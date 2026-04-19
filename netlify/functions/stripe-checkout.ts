@@ -22,10 +22,20 @@ const handler: Handler = async (event) => {
   try {
     const { priceId, associationId, userId } = JSON.parse(event.body || '{}')
 
+    console.log('📋 Stripe checkout request received:', { priceId, associationId, userId })
+    console.log('🔑 Environment variables check:', {
+      hasStripeKey: !!process.env.STRIPE_SECRET_KEY,
+      stripeKeyLength: process.env.STRIPE_SECRET_KEY?.length,
+    })
+
     if (!priceId || !associationId || !userId) {
+      console.error('❌ Missing required fields:', { priceId, associationId, userId })
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Missing required fields' }),
+        body: JSON.stringify({
+          error: 'Missing required fields',
+          received: { priceId, associationId, userId }
+        }),
       }
     }
 
@@ -86,11 +96,18 @@ const handler: Handler = async (event) => {
       body: JSON.stringify({ sessionUrl: session.url }),
     }
   } catch (error) {
-    console.error('Stripe checkout error:', error)
+    console.error('💥 Stripe checkout error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error'
+    console.error('📍 Error details:', {
+      message: errorMessage,
+      name: error instanceof Error ? error.name : 'Unknown',
+      stack: error instanceof Error ? error.stack : undefined,
+    })
     return {
       statusCode: 500,
       body: JSON.stringify({
-        error: error instanceof Error ? error.message : 'Internal server error',
+        error: errorMessage,
+        details: error instanceof Error ? error.message : 'Internal server error',
       }),
     }
   }

@@ -105,8 +105,18 @@ export function ParametresFacturationPage() {
         return
       }
 
+      console.log('📤 Sending checkout request:', {
+        planName,
+        priceId,
+        associationId: currentAssociation.id,
+        userId: user.id,
+      })
+
       const response = await fetch('/.netlify/functions/stripe-checkout', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           priceId,
           associationId: currentAssociation.id,
@@ -116,11 +126,16 @@ export function ParametresFacturationPage() {
 
       if (!response.ok) {
         const errorData = await response.json()
+        console.error('❌ Checkout error response:', {
+          status: response.status,
+          error: errorData,
+        })
         setError(errorData.error || 'Failed to create checkout session')
         return
       }
 
       const { sessionUrl } = await response.json()
+      console.log('✅ Checkout session created:', sessionUrl)
       if (sessionUrl) {
         window.location.href = sessionUrl
       }
