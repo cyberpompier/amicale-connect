@@ -55,8 +55,10 @@ export function BureauHistoriquePage() {
 
                   return (
                     <tr key={pos.id} className="hover:bg-[var(--color-bg-secondary)] transition-colors">
-                      <td className="px-4 py-3.5 font-semibold text-[var(--color-text)]">{pos.position_name}</td>
-                      <td className="px-4 py-3.5 text-[var(--color-text)]">{pos.person_name}</td>
+                      <td className="px-4 py-3.5 font-semibold text-[var(--color-text)]">{pos.position}</td>
+                      <td className="px-4 py-3.5 text-[var(--color-text)]">
+                        {(pos as any).amicalistes ? `${(pos as any).amicalistes.first_name} ${(pos as any).amicalistes.last_name}` : 'N/A'}
+                      </td>
                       <td className="px-4 py-3.5 text-[var(--color-text-muted)] hidden md:table-cell">{formatDateShort(pos.start_date)}</td>
                       <td className="px-4 py-3.5 text-[var(--color-text-muted)] hidden md:table-cell">
                         {pos.end_date ? formatDateShort(pos.end_date) : '—'}

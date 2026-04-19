@@ -7,7 +7,7 @@ import { Flame, Building2, MapPin, Phone, Mail, ArrowRight, Loader2 } from 'luci
 
 export function OnboardingPage() {
   const { user } = useAuthContext()
-  const { setCurrentAssociation, refetch } = useAssociation()
+  const { refetch } = useAssociation()
 
   const [step, setStep] = useState<1 | 2>(1)
   const [loading, setLoading] = useState(false)

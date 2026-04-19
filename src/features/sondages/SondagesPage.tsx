@@ -146,7 +146,7 @@ function SondageCard({
         <div className="flex items-center gap-3">
           {/* Avatars participants */}
           <div className="flex -space-x-2">
-            {sondage.participants.slice(0, 4).map((v, i) => (
+            {sondage.participants.slice(0, 4).map((_, i) => (
               <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-[var(--color-primary-light)] flex items-center justify-center">
                 <span className="text-[8px] font-bold text-[var(--color-primary)]">
                   {String(i + 1)}

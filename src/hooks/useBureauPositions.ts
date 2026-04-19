@@ -51,7 +51,7 @@ export function useBureauPositions() {
 
     const { data, error: fetchError } = await supabase
       .from('bureau_positions')
-      .select('*')
+      .select('*, amicalistes(first_name, last_name)')
       .eq('association_id', currentAssociation.id)
       .not('end_date', 'is', null)
       .order('start_date', { ascending: false })
@@ -59,7 +59,7 @@ export function useBureauPositions() {
     if (fetchError) {
       setError(fetchError.message)
     } else {
-      setHistory(data || [])
+      setHistory((data as any) || [])
     }
   }, [currentAssociation])
 
