@@ -40,23 +40,34 @@ const handler: Handler = async (event) => {
     }
 
     // Get the association
+    console.log('🔍 Checking Supabase connection...', {
+      hasUrl: !!process.env.VITE_SUPABASE_URL,
+      hasKey: !!process.env.VITE_SUPABASE_ANON_KEY,
+    })
+
     const { data: association, error: fetchError } = await supabase
       .from('associations')
       .select('id, stripe_customer_id, name, email')
       .eq('id', associationId)
       .single()
 
+    console.log('📦 Association fetch result:', { association, fetchError })
+
     if (fetchError || !association) {
+      console.error('❌ Association not found:', fetchError)
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Association not found' }),
+        body: JSON.stringify({ error: 'Association not found', details: fetchError?.message }),
       }
     }
+
+    console.log('✅ Association found:', association.id)
 
     let customerId = association.stripe_customer_id
 
     // Create or retrieve Stripe customer
     if (!customerId) {
+      console.log('🆕 Creating new Stripe customer...')
       const customer = await stripe.customers.create({
         email: association.email || undefined,
         metadata: {
@@ -65,15 +76,25 @@ const handler: Handler = async (event) => {
         },
       })
       customerId = customer.id
+      console.log('✅ Stripe customer created:', customerId)
 
       // Update association with stripe_customer_id
-      await supabase
+      const { error: updateError } = await supabase
         .from('associations')
         .update({ stripe_customer_id: customerId })
         .eq('id', associationId)
+
+      if (updateError) {
+        console.error('⚠️ Failed to update association with stripe_customer_id:', updateError)
+      } else {
+        console.log('✅ Association updated with stripe_customer_id')
+      }
+    } else {
+      console.log('♻️ Using existing Stripe customer:', customerId)
     }
 
     // Create checkout session
+    console.log('🛒 Creating Stripe checkout session...', { customerId, priceId })
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       line_items: [
@@ -90,6 +111,8 @@ const handler: Handler = async (event) => {
         user_id: userId,
       },
     })
+
+    console.log('✅ Checkout session created:', session.id, 'URL:', session.url)
 
     return {
       statusCode: 200,
