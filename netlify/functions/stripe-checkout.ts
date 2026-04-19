@@ -95,6 +95,10 @@ const handler: Handler = async (event) => {
 
     // Create checkout session
     console.log('🛒 Creating Stripe checkout session...', { customerId, priceId })
+
+    // Normalize app URL - remove trailing slash if present
+    const baseUrl = (process.env.VITE_APP_URL || '').replace(/\/$/, '')
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       line_items: [
@@ -104,8 +108,8 @@ const handler: Handler = async (event) => {
         },
       ],
       mode: 'subscription',
-      success_url: `${process.env.VITE_APP_URL}/parametres/facturation?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.VITE_APP_URL}/parametres/facturation`,
+      success_url: `${baseUrl}/parametres/facturation?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/parametres/facturation`,
       metadata: {
         association_id: associationId,
         user_id: userId,

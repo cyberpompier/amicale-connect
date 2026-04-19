@@ -44,9 +44,12 @@ const handler: Handler = async (event) => {
     }
 
     // Create portal session
+    // Normalize app URL - remove trailing slash if present
+    const baseUrl = (process.env.VITE_APP_URL || '').replace(/\/$/, '')
+
     const session = await stripe.billingPortal.sessions.create({
       customer: association.stripe_customer_id,
-      return_url: `${process.env.VITE_APP_URL}/parametres/facturation`,
+      return_url: `${baseUrl}/parametres/facturation`,
     })
 
     return {
