@@ -111,7 +111,6 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
       .update({
         stripe_subscription_id: subscription.id,
         subscription_status: subscriptionStatus,
-        updated_at: new Date().toISOString(),
       })
       .eq('id', association.id)
 
@@ -146,7 +145,6 @@ async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
       .from('associations')
       .update({
         subscription_status: 'canceled',
-        updated_at: new Date().toISOString(),
       })
       .eq('id', association.id)
   }
@@ -177,7 +175,6 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
         .from('associations')
         .update({
           subscription_status: 'active',
-          updated_at: new Date().toISOString(),
         })
         .eq('id', association.id)
     }
@@ -201,7 +198,6 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
       .from('associations')
       .update({
         subscription_status: 'past_due',
-        updated_at: new Date().toISOString(),
       })
       .eq('id', association.id)
   }
