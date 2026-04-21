@@ -61,6 +61,46 @@ export function CotisationsPage() {
     setSaving(false)
   }
 
+  const handleAddCotisationForAll = async () => {
+    if (!formData.amount) return
+    setSaving(true)
+    try {
+      // Get members to add cotisation for
+      const membersToAdd = filteredAmicalistes
+      if (membersToAdd.length === 0) {
+        alert('Aucun membre avec ce statut')
+        setSaving(false)
+        return
+      }
+
+      // Check if user confirms
+      const confirmed = confirm(
+        `Créer une cotisation de ${formData.amount}€ pour ${membersToAdd.length} membre${membersToAdd.length > 1 ? 's' : ''} ?`
+      )
+      if (!confirmed) {
+        setSaving(false)
+        return
+      }
+
+      // Create cotisation for each member
+      for (const member of membersToAdd) {
+        await addCotisation({
+          amicaliste_id: member.id,
+          year: selectedYear,
+          amount: parseFloat(formData.amount),
+          status: 'pending',
+        })
+      }
+
+      setShowForm(false)
+      setFormData({ amicaliste_id: '', amount: '30' })
+      alert(`${membersToAdd.length} cotisation${membersToAdd.length > 1 ? 's' : ''} créée${membersToAdd.length > 1 ? 's' : ''} !`)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erreur')
+    }
+    setSaving(false)
+  }
+
   const handleMarkPaid = async (id: string) => {
     try {
       await markAsPaid(id)
@@ -203,43 +243,74 @@ export function CotisationsPage() {
               </div>
             </div>
 
-            {/* Sélection d'un membre */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <select
-                value={formData.amicaliste_id}
-                onChange={(e) => setFormData((p) => ({ ...p, amicaliste_id: e.target.value }))}
-                className="flex-1 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
-              >
-                <option value="">— Sélectionner un membre —</option>
-                {filteredAmicalistes.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.last_name} {a.first_name}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.amount}
-                onChange={(e) => setFormData((p) => ({ ...p, amount: e.target.value }))}
-                className="w-32 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
-                placeholder="Montant (€)"
-              />
-              <button
-                onClick={handleAddCotisation}
-                disabled={saving || !formData.amicaliste_id}
-                className="px-4 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50"
-              >
-                {saving ? 'Ajout...' : 'Ajouter'}
-              </button>
-              <button
-                onClick={() => setShowForm(false)}
-                className="px-4 py-2.5 border border-[var(--color-border)] text-[var(--color-text)] text-sm font-medium rounded-lg hover:bg-[var(--color-bg-secondary)] transition-colors"
-              >
-                Annuler
-              </button>
+            {/* Sélection d'un membre - création individuelle */}
+            <div>
+              <label className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide block mb-2">
+                Créer pour un membre
+              </label>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <select
+                  value={formData.amicaliste_id}
+                  onChange={(e) => setFormData((p) => ({ ...p, amicaliste_id: e.target.value }))}
+                  className="flex-1 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
+                >
+                  <option value="">— Sélectionner un membre —</option>
+                  {amicalistes.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.last_name} {a.first_name}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.amount}
+                  onChange={(e) => setFormData((p) => ({ ...p, amount: e.target.value }))}
+                  className="w-32 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
+                  placeholder="Montant (€)"
+                />
+                <button
+                  onClick={handleAddCotisation}
+                  disabled={saving || !formData.amicaliste_id}
+                  className="px-4 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {saving ? 'Ajout...' : 'Ajouter'}
+                </button>
+              </div>
             </div>
+
+            {/* Création en masse pour tous les membres du statut sélectionné */}
+            {memberFilter !== 'all' && filteredAmicalistes.length > 0 && (
+              <div className="pt-4 border-t border-[var(--color-border)]">
+                <div className="bg-[var(--color-bg-secondary)] rounded-lg p-4">
+                  <p className="text-sm text-[var(--color-text-muted)] mb-3">
+                    Créer une cotisation de <strong>{formData.amount}€</strong> pour les {filteredAmicalistes.length} membre{filteredAmicalistes.length > 1 ? 's' : ''} {
+                      memberFilter === 'active' ? 'actif' :
+                      memberFilter === 'inactive' ? 'inactif' :
+                      memberFilter === 'honorary' ? 'honoraire' : ''
+                    }{filteredAmicalistes.length > 1 ? 's' : ''}
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleAddCotisationForAll}
+                      disabled={saving || !formData.amount}
+                      className="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      {saving ? 'Création...' : `Créer pour tous`}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Bouton Annuler */}
+            <button
+              onClick={() => setShowForm(false)}
+              className="w-full px-4 py-2.5 border border-[var(--color-border)] text-[var(--color-text)] text-sm font-medium rounded-lg hover:bg-[var(--color-bg-secondary)] transition-colors"
+            >
+              Annuler
+            </button>
           </div>
         </div>
       )}
