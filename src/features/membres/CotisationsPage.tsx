@@ -82,19 +82,36 @@ export function CotisationsPage() {
         return
       }
 
-      // Create cotisation for each member
+      // Create cotisation for each member, skip if already exists
+      let created = 0
+      let skipped = 0
       for (const member of membersToAdd) {
-        await addCotisation({
-          amicaliste_id: member.id,
-          year: selectedYear,
-          amount: parseFloat(formData.amount),
-          status: 'pending',
-        })
+        try {
+          await addCotisation({
+            amicaliste_id: member.id,
+            year: selectedYear,
+            amount: parseFloat(formData.amount),
+            status: 'pending',
+          })
+          created++
+        } catch (err) {
+          // Skip if cotisation already exists (409 Conflict)
+          if (err instanceof Error && err.message.includes('409')) {
+            skipped++
+          } else {
+            throw err
+          }
+        }
       }
 
       setShowForm(false)
       setFormData({ amicaliste_id: '', amount: '30' })
-      alert(`${membersToAdd.length} cotisation${membersToAdd.length > 1 ? 's' : ''} créée${membersToAdd.length > 1 ? 's' : ''} !`)
+
+      let message = `${created} cotisation${created > 1 ? 's' : ''} créée${created > 1 ? 's' : ''} !`
+      if (skipped > 0) {
+        message += `\n${skipped} cotisation${skipped > 1 ? 's' : ''} existante${skipped > 1 ? 's' : ''} ignorée${skipped > 1 ? 's' : ''}`
+      }
+      alert(message)
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Erreur')
     }
