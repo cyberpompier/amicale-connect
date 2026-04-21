@@ -727,39 +727,46 @@ function ParticipantRow({
   const fullName = `${p.amicalistes.last_name} ${p.amicalistes.first_name}`
 
   return (
-    <div className="px-4 py-3.5 flex items-center gap-3 hover:bg-[var(--color-bg-secondary)] transition-colors group">
-      <Avatar prenom={p.amicalistes.first_name} nom={p.amicalistes.last_name} size="sm" />
-
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-[var(--color-text)] truncate">{fullName}</p>
-        <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-          {p.amicalistes.grade && (
-            <span className="text-xs text-[var(--color-text-muted)]">{p.amicalistes.grade}</span>
-          )}
-          {p.nombre_accompagnants > 0 && (
-            <span className="text-xs text-indigo-500">+{p.nombre_accompagnants} acc.</span>
-          )}
+    <div className="px-4 py-3.5 hover:bg-[var(--color-bg-secondary)] transition-colors group">
+      {/* Ligne 1 : avatar + nom + bouton supprimer */}
+      <div className="flex items-center gap-3">
+        <Avatar prenom={p.amicalistes.first_name} nom={p.amicalistes.last_name} size="sm" />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-[var(--color-text)] truncate">{fullName}</p>
+          <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+            {p.amicalistes.grade && (
+              <span className="text-xs text-[var(--color-text-muted)]">{p.amicalistes.grade}</span>
+            )}
+            {p.nombre_accompagnants > 0 && (
+              <span className="text-xs text-indigo-500">+{p.nombre_accompagnants} acc.</span>
+            )}
+          </div>
         </div>
+        <button
+          onClick={onRemove}
+          className="opacity-0 group-hover:opacity-100 p-1.5 text-[var(--color-text-muted)] hover:text-red-600 hover:bg-red-50 rounded-lg transition-all flex-shrink-0"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
       </div>
 
-      <div className="flex items-center gap-1.5 flex-shrink-0">
-        {/* Status selector */}
+      {/* Ligne 2 : sélecteurs */}
+      <div className="flex items-center gap-2 mt-2 ml-11">
         <select
           value={p.status}
           onChange={(e) => onStatusChange(e.target.value as Participant['status'])}
-          className="text-xs border border-[var(--color-border)] rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]/30 cursor-pointer"
+          className="flex-1 text-xs border border-[var(--color-border)] rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]/30 cursor-pointer"
         >
           <option value="confirmed">✅ Confirmé</option>
           <option value="invited">⏳ En attente</option>
           <option value="declined">❌ Refusé</option>
         </select>
 
-        {/* Payment selector */}
         <select
           value={p.paiement}
           onChange={(e) => onPaiementChange(e.target.value as Participant['paiement'])}
           className={cn(
-            'text-xs border rounded-lg px-2 py-1 font-semibold focus:outline-none focus:ring-1 cursor-pointer',
+            'flex-1 text-xs border rounded-lg px-2 py-1.5 font-semibold focus:outline-none focus:ring-1 cursor-pointer',
             p.paiement === 'paye'    ? 'bg-green-50 text-green-600 border-green-200 focus:ring-green-300' :
             p.paiement === 'exonere' ? 'bg-blue-50 text-blue-600 border-blue-200 focus:ring-blue-300' :
                                        'bg-amber-50 text-amber-600 border-amber-200 focus:ring-amber-300'
@@ -770,21 +777,12 @@ function ParticipantRow({
           <option value="exonere">🔵 Exonéré</option>
         </select>
 
-        {/* Accompagnants */}
         <button
           onClick={() => setShowAccomp(!showAccomp)}
           title="Accompagnants"
-          className="p-1.5 text-[var(--color-text-muted)] hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+          className="p-1.5 text-[var(--color-text-muted)] hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex-shrink-0"
         >
           <Users className="w-3.5 h-3.5" />
-        </button>
-
-        {/* Remove */}
-        <button
-          onClick={onRemove}
-          className="opacity-0 group-hover:opacity-100 p-1.5 text-[var(--color-text-muted)] hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-        >
-          <X className="w-3.5 h-3.5" />
         </button>
       </div>
 
@@ -819,31 +817,40 @@ function InviteRow({
 }) {
   return (
     <div className="px-4 py-3.5 flex items-center gap-3 hover:bg-[var(--color-bg-secondary)] transition-colors group">
-      <div className={cn('w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0', avatarColor(inv.nom))}>
-        {inv.nom.slice(0, 2).toUpperCase()}
-      </div>
-
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-[var(--color-text)] truncate">{inv.nom}</p>
-        <div className="flex items-center gap-2 mt-0.5">
-          {inv.email && (
-            <a href={`mailto:${inv.email}`} className="flex items-center gap-0.5 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)]">
-              <Mail className="w-3 h-3" /> {inv.email}
-            </a>
-          )}
-          {inv.telephone && (
-            <a href={`tel:${inv.telephone}`} className="flex items-center gap-0.5 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)]">
-              <Phone className="w-3 h-3" /> {inv.telephone}
-            </a>
-          )}
+      {/* Ligne 1 : avatar + nom + supprimer */}
+      <div className="flex items-center gap-3">
+        <div className={cn('w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0', avatarColor(inv.nom))}>
+          {inv.nom.slice(0, 2).toUpperCase()}
         </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-[var(--color-text)] truncate">{inv.nom}</p>
+          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+            {inv.email && (
+              <a href={`mailto:${inv.email}`} className="flex items-center gap-0.5 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)] truncate max-w-[140px]">
+                <Mail className="w-3 h-3 flex-shrink-0" /> {inv.email}
+              </a>
+            )}
+            {inv.telephone && (
+              <a href={`tel:${inv.telephone}`} className="flex items-center gap-0.5 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)]">
+                <Phone className="w-3 h-3 flex-shrink-0" /> {inv.telephone}
+              </a>
+            )}
+          </div>
+        </div>
+        <button
+          onClick={onRemove}
+          className="opacity-0 group-hover:opacity-100 p-1.5 text-[var(--color-text-muted)] hover:text-red-600 hover:bg-red-50 rounded-lg transition-all flex-shrink-0"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
       </div>
 
-      <div className="flex items-center gap-1.5 flex-shrink-0">
+      {/* Ligne 2 : sélecteurs */}
+      <div className="flex items-center gap-2 mt-2 ml-12">
         <select
           value={inv.statut}
           onChange={(e) => onStatutChange(e.target.value as Invite['statut'])}
-          className="text-xs border border-[var(--color-border)] rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]/30 cursor-pointer"
+          className="flex-1 text-xs border border-[var(--color-border)] rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]/30 cursor-pointer"
         >
           <option value="invite">📨 Invité</option>
           <option value="confirme">✅ Confirmé</option>
@@ -854,7 +861,7 @@ function InviteRow({
           value={inv.paiement}
           onChange={(e) => onPaiementChange(e.target.value as Invite['paiement'])}
           className={cn(
-            'text-xs border rounded-lg px-2 py-1 font-semibold focus:outline-none focus:ring-1 cursor-pointer',
+            'flex-1 text-xs border rounded-lg px-2 py-1.5 font-semibold focus:outline-none focus:ring-1 cursor-pointer',
             inv.paiement === 'paye'    ? 'bg-green-50 text-green-600 border-green-200 focus:ring-green-300' :
             inv.paiement === 'exonere' ? 'bg-blue-50 text-blue-600 border-blue-200 focus:ring-blue-300' :
                                          'bg-amber-50 text-amber-600 border-amber-200 focus:ring-amber-300'
@@ -864,13 +871,6 @@ function InviteRow({
           <option value="paye">✅ Payé</option>
           <option value="exonere">🔵 Exonéré</option>
         </select>
-
-        <button
-          onClick={onRemove}
-          className="opacity-0 group-hover:opacity-100 p-1.5 text-[var(--color-text-muted)] hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
       </div>
     </div>
   )
