@@ -20,6 +20,14 @@ import { EvenementsArchivesPage } from '@/features/evenements/EvenementsArchives
 import { EvenementDetailPage } from '@/features/evenements/EvenementDetailPage'
 import { SondagesPage } from '@/features/sondages/SondagesPage'
 import { SondagesCreerPage } from '@/features/sondages/SondagesCreerPage'
+import { BoutiquePage } from '@/features/boutique/BoutiquePage'
+import { BoutiqueDetailPage } from '@/features/boutique/BoutiqueDetailPage'
+import { BoutiqueCartPage } from '@/features/boutique/BoutiqueCartPage'
+import { BoutiqueCheckoutPage } from '@/features/boutique/BoutiqueCheckoutPage'
+import { BoutiqueCommandesPage } from '@/features/boutique/BoutiqueCommandesPage'
+import { BoutiqueGestionPage } from '@/features/boutique/BoutiqueGestionPage'
+import { BoutiqueGestionProduitsList } from '@/features/boutique/BoutiqueGestionProduitsList'
+import { BoutiqueGestionProduitForm } from '@/features/boutique/BoutiqueGestionProduitForm'
 import { ParametresPage } from '@/features/parametres/ParametresPage'
 import { ParametresFacturationPage } from '@/features/parametres/ParametresFacturationPage'
 import { ParametresEquipePage } from '@/features/parametres/ParametresEquipePage'
@@ -124,6 +132,43 @@ export const router = createBrowserRouter([
       {
         path: 'sondages/creer',
         element: <SondagesCreerPage />,
+      },
+      // Boutique
+      {
+        path: 'boutique',
+        element: <BoutiquePage />,
+      },
+      {
+        path: 'boutique/panier',
+        element: <BoutiqueCartPage />,
+      },
+      {
+        path: 'boutique/checkout',
+        element: <BoutiqueCheckoutPage />,
+      },
+      {
+        path: 'boutique/commandes',
+        element: <BoutiqueCommandesPage />,
+      },
+      {
+        path: 'boutique/gestion',
+        element: <BoutiqueGestionPage />,
+      },
+      {
+        path: 'boutique/gestion/produits',
+        element: <BoutiqueGestionProduitsList />,
+      },
+      {
+        path: 'boutique/gestion/produits/creer',
+        element: <BoutiqueGestionProduitForm />,
+      },
+      {
+        path: 'boutique/gestion/produits/:id',
+        element: <BoutiqueGestionProduitForm />,
+      },
+      {
+        path: 'boutique/:id',
+        element: <BoutiqueDetailPage />,
       },
       // Paramètres
       {

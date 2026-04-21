@@ -6,6 +6,7 @@ import {
   Calendar,
   Settings,
   BarChart3,
+  ShoppingBag,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -74,6 +75,17 @@ export const mainNavItems: NavItem[] = [
     subNav: [
       { label: 'Tous les sondages', path: '/sondages' },
       { label: 'Créer', path: '/sondages/creer' },
+    ],
+  },
+  {
+    label: 'Boutique',
+    path: '/boutique',
+    icon: ShoppingBag,
+    subNav: [
+      { label: 'Catalogue', path: '/boutique' },
+      { label: 'Panier', path: '/boutique/panier' },
+      { label: 'Mes commandes', path: '/boutique/commandes' },
+      { label: 'Gestion', path: '/boutique/gestion' },
     ],
   },
 ]
