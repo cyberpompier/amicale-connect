@@ -27,9 +27,9 @@ export function CotisationsPage() {
   // Filtrer les amicalistes selon le filtre sélectionné
   const getFilteredAmicalistes = () => {
     if (memberFilter === 'all') return amicalistes
-    if (memberFilter === 'active') return amicalistes.filter((a) => a.status === 'active')
-    if (memberFilter === 'inactive') return amicalistes.filter((a) => a.status === 'inactive')
-    if (memberFilter === 'honorary') return amicalistes.filter((a) => a.status === 'honorary')
+    if (memberFilter === 'active') return amicalistes.filter((a) => a.status === 'actif')
+    if (memberFilter === 'inactive') return amicalistes.filter((a) => a.status === 'inactif')
+    if (memberFilter === 'honorary') return amicalistes.filter((a) => a.status === 'honoraire')
     return amicalistes.filter((a) => a.id === memberFilter)
   }
 
