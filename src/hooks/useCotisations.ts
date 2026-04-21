@@ -8,6 +8,7 @@ export interface Cotisation {
   amicaliste_id: string
   year: number
   amount: number
+  libelle: string
   status: 'paid' | 'pending' | 'overdue'
   paid_at: string | null
   created_at: string
@@ -24,6 +25,7 @@ export type CotisationInput = {
   amicaliste_id: string
   year: number
   amount: number
+  libelle?: string
   status: 'paid' | 'pending' | 'overdue'
   paid_at?: string | null
 }

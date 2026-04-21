@@ -18,7 +18,7 @@ export function CotisationsPage() {
   const { cotisations, loading, markAsPaid, addCotisation } = useCotisations(selectedYear)
   const { amicalistes } = useAmicalistes()
   const [showForm, setShowForm] = useState(false)
-  const [formData, setFormData] = useState({ amicaliste_id: '', amount: '30' })
+  const [formData, setFormData] = useState({ amicaliste_id: '', amount: '30', libelle: 'Cotisation' })
   const [saving, setSaving] = useState(false)
   const [memberFilter, setMemberFilter] = useState('all') // all, active, inactive, honorary, or specific id
 
@@ -51,10 +51,11 @@ export function CotisationsPage() {
         amicaliste_id: formData.amicaliste_id,
         year: selectedYear,
         amount: parseFloat(formData.amount),
+        libelle: formData.libelle || 'Cotisation',
         status: 'pending',
       })
       setShowForm(false)
-      setFormData({ amicaliste_id: '', amount: '30' })
+      setFormData({ amicaliste_id: '', amount: '30', libelle: 'Cotisation' })
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Erreur')
     }
@@ -91,6 +92,7 @@ export function CotisationsPage() {
             amicaliste_id: member.id,
             year: selectedYear,
             amount: parseFloat(formData.amount),
+            libelle: formData.libelle || 'Cotisation',
             status: 'pending',
           })
           created++
@@ -105,7 +107,7 @@ export function CotisationsPage() {
       }
 
       setShowForm(false)
-      setFormData({ amicaliste_id: '', amount: '30' })
+      setFormData({ amicaliste_id: '', amount: '30', libelle: 'Cotisation' })
 
       let message = `${created} cotisation${created > 1 ? 's' : ''} créée${created > 1 ? 's' : ''} !`
       if (skipped > 0) {
@@ -265,35 +267,44 @@ export function CotisationsPage() {
               <label className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide block mb-2">
                 Créer pour un membre
               </label>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <select
-                  value={formData.amicaliste_id}
-                  onChange={(e) => setFormData((p) => ({ ...p, amicaliste_id: e.target.value }))}
-                  className="flex-1 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
-                >
-                  <option value="">— Sélectionner un membre —</option>
-                  {amicalistes.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.last_name} {a.first_name}
-                    </option>
-                  ))}
-                </select>
+              <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <select
+                    value={formData.amicaliste_id}
+                    onChange={(e) => setFormData((p) => ({ ...p, amicaliste_id: e.target.value }))}
+                    className="flex-1 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
+                  >
+                    <option value="">— Sélectionner un membre —</option>
+                    {amicalistes.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.last_name} {a.first_name}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.amount}
+                    onChange={(e) => setFormData((p) => ({ ...p, amount: e.target.value }))}
+                    className="w-32 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
+                    placeholder="Montant (€)"
+                  />
+                  <button
+                    onClick={handleAddCotisation}
+                    disabled={saving || !formData.amicaliste_id}
+                    className="px-4 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    {saving ? 'Ajout...' : 'Ajouter'}
+                  </button>
+                </div>
                 <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.amount}
-                  onChange={(e) => setFormData((p) => ({ ...p, amount: e.target.value }))}
-                  className="w-32 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
-                  placeholder="Montant (€)"
+                  type="text"
+                  value={formData.libelle}
+                  onChange={(e) => setFormData((p) => ({ ...p, libelle: e.target.value }))}
+                  placeholder="Libellé (ex: Cotisation annuelle 2026)"
+                  className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
                 />
-                <button
-                  onClick={handleAddCotisation}
-                  disabled={saving || !formData.amicaliste_id}
-                  className="px-4 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50"
-                >
-                  {saving ? 'Ajout...' : 'Ajouter'}
-                </button>
               </div>
             </div>
 
