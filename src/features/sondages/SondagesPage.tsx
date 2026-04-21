@@ -56,11 +56,18 @@ function SondageCard({
 
   return (
     <div
-      className={`bg-white rounded-2xl border-2 transition-all cursor-pointer ${
+      className={`bg-white rounded-2xl border-2 transition-all cursor-pointer overflow-hidden ${
         isSelected ? 'border-[var(--color-primary)] shadow-lg' : 'border-[var(--color-border)] hover:border-gray-300 shadow-sm'
       }`}
       onClick={() => onSelect(sondage.id)}
     >
+      {/* Bannière */}
+      {sondage.image_url && (
+        <div className="w-full h-32 overflow-hidden">
+          <img src={sondage.image_url} alt={sondage.titre} className="w-full h-full object-cover" />
+        </div>
+      )}
+
       {/* Header */}
       <div className="p-5 pb-3">
         <div className="flex items-start justify-between gap-3 mb-2">

@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, Radio, CheckSquare, Calendar } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, Radio, CheckSquare, Calendar, Upload, X } from 'lucide-react'
 import { useSondages } from '@/hooks/useSondages'
 
 export function SondagesCreerPage() {
@@ -13,9 +13,19 @@ export function SondagesCreerPage() {
     type: 'unique' as 'unique' | 'multiple',
     date_fin: '',
   })
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [options, setOptions] = useState(['', ''])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (evt) => setImagePreview(evt.target?.result as string)
+      reader.readAsDataURL(file)
+    }
+  }
 
   const addOption = () => setOptions((prev) => [...prev, ''])
   const removeOption = (i: number) => setOptions((prev) => prev.filter((_, idx) => idx !== i))
@@ -39,6 +49,7 @@ export function SondagesCreerPage() {
         description: form.description.trim() || null,
         type: form.type,
         date_fin: form.date_fin || null,
+        image_url: imagePreview || null,
         options: validOptions,
       })
       navigate('/sondages')
@@ -68,6 +79,34 @@ export function SondagesCreerPage() {
         {/* Informations générales */}
         <section className="bg-white rounded-xl border border-[var(--color-border)] p-6 shadow-sm space-y-4">
           <h2 className="text-sm font-bold text-[var(--color-text)] uppercase tracking-wide">Informations</h2>
+
+          {/* Bannière */}
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text)] mb-1">
+              Bannière <span className="text-[var(--color-text-muted)] font-normal">(optionnel)</span>
+            </label>
+            {imagePreview ? (
+              <div className="relative">
+                <img src={imagePreview} alt="Preview" className="w-full h-36 object-cover rounded-xl border border-[var(--color-border)]" />
+                <button
+                  type="button"
+                  onClick={() => setImagePreview(null)}
+                  className="absolute top-2 right-2 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <label className="block w-full px-4 py-5 border-2 border-dashed border-[var(--color-border)] rounded-xl cursor-pointer hover:border-[var(--color-primary)] hover:bg-[var(--color-primary)]/5 transition-colors">
+                <div className="flex flex-col items-center justify-center gap-1.5">
+                  <Upload className="w-5 h-5 text-[var(--color-text-muted)]" />
+                  <span className="text-sm font-medium text-[var(--color-text)]">Ajouter une image</span>
+                  <span className="text-xs text-[var(--color-text-muted)]">PNG, JPG ou GIF</span>
+                </div>
+                <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+              </label>
+            )}
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-[var(--color-text)] mb-1">

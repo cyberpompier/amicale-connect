@@ -25,6 +25,7 @@ export interface Sondage {
   type: 'unique' | 'multiple'
   statut: 'actif' | 'termine'
   date_fin: string | null
+  image_url: string | null
   created_at: string
   sondage_options?: SondageOption[]
   sondage_votes?: SondageVote[]
@@ -41,6 +42,7 @@ export type SondageInput = {
   description: string | null
   type: 'unique' | 'multiple'
   date_fin: string | null
+  image_url: string | null
   options: string[]
 }
 
@@ -110,6 +112,7 @@ export function useSondages() {
         description: input.description,
         type: input.type,
         date_fin: input.date_fin,
+        image_url: input.image_url,
         statut: 'actif',
       })
       .select()
