@@ -240,7 +240,11 @@ export function TransactionsPage() {
                   <td className="px-8 py-5 hidden md:table-cell">
                     <Link to={`/comptabilite/${t.id}`}>
                       {t.categories?.name ? (
-                        <span className="inline-flex px-4 py-2 bg-blue-100 text-blue-700 text-xs font-bold rounded-lg">
+                        <span className={`inline-flex px-4 py-2 text-xs font-bold rounded-lg ${
+                          t.type === 'income'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-red-100 text-red-700'
+                        }`}>
                           {t.categories.name}
                         </span>
                       ) : (
