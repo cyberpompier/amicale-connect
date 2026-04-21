@@ -16,6 +16,8 @@ export function EvenementsCreerPage() {
     heure: '',
     lieu: '',
     image_url: '',
+    tarif_amicaliste: '',
+    tarif_exterieur: '',
   })
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -31,6 +33,8 @@ export function EvenementsCreerPage() {
           heure: event.heure || '',
           lieu: event.lieu || '',
           image_url: event.image_url || '',
+          tarif_amicaliste: event.tarif_amicaliste?.toString() || '',
+          tarif_exterieur: event.tarif_exterieur?.toString() || '',
         })
         if (event.image_url) {
           setImagePreview(event.image_url)
@@ -58,10 +62,15 @@ export function EvenementsCreerPage() {
 
     setSaving(true)
     try {
+      const payload = {
+        ...formData,
+        tarif_amicaliste: formData.tarif_amicaliste ? parseFloat(formData.tarif_amicaliste) : null,
+        tarif_exterieur: formData.tarif_exterieur ? parseFloat(formData.tarif_exterieur) : null,
+      }
       if (editId) {
-        await updateEvenement(editId, formData)
+        await updateEvenement(editId, payload)
       } else {
-        await addEvenement(formData)
+        await addEvenement(payload)
       }
       navigate('/evenements')
     } catch (err) {
@@ -199,6 +208,44 @@ export function EvenementsCreerPage() {
                 placeholder="Ex : Caserne centrale"
                 className="w-full px-3.5 py-2.5 border border-[var(--color-border)] rounded-xl text-sm bg-[var(--color-bg-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)] transition-colors"
               />
+            </div>
+
+            {/* Tarifs */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-[var(--color-text)] mb-2">
+                  Tarif amicaliste <span className="text-[var(--color-text-muted)] font-normal">(€, optionnel)</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-[var(--color-text-muted)] font-medium">€</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.tarif_amicaliste}
+                    onChange={(e) => setFormData((p) => ({ ...p, tarif_amicaliste: e.target.value }))}
+                    placeholder="0.00"
+                    className="w-full pl-8 pr-3.5 py-2.5 border border-[var(--color-border)] rounded-xl text-sm bg-[var(--color-bg-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)] transition-colors"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-[var(--color-text)] mb-2">
+                  Tarif extérieur <span className="text-[var(--color-text-muted)] font-normal">(€, optionnel)</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-[var(--color-text-muted)] font-medium">€</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.tarif_exterieur}
+                    onChange={(e) => setFormData((p) => ({ ...p, tarif_exterieur: e.target.value }))}
+                    placeholder="0.00"
+                    className="w-full pl-8 pr-3.5 py-2.5 border border-[var(--color-border)] rounded-xl text-sm bg-[var(--color-bg-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)] transition-colors"
+                  />
+                </div>
+              </div>
             </div>
 
             <div>

@@ -141,6 +141,35 @@ export function useEvenementDetail(evenementId: string | undefined) {
       .eq('id', participantId)
 
     if (error) throw error
+
+    // Si passage à "payé" → créer une transaction dans le livre de compte
+    if (paiement === 'paye' && evenement?.tarif_amicaliste) {
+      const participant = participants.find((p) => p.id === participantId)
+      if (participant) {
+        const { data: { user } } = await supabase.auth.getUser()
+
+        // Chercher la catégorie EVENEMENT
+        const { data: cat } = await supabase
+          .from('categories')
+          .select('id')
+          .eq('association_id', evenement.association_id)
+          .ilike('name', 'EVENEMENT')
+          .maybeSingle()
+
+        await supabase.from('transactions').insert({
+          association_id: evenement.association_id,
+          type: 'income',
+          amount: evenement.tarif_amicaliste,
+          description: evenement.titre,
+          date: new Date().toISOString().split('T')[0],
+          category_id: cat?.id || null,
+          notes: `Paiement de ${participant.amicalistes.first_name} ${participant.amicalistes.last_name} — ${evenement.titre}`,
+          created_by: user?.id || null,
+          updated_by: user?.id || null,
+        })
+      }
+    }
+
     setParticipants((prev) => prev.map((p) => p.id === participantId ? { ...p, paiement } : p))
   }
 
@@ -202,6 +231,35 @@ export function useEvenementDetail(evenementId: string | undefined) {
       .eq('id', inviteId)
 
     if (error) throw error
+
+    // Si passage à "payé" → créer une transaction dans le livre de compte
+    if (paiement === 'paye' && evenement?.tarif_exterieur) {
+      const invite = invites.find((i) => i.id === inviteId)
+      if (invite) {
+        const { data: { user } } = await supabase.auth.getUser()
+
+        // Chercher la catégorie EVENEMENT
+        const { data: cat } = await supabase
+          .from('categories')
+          .select('id')
+          .eq('association_id', evenement.association_id)
+          .ilike('name', 'EVENEMENT')
+          .maybeSingle()
+
+        await supabase.from('transactions').insert({
+          association_id: evenement.association_id,
+          type: 'income',
+          amount: evenement.tarif_exterieur,
+          description: evenement.titre,
+          date: new Date().toISOString().split('T')[0],
+          category_id: cat?.id || null,
+          notes: `Paiement de ${invite.nom} (extérieur) — ${evenement.titre}`,
+          created_by: user?.id || null,
+          updated_by: user?.id || null,
+        })
+      }
+    }
+
     setInvites((prev) => prev.map((i) => i.id === inviteId ? { ...i, paiement } : i))
   }
 

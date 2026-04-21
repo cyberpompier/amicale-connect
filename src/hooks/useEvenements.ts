@@ -11,6 +11,8 @@ export interface Evenement {
   heure: string | null
   lieu: string
   image_url: string | null
+  tarif_amicaliste: number | null
+  tarif_exterieur: number | null
   created_at: string
   updated_at: string
 }
