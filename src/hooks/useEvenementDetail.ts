@@ -163,10 +163,10 @@ export function useEvenementDetail(evenementId: string | undefined) {
           association_id: evenement.association_id,
           type: 'income',
           amount: evenement.tarif_amicaliste,
-          description: evenement.titre,
+          description: `${evenement.titre} — ${nomParticipant}`,
           date: new Date().toISOString().split('T')[0],
           category_id: cat?.id || null,
-          notes: `Paiement de ${nomParticipant} — ${evenement.titre}`,
+          notes: `Paiement de ${nomParticipant} pour l'événement "${evenement.titre}"`,
           created_by: user?.id || null,
           updated_by: user?.id || null,
         })
@@ -176,16 +176,16 @@ export function useEvenementDetail(evenementId: string | undefined) {
       if (paiement === 'en_attente' && previousPaiement === 'paye') {
         const { data: candidates } = await supabase
           .from('transactions')
-          .select('id, notes')
+          .select('id, description')
           .eq('association_id', evenement.association_id)
-          .eq('description', evenement.titre)
           .eq('type', 'income')
 
         if (candidates && candidates.length > 0) {
-          const match = candidates.find((t) => t.notes?.includes(nomParticipant))
-          const toDelete = match ?? (candidates.length === 1 ? candidates[0] : null)
-          if (toDelete) {
-            await supabase.from('transactions').delete().eq('id', toDelete.id)
+          const match = candidates.find((t) =>
+            t.description?.includes(evenement.titre) && t.description?.includes(nomParticipant)
+          )
+          if (match) {
+            await supabase.from('transactions').delete().eq('id', match.id)
           }
         }
       }
@@ -274,10 +274,10 @@ export function useEvenementDetail(evenementId: string | undefined) {
           association_id: evenement.association_id,
           type: 'income',
           amount: evenement.tarif_exterieur,
-          description: evenement.titre,
+          description: `${evenement.titre} — ${nomInvite}`,
           date: new Date().toISOString().split('T')[0],
           category_id: cat?.id || null,
-          notes: `Paiement de ${nomInvite} — ${evenement.titre}`,
+          notes: `Paiement de ${nomInvite} pour l'événement "${evenement.titre}"`,
           created_by: user?.id || null,
           updated_by: user?.id || null,
         })
@@ -287,16 +287,16 @@ export function useEvenementDetail(evenementId: string | undefined) {
       if (paiement === 'en_attente' && previousPaiement === 'paye') {
         const { data: candidates } = await supabase
           .from('transactions')
-          .select('id, notes')
+          .select('id, description')
           .eq('association_id', evenement.association_id)
-          .eq('description', evenement.titre)
           .eq('type', 'income')
 
         if (candidates && candidates.length > 0) {
-          const match = candidates.find((t) => t.notes?.includes(invite.nom))
-          const toDelete = match ?? (candidates.length === 1 ? candidates[0] : null)
-          if (toDelete) {
-            await supabase.from('transactions').delete().eq('id', toDelete.id)
+          const match = candidates.find((t) =>
+            t.description?.includes(evenement.titre) && t.description?.includes(invite.nom)
+          )
+          if (match) {
+            await supabase.from('transactions').delete().eq('id', match.id)
           }
         }
       }
