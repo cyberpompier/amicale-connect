@@ -5,9 +5,11 @@ import { RegisterPage } from '@/features/auth/RegisterPage'
 import { AuthCallback } from '@/features/auth/AuthCallback'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { MembresListPage } from '@/features/membres/MembresListPage'
+import { MembresDetailPage } from '@/features/membres/MembresDetailPage'
 import { MembresAddPage } from '@/features/membres/MembresAddPage'
 import { CotisationsPage } from '@/features/membres/CotisationsPage'
 import { TransactionsPage } from '@/features/comptabilite/TransactionsPage'
+import { TransactionDetailPage } from '@/features/comptabilite/TransactionDetailPage'
 import { CategoriesPage } from '@/features/comptabilite/CategoriesPage'
 import { BilanPage } from '@/features/comptabilite/BilanPage'
 import { BureauPage } from '@/features/bureau/BureauPage'
@@ -56,6 +58,10 @@ export const router = createBrowserRouter([
         element: <MembresListPage />,
       },
       {
+        path: 'membres/:id',
+        element: <MembresDetailPage />,
+      },
+      {
         path: 'membres/ajouter',
         element: <MembresAddPage />,
       },
@@ -79,6 +85,10 @@ export const router = createBrowserRouter([
       {
         path: 'comptabilite/bilan',
         element: <BilanPage />,
+      },
+      {
+        path: 'comptabilite/:id',
+        element: <TransactionDetailPage />,
       },
       // Bureau
       {

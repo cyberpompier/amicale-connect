@@ -1,12 +1,13 @@
 import { useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { useTransactions } from '@/hooks/useTransactions'
 import { useCategories } from '@/hooks/useCategories'
-import { Trash2, Plus, TrendingUp, TrendingDown, Wallet } from 'lucide-react'
+import { Plus, TrendingUp, TrendingDown, Wallet } from 'lucide-react'
 import { formatCurrency, formatDateShort } from '@/lib/utils'
 import { PageHeader } from '@/components/ui/PageHeader'
 
 export function TransactionsPage() {
-  const { transactions, loading, stats, addTransaction, deleteTransaction } = useTransactions()
+  const { transactions, loading, stats, addTransaction } = useTransactions()
   const { categories } = useCategories()
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
@@ -15,6 +16,7 @@ export function TransactionsPage() {
     description: '',
     date: new Date().toISOString().split('T')[0],
     category_id: '',
+    notes: '',
   })
   const [saving, setSaving] = useState(false)
 
@@ -32,6 +34,7 @@ export function TransactionsPage() {
         description: formData.description,
         date: formData.date,
         category_id: formData.category_id || null,
+        notes: formData.notes || null,
       })
       setFormData({
         type: 'expense',
@@ -39,6 +42,7 @@ export function TransactionsPage() {
         description: '',
         date: new Date().toISOString().split('T')[0],
         category_id: '',
+        notes: '',
       })
       setShowForm(false)
     } catch (err) {
@@ -162,6 +166,14 @@ export function TransactionsPage() {
                 placeholder="Description"
                 className="sm:col-span-2 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
               />
+
+              <textarea
+                value={formData.notes}
+                onChange={(e) => setFormData((p) => ({ ...p, notes: e.target.value }))}
+                placeholder="Notes (optionnel)"
+                rows={2}
+                className="sm:col-span-2 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)] resize-none"
+              />
             </div>
 
             <div className="flex gap-2">
@@ -203,49 +215,48 @@ export function TransactionsPage() {
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden shadow-[var(--shadow-sm)]">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-[var(--color-bg-secondary)] border-b border-[var(--color-border)]">
-                  <th className="text-left px-4 py-3 font-semibold text-[var(--color-text-muted)] text-xs uppercase tracking-wide">Date</th>
-                  <th className="text-left px-4 py-3 font-semibold text-[var(--color-text-muted)] text-xs uppercase tracking-wide">Description</th>
-                  <th className="text-left px-4 py-3 font-semibold text-[var(--color-text-muted)] text-xs uppercase tracking-wide hidden md:table-cell">Catégorie</th>
-                  <th className="text-right px-4 py-3 font-semibold text-[var(--color-text-muted)] text-xs uppercase tracking-wide">Montant</th>
-                  <th className="text-right px-4 py-3 font-semibold text-[var(--color-text-muted)] text-xs uppercase tracking-wide">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--color-border)]">
-                {transactions.map((t) => (
-                  <tr key={t.id} className="hover:bg-[var(--color-bg-secondary)] transition-colors">
-                    <td className="px-4 py-3.5 text-[var(--color-text-muted)] whitespace-nowrap">{formatDateShort(t.date)}</td>
-                    <td className="px-4 py-3.5 font-medium text-[var(--color-text)]">{t.description}</td>
-                    <td className="px-4 py-3.5 hidden md:table-cell">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-[var(--color-bg-secondary)] border-b-2 border-[var(--color-border)]">
+                <th className="text-left px-8 py-5 font-bold text-[var(--color-text-muted)] text-xs uppercase tracking-widest">Date</th>
+                <th className="text-left px-8 py-5 font-bold text-[var(--color-text-muted)] text-xs uppercase tracking-widest">Description</th>
+                <th className="text-left px-8 py-5 font-bold text-[var(--color-text-muted)] text-xs uppercase tracking-widest hidden md:table-cell">Catégorie</th>
+                <th className="text-right px-8 py-5 font-bold text-[var(--color-text-muted)] text-xs uppercase tracking-widest">Montant</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[var(--color-border)]">
+              {transactions.map((t) => (
+                <tr key={t.id} className="hover:bg-[var(--color-bg-secondary)] transition-colors cursor-pointer">
+                  <td className="px-8 py-5">
+                    <Link to={`/comptabilite/${t.id}`} className="text-sm text-[var(--color-text-muted)] font-semibold hover:text-[var(--color-primary)]">
+                      {formatDateShort(t.date)}
+                    </Link>
+                  </td>
+                  <td className="px-8 py-5">
+                    <Link to={`/comptabilite/${t.id}`} className="text-sm font-bold text-[var(--color-text)] hover:text-[var(--color-primary)] transition-colors">
+                      {t.description}
+                    </Link>
+                  </td>
+                  <td className="px-8 py-5 hidden md:table-cell">
+                    <Link to={`/comptabilite/${t.id}`}>
                       {t.categories?.name ? (
-                        <span className="inline-flex px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">
+                        <span className="inline-flex px-4 py-2 bg-blue-100 text-blue-700 text-xs font-bold rounded-lg">
                           {t.categories.name}
                         </span>
                       ) : (
                         <span className="text-[var(--color-text-muted)]">—</span>
                       )}
-                    </td>
-                    <td className="px-4 py-3.5 text-right">
-                      <span className={`font-semibold ${t.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                        {t.type === 'income' ? '+' : '−'}{formatCurrency(Number(t.amount))}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3.5 text-right">
-                      <button
-                        onClick={() => deleteTransaction(t.id)}
-                        className="p-1.5 text-[var(--color-text-muted)] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </Link>
+                  </td>
+                  <td className="px-8 py-5 text-right">
+                    <Link to={`/comptabilite/${t.id}`} className={`text-lg font-bold ${t.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                      {t.type === 'income' ? '+' : '−'}{formatCurrency(Number(t.amount))}
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

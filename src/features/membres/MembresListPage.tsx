@@ -128,19 +128,24 @@ export function MembresListPage() {
                   {filtered.map((m) => (
                     <tr key={m.id} className="hover:bg-[var(--color-bg-secondary)] transition-colors">
                       <td className="px-4 py-3 text-center">
-                        {m.avatar_url ? (
-                          <img
-                            src={m.avatar_url}
-                            alt={`${m.first_name} ${m.last_name}`}
-                            className="w-10 h-10 rounded-lg object-cover mx-auto"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-lg bg-[var(--color-primary-light)] flex items-center justify-center mx-auto">
-                            <span className="text-xs font-bold text-[var(--color-primary)]">
-                              {m.first_name[0]}{m.last_name[0]}
-                            </span>
-                          </div>
-                        )}
+                        <button
+                          onClick={() => navigate(`/membres/${m.id}`)}
+                          className="flex justify-center focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2 rounded-lg transition-all"
+                        >
+                          {m.avatar_url ? (
+                            <img
+                              src={m.avatar_url}
+                              alt={`${m.first_name} ${m.last_name}`}
+                              className="w-10 h-10 rounded-lg object-cover mx-auto hover:shadow-md hover:scale-110 transition-all cursor-pointer"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-[var(--color-primary-light)] flex items-center justify-center mx-auto hover:shadow-md hover:scale-110 transition-all cursor-pointer">
+                              <span className="text-xs font-bold text-[var(--color-primary)]">
+                                {m.first_name[0]}{m.last_name[0]}
+                              </span>
+                            </div>
+                          )}
+                        </button>
                       </td>
                       <td className="px-4 py-3 font-medium text-[var(--color-text)]">
                         {m.last_name} {m.first_name}
