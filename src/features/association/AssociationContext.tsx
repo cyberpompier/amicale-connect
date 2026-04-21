@@ -5,6 +5,7 @@ import { useAuthContext } from '@/features/auth/AuthContext'
 interface Association {
   id: string
   name: string
+  city: string | null
   subscription_status: string
 }
 
@@ -35,7 +36,7 @@ export function AssociationProvider({ children }: { children: ReactNode }) {
     setLoading(true)
     const { data, error } = await supabase
       .from('associations')
-      .select('id, name, subscription_status')
+      .select('id, name, city, subscription_status')
 
     if (error) {
       console.error('Erreur chargement associations:', error)

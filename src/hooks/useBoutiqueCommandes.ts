@@ -159,12 +159,71 @@ export function useBoutiqueCommandes() {
     await Promise.all([fetchUserCommandes(), fetchAllCommandes()])
   }
 
+  // Trouve ou crée la catégorie "Boutique [ville]" dans le livre de compte
+  const getOrCreateBoutiqueCategory = async (): Promise<string | null> => {
+    if (!currentAssociation || !user) return null
+
+    const city = currentAssociation.city
+    const categoryName = city ? `Boutique ${city}` : 'Boutique'
+
+    // Chercher si elle existe déjà
+    const { data: existing } = await supabase
+      .from('categories')
+      .select('id')
+      .eq('association_id', currentAssociation.id)
+      .eq('name', categoryName)
+      .eq('type', 'income')
+      .maybeSingle()
+
+    if (existing) return existing.id
+
+    // Créer la catégorie
+    const { data: created, error } = await supabase
+      .from('categories')
+      .insert({
+        association_id: currentAssociation.id,
+        name: categoryName,
+        type: 'income',
+      })
+      .select('id')
+      .single()
+
+    if (error) { console.error('Erreur création catégorie boutique:', error); return null }
+    return created.id
+  }
+
+  // Crée l'écriture comptable pour une vente boutique
+  const createTransactionVente = async (commande: Commande) => {
+    if (!currentAssociation || !user) return
+
+    const categoryId = await getOrCreateBoutiqueCategory()
+    const commandeRef = `#${commande.id.slice(0, 8).toUpperCase()}`
+    const description = `Vente boutique ${commandeRef} — ${commande.user_name}`
+
+    await supabase.from('transactions').insert({
+      association_id: currentAssociation.id,
+      category_id: categoryId,
+      type: 'income',
+      amount: commande.total_amount,
+      description,
+      date: new Date().toISOString().split('T')[0],
+      notes: `Commande ${commandeRef} · ${commande.user_email}`,
+      created_by: user.id,
+      updated_by: user.id,
+    })
+  }
+
   const markAsPaid = async (commandeId: string) => {
     const { error } = await supabase
       .from('boutique_commandes')
       .update({ payment_status: 'completed', status: 'processing', updated_at: new Date().toISOString() })
       .eq('id', commandeId)
     if (error) throw error
+
+    // Créer l'écriture comptable
+    const commande = allCommandes.find((c) => c.id === commandeId)
+    if (commande) await createTransactionVente(commande)
+
     await Promise.all([fetchUserCommandes(), fetchAllCommandes()])
   }
 
