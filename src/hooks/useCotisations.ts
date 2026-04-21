@@ -106,18 +106,18 @@ export function useCotisations(year?: number) {
 
     // Automatically create a transaction for the paid amount
     if (currentAssociation) {
-      // Find or create a "Cotisations" category for income
-      const { data: categories } = await supabase
+      // Find a "Cotisations" category for income (optional)
+      let categoryId = null
+      const { data: category } = await supabase
         .from('categories')
         .select('id')
         .eq('association_id', currentAssociation.id)
         .eq('name', 'Cotisations')
-        .single()
+        .maybeSingle()
 
-      let categoryId = categories?.id || null
-
-      // If category doesn't exist, we'll create transaction without category
-      // (it will use null which is allowed)
+      if (category?.id) {
+        categoryId = category.id
+      }
 
       // Create the transaction
       const { error: transactionError } = await supabase
