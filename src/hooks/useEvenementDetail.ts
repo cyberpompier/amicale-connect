@@ -176,16 +176,20 @@ export function useEvenementDetail(evenementId: string | undefined) {
       if (paiement === 'en_attente' && previousPaiement === 'paye') {
         const { data: candidates } = await supabase
           .from('transactions')
-          .select('id, description')
+          .select('id, description, notes')
           .eq('association_id', evenement.association_id)
           .eq('type', 'income')
 
         if (candidates && candidates.length > 0) {
           const match = candidates.find((t) =>
-            t.description?.includes(evenement.titre) && t.description?.includes(nomParticipant)
+            // Nouveau format : description contient titre ET nom
+            (t.description?.includes(evenement.titre) && t.description?.includes(nomParticipant)) ||
+            // Ancien format : description = titre, notes contient le nom
+            (t.description === evenement.titre && t.notes?.includes(nomParticipant))
           )
           if (match) {
-            await supabase.from('transactions').delete().eq('id', match.id)
+            const { error: delErr } = await supabase.from('transactions').delete().eq('id', match.id)
+            if (delErr) throw new Error(`Suppression impossible : ${delErr.message}`)
           }
         }
       }
@@ -287,16 +291,20 @@ export function useEvenementDetail(evenementId: string | undefined) {
       if (paiement === 'en_attente' && previousPaiement === 'paye') {
         const { data: candidates } = await supabase
           .from('transactions')
-          .select('id, description')
+          .select('id, description, notes')
           .eq('association_id', evenement.association_id)
           .eq('type', 'income')
 
         if (candidates && candidates.length > 0) {
           const match = candidates.find((t) =>
-            t.description?.includes(evenement.titre) && t.description?.includes(invite.nom)
+            // Nouveau format : description contient titre ET nom
+            (t.description?.includes(evenement.titre) && t.description?.includes(invite.nom)) ||
+            // Ancien format : description = titre, notes contient le nom
+            (t.description === evenement.titre && t.notes?.includes(invite.nom))
           )
           if (match) {
-            await supabase.from('transactions').delete().eq('id', match.id)
+            const { error: delErr } = await supabase.from('transactions').delete().eq('id', match.id)
+            if (delErr) throw new Error(`Suppression impossible : ${delErr.message}`)
           }
         }
       }
