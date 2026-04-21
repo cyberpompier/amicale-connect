@@ -816,7 +816,7 @@ function InviteRow({
   onRemove: () => void
 }) {
   return (
-    <div className="px-4 py-3.5 flex items-center gap-3 hover:bg-[var(--color-bg-secondary)] transition-colors group">
+    <div className="px-4 py-3.5 hover:bg-[var(--color-bg-secondary)] transition-colors group">
       {/* Ligne 1 : avatar + nom + supprimer */}
       <div className="flex items-center gap-3">
         <div className={cn('w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0', avatarColor(inv.nom))}>
