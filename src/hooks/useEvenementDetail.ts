@@ -174,13 +174,20 @@ export function useEvenementDetail(evenementId: string | undefined) {
 
       // Retour à "en_attente" depuis "payé" → supprimer la transaction
       if (paiement === 'en_attente' && previousPaiement === 'paye') {
-        await supabase
+        const { data: candidates } = await supabase
           .from('transactions')
-          .delete()
+          .select('id, notes')
           .eq('association_id', evenement.association_id)
           .eq('description', evenement.titre)
           .eq('type', 'income')
-          .ilike('notes', `%${nomParticipant}%`)
+
+        if (candidates && candidates.length > 0) {
+          const match = candidates.find((t) => t.notes?.includes(nomParticipant))
+          const toDelete = match ?? (candidates.length === 1 ? candidates[0] : null)
+          if (toDelete) {
+            await supabase.from('transactions').delete().eq('id', toDelete.id)
+          }
+        }
       }
     }
 
@@ -278,13 +285,20 @@ export function useEvenementDetail(evenementId: string | undefined) {
 
       // Retour à "en_attente" depuis "payé" → supprimer la transaction
       if (paiement === 'en_attente' && previousPaiement === 'paye') {
-        await supabase
+        const { data: candidates } = await supabase
           .from('transactions')
-          .delete()
+          .select('id, notes')
           .eq('association_id', evenement.association_id)
           .eq('description', evenement.titre)
           .eq('type', 'income')
-          .ilike('notes', `%${invite.nom}%`)
+
+        if (candidates && candidates.length > 0) {
+          const match = candidates.find((t) => t.notes?.includes(invite.nom))
+          const toDelete = match ?? (candidates.length === 1 ? candidates[0] : null)
+          if (toDelete) {
+            await supabase.from('transactions').delete().eq('id', toDelete.id)
+          }
+        }
       }
     }
 

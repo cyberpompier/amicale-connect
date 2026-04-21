@@ -37,23 +37,6 @@ function Avatar({ prenom, nom, size = 'md' }: { prenom: string; nom: string; siz
   )
 }
 
-function PaiementBadge({ paiement }: { paiement: 'en_attente' | 'paye' | 'exonere' }) {
-  if (paiement === 'paye') return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-600 border border-green-200">
-      <CheckCircle2 className="w-3 h-3" /> Payé
-    </span>
-  )
-  if (paiement === 'exonere') return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-600 border border-blue-200">
-      <Check className="w-3 h-3" /> Exonéré
-    </span>
-  )
-  return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-600 border border-amber-200">
-      <Clock className="w-3 h-3" /> En attente
-    </span>
-  )
-}
 
 function StarRating({ value, onChange, readonly = false }: { value: number; onChange?: (v: number) => void; readonly?: boolean }) {
   const [hovered, setHovered] = useState(0)
@@ -152,17 +135,12 @@ export function EvenementDetailPage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const cyclePaiement = (current: 'en_attente' | 'paye' | 'exonere') => {
-    const cycle = { en_attente: 'paye', paye: 'exonere', exonere: 'en_attente' } as const
-    return cycle[current]
-  }
-
-  const handleParticipantPaiement = async (p: Participant) => {
-    const next = cyclePaiement(p.paiement)
+  const handleParticipantPaiement = async (p: Participant, next: Participant['paiement']) => {
+    if (next === p.paiement) return
     const nom = `${p.amicalistes.first_name} ${p.amicalistes.last_name}`
-    const messages: Record<typeof next, string> = {
+    const messages: Record<Participant['paiement'], string> = {
       paye: `Confirmer le paiement de ${nom} ?\nUne recette sera créée dans le livre de compte.`,
-      exonere: `Marquer ${nom} comme exonéré ?`,
+      exonere: `Marquer ${nom} comme exonéré de paiement ?`,
       en_attente: `Annuler le paiement de ${nom} ?\nL'entrée dans le livre de compte sera supprimée.`,
     }
     if (!confirm(messages[next])) return
@@ -170,11 +148,11 @@ export function EvenementDetailPage() {
     catch (err) { alert(err instanceof Error ? err.message : 'Erreur') }
   }
 
-  const handleInvitePaiement = async (inv: Invite) => {
-    const next = cyclePaiement(inv.paiement)
-    const messages: Record<typeof next, string> = {
+  const handleInvitePaiement = async (inv: Invite, next: Invite['paiement']) => {
+    if (next === inv.paiement) return
+    const messages: Record<Invite['paiement'], string> = {
       paye: `Confirmer le paiement de ${inv.nom} ?\nUne recette sera créée dans le livre de compte.`,
-      exonere: `Marquer ${inv.nom} comme exonéré ?`,
+      exonere: `Marquer ${inv.nom} comme exonéré de paiement ?`,
       en_attente: `Annuler le paiement de ${inv.nom} ?\nL'entrée dans le livre de compte sera supprimée.`,
     }
     if (!confirm(messages[next])) return
@@ -447,7 +425,7 @@ export function EvenementDetailPage() {
                     key={p.id}
                     participant={p}
                     onStatusChange={(s) => updateParticipantStatus(p.id, s)}
-                    onPaiementChange={() => handleParticipantPaiement(p)}
+                    onPaiementChange={(next) => handleParticipantPaiement(p, next)}
                     onAccompagnantsChange={(n) => updateParticipantAccompagnants(p.id, n)}
                     onRemove={() => { if (confirm(`Retirer ${p.amicalistes.first_name} ?`)) removeParticipant(p.id) }}
                   />
@@ -466,7 +444,7 @@ export function EvenementDetailPage() {
                     key={p.id}
                     participant={p}
                     onStatusChange={(s) => updateParticipantStatus(p.id, s)}
-                    onPaiementChange={() => handleParticipantPaiement(p)}
+                    onPaiementChange={(next) => handleParticipantPaiement(p, next)}
                     onAccompagnantsChange={(n) => updateParticipantAccompagnants(p.id, n)}
                     onRemove={() => { if (confirm(`Retirer ${p.amicalistes.first_name} ?`)) removeParticipant(p.id) }}
                   />
@@ -485,7 +463,7 @@ export function EvenementDetailPage() {
                     key={p.id}
                     participant={p}
                     onStatusChange={(s) => updateParticipantStatus(p.id, s)}
-                    onPaiementChange={() => handleParticipantPaiement(p)}
+                    onPaiementChange={(next) => handleParticipantPaiement(p, next)}
                     onAccompagnantsChange={(n) => updateParticipantAccompagnants(p.id, n)}
                     onRemove={() => { if (confirm(`Retirer ${p.amicalistes.first_name} ?`)) removeParticipant(p.id) }}
                   />
@@ -585,7 +563,7 @@ export function EvenementDetailPage() {
                     key={inv.id}
                     invite={inv}
                     onStatutChange={(s) => updateInviteStatut(inv.id, s)}
-                    onPaiementChange={() => handleInvitePaiement(inv)}
+                    onPaiementChange={(next) => handleInvitePaiement(inv, next)}
                     onRemove={() => { if (confirm(`Retirer ${inv.nom} ?`)) removeInvite(inv.id) }}
                   />
                 ))}
@@ -741,7 +719,7 @@ function ParticipantRow({
 }: {
   participant: Participant
   onStatusChange: (s: Participant['status']) => void
-  onPaiementChange: () => void
+  onPaiementChange: (next: Participant['paiement']) => void
   onAccompagnantsChange: (n: number) => void
   onRemove: () => void
 }) {
@@ -776,14 +754,21 @@ function ParticipantRow({
           <option value="declined">❌ Refusé</option>
         </select>
 
-        {/* Payment toggle */}
-        <button
-          onClick={onPaiementChange}
-          title="Changer le statut de paiement"
-          className="flex-shrink-0"
+        {/* Payment selector */}
+        <select
+          value={p.paiement}
+          onChange={(e) => onPaiementChange(e.target.value as Participant['paiement'])}
+          className={cn(
+            'text-xs border rounded-lg px-2 py-1 font-semibold focus:outline-none focus:ring-1 cursor-pointer',
+            p.paiement === 'paye'    ? 'bg-green-50 text-green-600 border-green-200 focus:ring-green-300' :
+            p.paiement === 'exonere' ? 'bg-blue-50 text-blue-600 border-blue-200 focus:ring-blue-300' :
+                                       'bg-amber-50 text-amber-600 border-amber-200 focus:ring-amber-300'
+          )}
         >
-          <PaiementBadge paiement={p.paiement} />
-        </button>
+          <option value="en_attente">⏳ En attente</option>
+          <option value="paye">✅ Payé</option>
+          <option value="exonere">🔵 Exonéré</option>
+        </select>
 
         {/* Accompagnants */}
         <button
@@ -829,7 +814,7 @@ function InviteRow({
 }: {
   invite: Invite
   onStatutChange: (s: Invite['statut']) => void
-  onPaiementChange: () => void
+  onPaiementChange: (next: Invite['paiement']) => void
   onRemove: () => void
 }) {
   return (
@@ -865,9 +850,20 @@ function InviteRow({
           <option value="decline">❌ Décliné</option>
         </select>
 
-        <button onClick={onPaiementChange} className="flex-shrink-0">
-          <PaiementBadge paiement={inv.paiement} />
-        </button>
+        <select
+          value={inv.paiement}
+          onChange={(e) => onPaiementChange(e.target.value as Invite['paiement'])}
+          className={cn(
+            'text-xs border rounded-lg px-2 py-1 font-semibold focus:outline-none focus:ring-1 cursor-pointer',
+            inv.paiement === 'paye'    ? 'bg-green-50 text-green-600 border-green-200 focus:ring-green-300' :
+            inv.paiement === 'exonere' ? 'bg-blue-50 text-blue-600 border-blue-200 focus:ring-blue-300' :
+                                         'bg-amber-50 text-amber-600 border-amber-200 focus:ring-amber-300'
+          )}
+        >
+          <option value="en_attente">⏳ En attente</option>
+          <option value="paye">✅ Payé</option>
+          <option value="exonere">🔵 Exonéré</option>
+        </select>
 
         <button
           onClick={onRemove}
