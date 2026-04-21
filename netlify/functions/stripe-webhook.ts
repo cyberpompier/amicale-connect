@@ -31,33 +31,49 @@ const handler: Handler = async (event) => {
 
   try {
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || ''
+    console.log('🔐 Verifying webhook signature...')
     const stripeEvent = stripe.webhooks.constructEvent(body, signature, webhookSecret)
+
+    console.log('📨 Webhook event received:', stripeEvent.type)
+    console.log('📦 Event data:', {
+      type: stripeEvent.type,
+      id: stripeEvent.id,
+      created: stripeEvent.created,
+    })
 
     switch (stripeEvent.type) {
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
+        console.log('📝 Handling subscription update...')
         await handleSubscriptionUpdate(stripeEvent.data.object as Stripe.Subscription)
         break
 
       case 'customer.subscription.deleted':
+        console.log('🗑️ Handling subscription cancellation...')
         await handleSubscriptionCanceled(stripeEvent.data.object as Stripe.Subscription)
         break
 
       case 'invoice.payment_succeeded':
+        console.log('✅ Handling payment succeeded...')
         await handlePaymentSucceeded(stripeEvent.data.object as Stripe.Invoice)
         break
 
       case 'invoice.payment_failed':
+        console.log('❌ Handling payment failed...')
         await handlePaymentFailed(stripeEvent.data.object as Stripe.Invoice)
         break
+
+      default:
+        console.log('⏭️ Ignoring event type:', stripeEvent.type)
     }
 
+    console.log('✅ Webhook processed successfully')
     return {
       statusCode: 200,
       body: JSON.stringify({ received: true }),
     }
   } catch (error) {
-    console.error('Webhook error:', error)
+    console.error('💥 Webhook error:', error)
     return {
       statusCode: 400,
       body: JSON.stringify({
@@ -71,17 +87,26 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
   const customerId = subscription.customer as string
   const subscriptionStatus = mapStripeStatus(subscription.status)
 
+  console.log('🔍 Looking for association with customer:', customerId)
+  console.log('📊 Subscription status:', subscription.status, '→', subscriptionStatus)
+
   // Get association by stripe_customer_id
-  const { data: associations } = await supabase
+  const { data: associations, error: fetchError } = await supabase
     .from('associations')
-    .select('id')
+    .select('id, name')
     .eq('stripe_customer_id', customerId)
     .limit(1)
 
+  if (fetchError) {
+    console.error('❌ Error fetching association:', fetchError)
+    return
+  }
+
   if (associations && associations.length > 0) {
     const association = associations[0]
+    console.log('✅ Association found:', association.id, association.name)
 
-    await supabase
+    const { error: updateError } = await supabase
       .from('associations')
       .update({
         stripe_subscription_id: subscription.id,
@@ -89,6 +114,18 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
         updated_at: new Date().toISOString(),
       })
       .eq('id', association.id)
+
+    if (updateError) {
+      console.error('❌ Error updating association:', updateError)
+    } else {
+      console.log('✅ Association updated:', {
+        id: association.id,
+        status: subscriptionStatus,
+        subscriptionId: subscription.id,
+      })
+    }
+  } else {
+    console.warn('⚠️ No association found for customer:', customerId)
   }
 }
 
