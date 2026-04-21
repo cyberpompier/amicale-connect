@@ -157,6 +157,31 @@ export function EvenementDetailPage() {
     return cycle[current]
   }
 
+  const handleParticipantPaiement = async (p: Participant) => {
+    const next = cyclePaiement(p.paiement)
+    const nom = `${p.amicalistes.first_name} ${p.amicalistes.last_name}`
+    const messages: Record<typeof next, string> = {
+      paye: `Confirmer le paiement de ${nom} ?\nUne recette sera créée dans le livre de compte.`,
+      exonere: `Marquer ${nom} comme exonéré ?`,
+      en_attente: `Annuler le paiement de ${nom} ?\nL'entrée dans le livre de compte sera supprimée.`,
+    }
+    if (!confirm(messages[next])) return
+    try { await updateParticipantPaiement(p.id, next) }
+    catch (err) { alert(err instanceof Error ? err.message : 'Erreur') }
+  }
+
+  const handleInvitePaiement = async (inv: Invite) => {
+    const next = cyclePaiement(inv.paiement)
+    const messages: Record<typeof next, string> = {
+      paye: `Confirmer le paiement de ${inv.nom} ?\nUne recette sera créée dans le livre de compte.`,
+      exonere: `Marquer ${inv.nom} comme exonéré ?`,
+      en_attente: `Annuler le paiement de ${inv.nom} ?\nL'entrée dans le livre de compte sera supprimée.`,
+    }
+    if (!confirm(messages[next])) return
+    try { await updateInvitePaiement(inv.id, next) }
+    catch (err) { alert(err instanceof Error ? err.message : 'Erreur') }
+  }
+
   // ── Computed ──────────────────────────────────────────────────────────────
 
   const alreadyAdded = new Set(participants.map((p) => p.amicaliste_id))
@@ -422,7 +447,7 @@ export function EvenementDetailPage() {
                     key={p.id}
                     participant={p}
                     onStatusChange={(s) => updateParticipantStatus(p.id, s)}
-                    onPaiementChange={() => updateParticipantPaiement(p.id, cyclePaiement(p.paiement))}
+                    onPaiementChange={() => handleParticipantPaiement(p)}
                     onAccompagnantsChange={(n) => updateParticipantAccompagnants(p.id, n)}
                     onRemove={() => { if (confirm(`Retirer ${p.amicalistes.first_name} ?`)) removeParticipant(p.id) }}
                   />
@@ -441,7 +466,7 @@ export function EvenementDetailPage() {
                     key={p.id}
                     participant={p}
                     onStatusChange={(s) => updateParticipantStatus(p.id, s)}
-                    onPaiementChange={() => updateParticipantPaiement(p.id, cyclePaiement(p.paiement))}
+                    onPaiementChange={() => handleParticipantPaiement(p)}
                     onAccompagnantsChange={(n) => updateParticipantAccompagnants(p.id, n)}
                     onRemove={() => { if (confirm(`Retirer ${p.amicalistes.first_name} ?`)) removeParticipant(p.id) }}
                   />
@@ -460,7 +485,7 @@ export function EvenementDetailPage() {
                     key={p.id}
                     participant={p}
                     onStatusChange={(s) => updateParticipantStatus(p.id, s)}
-                    onPaiementChange={() => updateParticipantPaiement(p.id, cyclePaiement(p.paiement))}
+                    onPaiementChange={() => handleParticipantPaiement(p)}
                     onAccompagnantsChange={(n) => updateParticipantAccompagnants(p.id, n)}
                     onRemove={() => { if (confirm(`Retirer ${p.amicalistes.first_name} ?`)) removeParticipant(p.id) }}
                   />
@@ -560,7 +585,7 @@ export function EvenementDetailPage() {
                     key={inv.id}
                     invite={inv}
                     onStatutChange={(s) => updateInviteStatut(inv.id, s)}
-                    onPaiementChange={() => updateInvitePaiement(inv.id, cyclePaiement(inv.paiement))}
+                    onPaiementChange={() => handleInvitePaiement(inv)}
                     onRemove={() => { if (confirm(`Retirer ${inv.nom} ?`)) removeInvite(inv.id) }}
                   />
                 ))}

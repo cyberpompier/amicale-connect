@@ -135,6 +135,9 @@ export function useEvenementDetail(evenementId: string | undefined) {
   }
 
   const updateParticipantPaiement = async (participantId: string, paiement: Participant['paiement']) => {
+    const participant = participants.find((p) => p.id === participantId)
+    const previousPaiement = participant?.paiement
+
     const { error } = await supabase
       .from('evenement_participants')
       .update({ paiement })
@@ -142,13 +145,13 @@ export function useEvenementDetail(evenementId: string | undefined) {
 
     if (error) throw error
 
-    // Si passage à "payé" → créer une transaction dans le livre de compte
-    if (paiement === 'paye' && evenement?.tarif_amicaliste) {
-      const participant = participants.find((p) => p.id === participantId)
-      if (participant) {
+    if (evenement && participant) {
+      const nomParticipant = `${participant.amicalistes.first_name} ${participant.amicalistes.last_name}`
+
+      // Passage à "payé" → créer une transaction dans le livre de compte
+      if (paiement === 'paye' && evenement.tarif_amicaliste) {
         const { data: { user } } = await supabase.auth.getUser()
 
-        // Chercher la catégorie EVENEMENT
         const { data: cat } = await supabase
           .from('categories')
           .select('id')
@@ -163,10 +166,21 @@ export function useEvenementDetail(evenementId: string | undefined) {
           description: evenement.titre,
           date: new Date().toISOString().split('T')[0],
           category_id: cat?.id || null,
-          notes: `Paiement de ${participant.amicalistes.first_name} ${participant.amicalistes.last_name} — ${evenement.titre}`,
+          notes: `Paiement de ${nomParticipant} — ${evenement.titre}`,
           created_by: user?.id || null,
           updated_by: user?.id || null,
         })
+      }
+
+      // Retour à "en_attente" depuis "payé" → supprimer la transaction
+      if (paiement === 'en_attente' && previousPaiement === 'paye') {
+        await supabase
+          .from('transactions')
+          .delete()
+          .eq('association_id', evenement.association_id)
+          .eq('description', evenement.titre)
+          .eq('type', 'income')
+          .ilike('notes', `%${nomParticipant}%`)
       }
     }
 
@@ -225,6 +239,9 @@ export function useEvenementDetail(evenementId: string | undefined) {
   }
 
   const updateInvitePaiement = async (inviteId: string, paiement: Invite['paiement']) => {
+    const invite = invites.find((i) => i.id === inviteId)
+    const previousPaiement = invite?.paiement
+
     const { error } = await supabase
       .from('evenement_invites')
       .update({ paiement })
@@ -232,13 +249,13 @@ export function useEvenementDetail(evenementId: string | undefined) {
 
     if (error) throw error
 
-    // Si passage à "payé" → créer une transaction dans le livre de compte
-    if (paiement === 'paye' && evenement?.tarif_exterieur) {
-      const invite = invites.find((i) => i.id === inviteId)
-      if (invite) {
+    if (evenement && invite) {
+      const nomInvite = `${invite.nom} (extérieur)`
+
+      // Passage à "payé" → créer une transaction dans le livre de compte
+      if (paiement === 'paye' && evenement.tarif_exterieur) {
         const { data: { user } } = await supabase.auth.getUser()
 
-        // Chercher la catégorie EVENEMENT
         const { data: cat } = await supabase
           .from('categories')
           .select('id')
@@ -253,10 +270,21 @@ export function useEvenementDetail(evenementId: string | undefined) {
           description: evenement.titre,
           date: new Date().toISOString().split('T')[0],
           category_id: cat?.id || null,
-          notes: `Paiement de ${invite.nom} (extérieur) — ${evenement.titre}`,
+          notes: `Paiement de ${nomInvite} — ${evenement.titre}`,
           created_by: user?.id || null,
           updated_by: user?.id || null,
         })
+      }
+
+      // Retour à "en_attente" depuis "payé" → supprimer la transaction
+      if (paiement === 'en_attente' && previousPaiement === 'paye') {
+        await supabase
+          .from('transactions')
+          .delete()
+          .eq('association_id', evenement.association_id)
+          .eq('description', evenement.titre)
+          .eq('type', 'income')
+          .ilike('notes', `%${invite.nom}%`)
       }
     }
 
