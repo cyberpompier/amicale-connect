@@ -2,8 +2,9 @@ import { useTransactions } from '@/hooks/useTransactions'
 import { useEvenements } from '@/hooks/useEvenements'
 import { useCotisations } from '@/hooks/useCotisations'
 import { useAmicalistes } from '@/hooks/useAmicalistes'
+import { useSondages } from '@/hooks/useSondages'
 import { formatCurrency, formatDateShort } from '@/lib/utils'
-import { TrendingUp, TrendingDown, Calendar, MapPin, AlertCircle, Users, CheckCircle, ArrowRight } from 'lucide-react'
+import { TrendingUp, TrendingDown, Calendar, MapPin, AlertCircle, Users, CheckCircle, ArrowRight, Radio } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 export function DashboardPage() {
@@ -11,14 +12,16 @@ export function DashboardPage() {
   const { getUpcoming, loading: l2 } = useEvenements()
   const { cotisations, loading: l3 } = useCotisations()
   const { amicalistes, loading: l4 } = useAmicalistes()
+  const { sondages, loading: l5 } = useSondages()
   const navigate = useNavigate()
 
   const upcoming = getUpcoming().slice(0, 3)
+  const activeSurveys = sondages.filter((s) => s.statut === 'actif').slice(0, 3)
   const overdue = cotisations.filter((c) => c.status === 'overdue')
   const paid = cotisations.filter((c) => c.status === 'paid')
   const pending = cotisations.filter((c) => c.status === 'pending')
 
-  if (l1 || l2 || l3 || l4) {
+  if (l1 || l2 || l3 || l4 || l5) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="animate-spin w-8 h-8 border-4 border-[var(--color-primary)] border-t-transparent rounded-full" />
@@ -200,6 +203,66 @@ export function DashboardPage() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Sondages en cours */}
+      <div className="bg-white rounded-xl border border-[var(--color-border)] shadow-[var(--shadow-sm)] overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)]">
+          <div className="flex items-center gap-2">
+            <Radio className="w-4 h-4 text-[var(--color-primary)]" />
+            <h2 className="text-sm font-semibold text-[var(--color-text)]">Sondages en cours</h2>
+          </div>
+          <button
+            onClick={() => navigate('/sondages')}
+            className="flex items-center gap-1 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors"
+          >
+            Voir tout <ArrowRight className="w-3 h-3" />
+          </button>
+        </div>
+
+        {activeSurveys.length === 0 ? (
+          <div className="px-5 py-8 text-center">
+            <Radio className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+            <p className="text-sm text-[var(--color-text-muted)]">Aucun sondage en cours</p>
+            <button
+              onClick={() => navigate('/sondages/creer')}
+              className="mt-3 text-xs text-[var(--color-primary)] hover:underline"
+            >
+              Créer un sondage
+            </button>
+          </div>
+        ) : (
+          <div className="divide-y divide-[var(--color-border)]">
+            {activeSurveys.map((survey) => (
+              <button
+                key={survey.id}
+                onClick={() => navigate('/sondages')}
+                className="w-full px-5 py-3.5 flex items-center gap-3 hover:bg-[var(--color-bg-secondary)] transition-colors text-left"
+              >
+                {/* Miniature image ou icône par défaut */}
+                {survey.image_url ? (
+                  <div className="w-12 h-12 rounded-lg flex-shrink-0 overflow-hidden border border-[var(--color-border)]">
+                    <img
+                      src={survey.image_url}
+                      alt={survey.titre}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-12 h-12 bg-[var(--color-primary-light)] rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Radio className="w-5 h-5 text-[var(--color-primary)]" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-[var(--color-text)] truncate">{survey.titre}</p>
+                  <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                    {survey.totalVotes} {survey.totalVotes === 1 ? 'vote' : 'votes'} · {survey.options.length} options
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
