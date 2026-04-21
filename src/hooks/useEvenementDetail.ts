@@ -173,27 +173,20 @@ export function useEvenementDetail(evenementId: string | undefined) {
       }
 
       // Retour à "en_attente" depuis "payé" → supprimer la transaction
-      console.log('[paiement] passage à:', paiement, '| précédent:', previousPaiement)
       if (paiement === 'en_attente' && previousPaiement === 'paye') {
-        console.log('[paiement] recherche transaction à supprimer pour:', nomParticipant, '| événement:', evenement.titre, '| assoc:', evenement.association_id)
-
-        const { data: candidates, error: fetchErr } = await supabase
+        const { data: candidates } = await supabase
           .from('transactions')
           .select('id, description, notes')
           .eq('association_id', evenement.association_id)
           .eq('type', 'income')
-
-        console.log('[paiement] candidats trouvés:', candidates?.length ?? 0, fetchErr ?? '')
 
         if (candidates && candidates.length > 0) {
           const match = candidates.find((t) =>
             (t.description?.includes(evenement.titre) && t.description?.includes(nomParticipant)) ||
             (t.description === evenement.titre && t.notes?.includes(nomParticipant))
           )
-          console.log('[paiement] match:', match ?? 'aucun')
           if (match) {
             const { error: delErr } = await supabase.from('transactions').delete().eq('id', match.id)
-            console.log('[paiement] suppression:', delErr ? `ERREUR ${delErr.message}` : 'OK')
             if (delErr) throw new Error(`Suppression impossible : ${delErr.message}`)
           }
         }
