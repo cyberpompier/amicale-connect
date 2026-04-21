@@ -8,7 +8,6 @@ interface TeamMember {
   id: string
   user_id: string
   role: string
-  email?: string
   full_name?: string
   created_at: string
 }
@@ -47,14 +46,13 @@ export function ParametresEquipePage() {
       const userIds = data.map((m) => m.user_id)
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, full_name, email')
+        .select('id, full_name')
         .in('id', userIds)
 
       const enriched = data.map((m) => {
         const profile = profiles?.find((p) => p.id === m.user_id)
         return {
           ...m,
-          email: profile?.email,
           full_name: profile?.full_name,
         }
       })
@@ -78,10 +76,9 @@ export function ParametresEquipePage() {
     }, 800)
   }
 
-  const getInitials = (name?: string, email?: string) => {
+  const getInitials = (name?: string) => {
     if (name) return name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
-    if (email) return email[0].toUpperCase()
-    return '?'
+    return 'U'
   }
 
   return (
@@ -189,17 +186,14 @@ export function ParametresEquipePage() {
                     {/* Avatar */}
                     <div className="w-10 h-10 rounded-full bg-[var(--color-primary-light)] flex items-center justify-center flex-shrink-0">
                       <span className="text-xs font-bold text-[var(--color-primary)]">
-                        {getInitials(m.full_name, m.email)}
+                        {getInitials(m.full_name)}
                       </span>
                     </div>
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-[var(--color-text)] truncate">
-                        {m.full_name || m.email || 'Utilisateur'}
+                        {m.full_name || 'Utilisateur'}
                       </p>
-                      {m.email && m.full_name && (
-                        <p className="text-xs text-[var(--color-text-muted)] truncate">{m.email}</p>
-                      )}
                     </div>
                     {/* Rôle */}
                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${roleConf.color}`}>
