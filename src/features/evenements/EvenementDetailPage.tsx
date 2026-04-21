@@ -303,7 +303,7 @@ export function EvenementDetailPage() {
           <div className="grid grid-cols-4 gap-2 mt-5 pt-5 border-t border-[var(--color-border)]">
             {[
               { icon: <CheckCircle2 className="w-4 h-4 text-green-500" />, value: stats.confirmes, label: 'Confirmés', color: 'text-green-600' },
-              { icon: <HelpCircle className="w-4 h-4 text-amber-500" />, value: stats.paiementsEnAttente, label: 'En attente', color: 'text-amber-600' },
+              { icon: <HelpCircle className="w-4 h-4 text-amber-500" />, value: stats.enAttente, label: 'En attente', color: 'text-amber-600' },
               { icon: <UserMinus className="w-4 h-4 text-red-400" />, value: stats.invitesConfirmes, label: 'Invités', color: 'text-gray-500' },
               { icon: <MessageSquare className="w-4 h-4 text-blue-500" />, value: commentaires.length, label: 'Avis', color: 'text-blue-600' },
             ].map(({ icon, value, label, color }) => (

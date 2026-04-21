@@ -306,7 +306,7 @@ export function useEvenementDetail(evenementId: string | undefined) {
 
   const stats = {
     confirmes: participants.filter((p) => p.status === 'confirmed').length,
-    invites: participants.filter((p) => p.status === 'invited').length,
+    enAttente: participants.filter((p) => p.status === 'invited').length,
     refuses: participants.filter((p) => p.status === 'declined').length,
     invitesExternesTotal: invites.length,
     invitesConfirmes: invites.filter((i) => i.statut === 'confirme').length,
