@@ -115,10 +115,25 @@ export function DashboardPage() {
           ) : (
             <div className="divide-y divide-[var(--color-border)]">
               {upcoming.map((evt) => (
-                <div key={evt.id} className="px-5 py-3.5 flex items-center gap-3 hover:bg-[var(--color-bg-secondary)] transition-colors">
-                  <div className="w-9 h-9 bg-[var(--color-primary-light)] rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Calendar className="w-4 h-4 text-[var(--color-primary)]" />
-                  </div>
+                <button
+                  key={evt.id}
+                  onClick={() => navigate(`/evenements/${evt.id}`)}
+                  className="w-full px-5 py-3.5 flex items-center gap-3 hover:bg-[var(--color-bg-secondary)] transition-colors text-left"
+                >
+                  {/* Miniature image ou icône par défaut */}
+                  {evt.image_url ? (
+                    <div className="w-12 h-12 rounded-lg flex-shrink-0 overflow-hidden border border-[var(--color-border)]">
+                      <img
+                        src={evt.image_url}
+                        alt={evt.titre}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-12 h-12 bg-[var(--color-primary-light)] rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Calendar className="w-5 h-5 text-[var(--color-primary)]" />
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-[var(--color-text)] truncate">{evt.titre}</p>
                     <p className="text-xs text-[var(--color-text-muted)] flex items-center gap-1.5 mt-0.5">
@@ -126,7 +141,7 @@ export function DashboardPage() {
                       {evt.lieu && <><MapPin className="w-3 h-3 inline" />{evt.lieu}</>}
                     </p>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           )}
