@@ -22,6 +22,8 @@ const handler: Handler = async (event) => {
   try {
     const { associationId } = JSON.parse(event.body || '{}')
 
+    console.log('🔐 Portal request for association:', associationId)
+
     if (!associationId) {
       return {
         statusCode: 400,
@@ -32,32 +34,46 @@ const handler: Handler = async (event) => {
     // Get the association
     const { data: association, error: fetchError } = await supabase
       .from('associations')
-      .select('stripe_customer_id')
+      .select('stripe_customer_id, name')
       .eq('id', associationId)
       .single()
 
     if (fetchError || !association?.stripe_customer_id) {
+      console.error('❌ Association not found:', fetchError)
       return {
         statusCode: 400,
         body: JSON.stringify({ error: 'No Stripe customer found' }),
       }
     }
 
+    console.log('✅ Association found:', association.name)
+
     // Create portal session
-    // Normalize app URL - remove trailing slash if present
-    const baseUrl = (process.env.VITE_APP_URL || '').replace(/\/$/, '')
+    // Normalize app URL - ensure it has protocol and remove trailing slash
+    const rawUrl = (process.env.VITE_APP_URL || '').replace(/\/$/, '')
+    const baseUrl = rawUrl.startsWith('http')
+      ? rawUrl
+      : `https://${rawUrl}`
+    const returnUrl = `${baseUrl}/parametres/facturation`
+
+    console.log('🌐 Raw app URL:', rawUrl)
+    console.log('🌐 Base URL with protocol:', baseUrl)
+    console.log('🌐 Portal return URL:', returnUrl)
 
     const session = await stripe.billingPortal.sessions.create({
       customer: association.stripe_customer_id,
-      return_url: `${baseUrl}/parametres/facturation`,
+      return_url: returnUrl,
     })
+
+    console.log('✅ Portal session created:', session.id)
+    console.log('🔗 Portal URL:', session.url)
 
     return {
       statusCode: 200,
       body: JSON.stringify({ portalUrl: session.url }),
     }
   } catch (error) {
-    console.error('Stripe portal error:', error)
+    console.error('💥 Stripe portal error:', error)
     return {
       statusCode: 500,
       body: JSON.stringify({

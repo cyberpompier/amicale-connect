@@ -96,8 +96,13 @@ const handler: Handler = async (event) => {
     // Create checkout session
     console.log('🛒 Creating Stripe checkout session...', { customerId, priceId })
 
-    // Normalize app URL - remove trailing slash if present
-    const baseUrl = (process.env.VITE_APP_URL || '').replace(/\/$/, '')
+    // Normalize app URL - ensure it has protocol and remove trailing slash
+    const rawUrl = (process.env.VITE_APP_URL || '').replace(/\/$/, '')
+    const baseUrl = rawUrl.startsWith('http')
+      ? rawUrl
+      : `https://${rawUrl}`
+
+    console.log('🌐 Base URL with protocol:', baseUrl)
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
