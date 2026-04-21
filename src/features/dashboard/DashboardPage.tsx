@@ -258,6 +258,19 @@ export function DashboardPage() {
                   <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
                     {survey.totalVotes} {survey.totalVotes === 1 ? 'vote' : 'votes'} · {survey.options.length} options
                   </p>
+                  {survey.totalVotes > 0 && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[var(--color-primary)] rounded-full"
+                          style={{ width: `${(survey.options[0]?.votes / survey.totalVotes) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-semibold text-[var(--color-text-muted)] whitespace-nowrap">
+                        {Math.round((survey.options[0]?.votes / survey.totalVotes) * 100)}%
+                      </span>
+                    </div>
+                  )}
                 </div>
               </button>
             ))}
