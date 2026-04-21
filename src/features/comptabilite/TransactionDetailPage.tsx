@@ -5,6 +5,15 @@ import { useCategories } from '@/hooks/useCategories'
 import { ArrowLeft, Pencil, Trash2, AlertCircle } from 'lucide-react'
 import { formatCurrency, formatDateShort } from '@/lib/utils'
 
+interface TransactionFormData {
+  type: 'income' | 'expense'
+  amount: string
+  description: string
+  date: string
+  category_id: string
+  notes: string
+}
+
 export function TransactionDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -14,7 +23,7 @@ export function TransactionDetailPage() {
   const transaction = transactions.find((t) => t.id === id)
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [formData, setFormData] = useState<any>(null)
+  const [formData, setFormData] = useState<TransactionFormData | null>(null)
 
   useEffect(() => {
     if (transaction) {
@@ -211,8 +220,8 @@ export function TransactionDetailPage() {
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <select
-                value={formData.type}
-                onChange={(e) => setFormData((p) => ({ ...p, type: e.target.value as 'income' | 'expense', category_id: '' }))}
+                value={formData?.type || ''}
+                onChange={(e) => setFormData((p) => p ? { ...p, type: e.target.value as 'income' | 'expense', category_id: '' } : null)}
                 className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
               >
                 <option value="expense">Dépense</option>
@@ -224,8 +233,8 @@ export function TransactionDetailPage() {
                 step="0.01"
                 min="0"
                 required
-                value={formData.amount}
-                onChange={(e) => setFormData((p) => ({ ...p, amount: e.target.value }))}
+                value={formData?.amount || ''}
+                onChange={(e) => setFormData((p) => p ? { ...p, amount: e.target.value } : null)}
                 placeholder="Montant (€)"
                 className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
               />
@@ -233,14 +242,14 @@ export function TransactionDetailPage() {
               <input
                 type="date"
                 required
-                value={formData.date}
-                onChange={(e) => setFormData((p) => ({ ...p, date: e.target.value }))}
+                value={formData?.date || ''}
+                onChange={(e) => setFormData((p) => p ? { ...p, date: e.target.value } : null)}
                 className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
               />
 
               <select
-                value={formData.category_id}
-                onChange={(e) => setFormData((p) => ({ ...p, category_id: e.target.value }))}
+                value={formData?.category_id || ''}
+                onChange={(e) => setFormData((p) => p ? { ...p, category_id: e.target.value } : null)}
                 className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
               >
                 <option value="">— Catégorie —</option>
@@ -252,15 +261,15 @@ export function TransactionDetailPage() {
               <input
                 type="text"
                 required
-                value={formData.description}
-                onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
+                value={formData?.description || ''}
+                onChange={(e) => setFormData((p) => p ? { ...p, description: e.target.value } : null)}
                 placeholder="Description"
                 className="sm:col-span-2 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
               />
 
               <textarea
-                value={formData.notes}
-                onChange={(e) => setFormData((p) => ({ ...p, notes: e.target.value }))}
+                value={formData?.notes || ''}
+                onChange={(e) => setFormData((p) => p ? { ...p, notes: e.target.value } : null)}
                 placeholder="Notes (optionnel)"
                 rows={3}
                 className="sm:col-span-2 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)] resize-none"
