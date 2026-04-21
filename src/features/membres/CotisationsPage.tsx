@@ -20,12 +20,27 @@ export function CotisationsPage() {
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({ amicaliste_id: '', amount: '30' })
   const [saving, setSaving] = useState(false)
+  const [memberFilter, setMemberFilter] = useState('all') // all, active, inactive, honorary, or specific id
 
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i)
 
-  const paid = cotisations.filter((c) => c.status === 'paid')
-  const pending = cotisations.filter((c) => c.status === 'pending')
-  const overdue = cotisations.filter((c) => c.status === 'overdue')
+  // Filtrer les amicalistes selon le filtre sélectionné
+  const getFilteredAmicalistes = () => {
+    if (memberFilter === 'all') return amicalistes
+    if (memberFilter === 'active') return amicalistes.filter((a) => a.status === 'active')
+    if (memberFilter === 'inactive') return amicalistes.filter((a) => a.status === 'inactive')
+    if (memberFilter === 'honorary') return amicalistes.filter((a) => a.status === 'honorary')
+    return amicalistes.filter((a) => a.id === memberFilter)
+  }
+
+  const filteredAmicalistes = getFilteredAmicalistes()
+  const filteredCotisations = cotisations.filter((c) =>
+    filteredAmicalistes.some((a) => a.id === c.amicaliste_id)
+  )
+
+  const paid = filteredCotisations.filter((c) => c.status === 'paid')
+  const pending = filteredCotisations.filter((c) => c.status === 'pending')
+  const overdue = filteredCotisations.filter((c) => c.status === 'overdue')
   const totalAmount = paid.reduce((sum, c) => sum + Number(c.amount), 0)
 
   const handleAddCotisation = async () => {
@@ -98,7 +113,7 @@ export function CotisationsPage() {
               <span className="text-xs font-bold text-gray-500">#</span>
             </div>
           </div>
-          <p className="text-2xl font-bold text-[var(--color-text)]">{cotisations.length}</p>
+          <p className="text-2xl font-bold text-[var(--color-text)]">{filteredCotisations.length}</p>
         </div>
 
         <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 shadow-[var(--shadow-sm)]">
@@ -138,7 +153,57 @@ export function CotisationsPage() {
           <div className="px-5 py-4 border-b border-[var(--color-border)]">
             <h3 className="text-sm font-semibold text-[var(--color-text)]">Nouvelle cotisation — {selectedYear}</h3>
           </div>
-          <div className="p-5">
+          <div className="p-5 space-y-4">
+            {/* Filtre des membres */}
+            <div>
+              <label className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide block mb-2">
+                Filtrer par statut
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setMemberFilter('all')}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors border ${
+                    memberFilter === 'all'
+                      ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]'
+                      : 'bg-white text-[var(--color-text)] border-[var(--color-border)] hover:border-[var(--color-primary)]'
+                  }`}
+                >
+                  Tous
+                </button>
+                <button
+                  onClick={() => setMemberFilter('active')}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors border ${
+                    memberFilter === 'active'
+                      ? 'bg-green-500 text-white border-green-500'
+                      : 'bg-white text-[var(--color-text)] border-[var(--color-border)] hover:border-green-500'
+                  }`}
+                >
+                  Actifs
+                </button>
+                <button
+                  onClick={() => setMemberFilter('inactive')}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors border ${
+                    memberFilter === 'inactive'
+                      ? 'bg-gray-500 text-white border-gray-500'
+                      : 'bg-white text-[var(--color-text)] border-[var(--color-border)] hover:border-gray-500'
+                  }`}
+                >
+                  Inactifs
+                </button>
+                <button
+                  onClick={() => setMemberFilter('honorary')}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors border ${
+                    memberFilter === 'honorary'
+                      ? 'bg-amber-500 text-white border-amber-500'
+                      : 'bg-white text-[var(--color-text)] border-[var(--color-border)] hover:border-amber-500'
+                  }`}
+                >
+                  Honoraires
+                </button>
+              </div>
+            </div>
+
+            {/* Sélection d'un membre */}
             <div className="flex flex-col sm:flex-row gap-3">
               <select
                 value={formData.amicaliste_id}
@@ -146,7 +211,7 @@ export function CotisationsPage() {
                 className="flex-1 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
               >
                 <option value="">— Sélectionner un membre —</option>
-                {amicalistes.map((a) => (
+                {filteredAmicalistes.map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.last_name} {a.first_name}
                   </option>
@@ -180,7 +245,7 @@ export function CotisationsPage() {
       )}
 
       {/* Tableau */}
-      {cotisations.length === 0 ? (
+      {filteredCotisations.length === 0 ? (
         <div className="bg-white rounded-xl border border-[var(--color-border)] p-16 text-center shadow-[var(--shadow-sm)]">
           <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <AlertTriangle className="w-7 h-7 text-gray-400" />
@@ -209,7 +274,7 @@ export function CotisationsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--color-border)]">
-                {cotisations.map((c) => {
+                {filteredCotisations.map((c) => {
                   const s = STATUS_STYLES[c.status] ?? STATUS_STYLES['pending']
                   return (
                     <tr key={c.id} className="hover:bg-[var(--color-bg-secondary)] transition-colors">

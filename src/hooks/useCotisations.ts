@@ -92,10 +92,48 @@ export function useCotisations(year?: number) {
   }
 
   const markAsPaid = async (id: string) => {
+    // Get the cotisation to retrieve amicaliste_id and amount
+    const cotisation = cotisations.find((c) => c.id === id)
+    if (!cotisation) throw new Error('Cotisation not found')
+
+    // Update cotisation status
     await updateCotisation(id, {
       status: 'paid',
       paid_at: new Date().toISOString(),
     })
+
+    // Automatically create a transaction for the paid amount
+    if (currentAssociation) {
+      // Find or create a "Cotisations" category for income
+      const { data: categories } = await supabase
+        .from('categories')
+        .select('id')
+        .eq('association_id', currentAssociation.id)
+        .eq('name', 'Cotisations')
+        .single()
+
+      let categoryId = categories?.id || null
+
+      // If category doesn't exist, we'll create transaction without category
+      // (it will use null which is allowed)
+
+      // Create the transaction
+      const { error: transactionError } = await supabase
+        .from('transactions')
+        .insert({
+          association_id: currentAssociation.id,
+          type: 'income',
+          amount: cotisation.amount,
+          description: `Cotisation ${new Date().getFullYear()} - ${cotisation.amicalistes.first_name} ${cotisation.amicalistes.last_name}`,
+          category_id: categoryId,
+          date: new Date().toISOString().split('T')[0],
+        })
+
+      if (transactionError) {
+        console.error('Erreur lors de la création de la transaction:', transactionError)
+        // Don't throw error, as cotisation was already marked as paid
+      }
+    }
   }
 
   return {
