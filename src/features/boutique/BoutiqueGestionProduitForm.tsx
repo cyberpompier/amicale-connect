@@ -29,6 +29,8 @@ export function BoutiqueGestionProduitForm() {
     sku: '',
     stock_status: 'in_stock' as 'in_stock' | 'out_of_stock' | 'coming_soon',
     payment_type: 'both' as 'stripe' | 'manual' | 'both',
+    badges: [] as string[],
+    discount_percent: '',
   })
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [variantes, setVariantes] = useState<VarianteForm[]>([])
@@ -48,6 +50,8 @@ export function BoutiqueGestionProduitForm() {
         sku: existing.sku ?? '',
         stock_status: existing.stock_status,
         payment_type: existing.payment_type,
+        badges: existing.badges ?? [],
+        discount_percent: existing.discount_percent?.toString() ?? '',
       })
       setImagePreview(existing.image_url ?? null)
       setVariantes(
@@ -110,6 +114,7 @@ export function BoutiqueGestionProduitForm() {
     if (isNaN(price) || price <= 0) { setError('Prix invalide.'); return }
 
     const validVariantes = variantes.filter((v) => v.value.trim())
+    const discount = form.discount_percent ? parseFloat(form.discount_percent) : 0
 
     setSaving(true)
     try {
@@ -123,6 +128,8 @@ export function BoutiqueGestionProduitForm() {
         stock_status: form.stock_status,
         payment_type: form.payment_type,
         image_url: imagePreview,
+        badges: form.badges,
+        discount_percent: discount,
         variantes: validVariantes.map((v) => ({
           type: v.type,
           value: v.value.trim(),
@@ -211,9 +218,41 @@ export function BoutiqueGestionProduitForm() {
                 placeholder="12.50" className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]" />
             </div>
             <div>
+              <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Remise (%)</label>
+              <input type="number" step="0.01" min="0" max="100" value={form.discount_percent} onChange={(e) => setForm((p) => ({ ...p, discount_percent: e.target.value }))}
+                placeholder="0" className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3">
+            <div>
               <label className="block text-sm font-medium text-[var(--color-text)] mb-1">SKU</label>
               <input type="text" value={form.sku} onChange={(e) => setForm((p) => ({ ...p, sku: e.target.value }))}
                 placeholder="REF-001" className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]" />
+            </div>
+          </div>
+
+          {/* Badges */}
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text)] mb-2">Badges d'article</label>
+            <div className="space-y-2">
+              {['exclusif', 'promotion', 'liquidation'].map((badge) => (
+                <label key={badge} className="flex items-center gap-2 cursor-pointer p-2 hover:bg-[var(--color-bg-secondary)] rounded-lg transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={form.badges.includes(badge)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setForm((p) => ({ ...p, badges: [...p.badges, badge] }))
+                      } else {
+                        setForm((p) => ({ ...p, badges: p.badges.filter((b) => b !== badge) }))
+                      }
+                    }}
+                    className="w-4 h-4 rounded border-[var(--color-border)] cursor-pointer accent-[var(--color-primary)]"
+                  />
+                  <span className="text-sm text-[var(--color-text)] capitalize">{badge}</span>
+                </label>
+              ))}
             </div>
           </div>
 

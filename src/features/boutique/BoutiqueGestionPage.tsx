@@ -147,6 +147,12 @@ export function BoutiqueGestionPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+                    <button
+                      onClick={() => navigate(`/boutique/commandes/${commande.id}`)}
+                      className="px-2.5 py-1 text-xs font-semibold text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 rounded-lg transition-colors"
+                    >
+                      Détails
+                    </button>
                     {commande.payment_status === 'pending' && commande.payment_method === 'manual' && (
                       <button
                         onClick={() => markAsPaid(commande.id)}

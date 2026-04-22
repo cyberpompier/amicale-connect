@@ -25,7 +25,9 @@ import { BoutiqueDetailPage } from '@/features/boutique/BoutiqueDetailPage'
 import { BoutiqueCartPage } from '@/features/boutique/BoutiqueCartPage'
 import { BoutiqueCheckoutPage } from '@/features/boutique/BoutiqueCheckoutPage'
 import { BoutiqueCommandesPage } from '@/features/boutique/BoutiqueCommandesPage'
+import { BoutiqueCommandeDetailPage } from '@/features/boutique/BoutiqueCommandeDetailPage'
 import { BoutiqueGestionPage } from '@/features/boutique/BoutiqueGestionPage'
+import { BoutiqueGestionCommandesAdminPage } from '@/features/boutique/BoutiqueGestionCommandesAdminPage'
 import { BoutiqueGestionProduitsList } from '@/features/boutique/BoutiqueGestionProduitsList'
 import { BoutiqueGestionProduitForm } from '@/features/boutique/BoutiqueGestionProduitForm'
 import { ParametresPage } from '@/features/parametres/ParametresPage'
@@ -151,8 +153,16 @@ export const router = createBrowserRouter([
         element: <BoutiqueCommandesPage />,
       },
       {
+        path: 'boutique/commandes/:id',
+        element: <BoutiqueCommandeDetailPage />,
+      },
+      {
         path: 'boutique/gestion',
         element: <BoutiqueGestionPage />,
+      },
+      {
+        path: 'boutique/gestion/commandes',
+        element: <BoutiqueGestionCommandesAdminPage />,
       },
       {
         path: 'boutique/gestion/produits',

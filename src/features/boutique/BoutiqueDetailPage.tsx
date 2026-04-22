@@ -127,7 +127,7 @@ export function BoutiqueDetailPage() {
 
         {/* Détails */}
         <div className="space-y-5">
-          {/* Catégorie + statut */}
+          {/* Catégorie + statut + badges */}
           <div className="flex flex-wrap items-center gap-2">
             {produit.boutique_categories && (
               <span className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--color-text-muted)] bg-[var(--color-bg-secondary)] px-2 py-1 rounded-lg">
@@ -138,6 +138,27 @@ export function BoutiqueDetailPage() {
             <span className={`text-xs font-bold px-2 py-1 rounded-lg ${stock.class}`}>
               {stock.label}
             </span>
+            {produit.badges.length > 0 && produit.badges.map((badge) => (
+              <span
+                key={badge}
+                className={`text-xs font-bold px-2 py-1 rounded-lg ${
+                  badge === 'exclusif'
+                    ? 'bg-yellow-100 text-yellow-700'
+                    : badge === 'promotion'
+                      ? 'bg-orange-100 text-orange-700'
+                      : badge === 'liquidation'
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-blue-100 text-blue-700'
+                }`}
+              >
+                {badge === 'exclusif' ? '✨ Exclusif' : badge === 'promotion' ? '🔥 Promo' : '❌ Liquidation'}
+              </span>
+            ))}
+            {produit.discount_percent > 0 && (
+              <span className="text-xs font-bold px-2 py-1 rounded-lg bg-green-100 text-green-700">
+                -{produit.discount_percent.toFixed(0)}%
+              </span>
+            )}
             {!produit.boutique_vendors?.is_primary && (
               <span className="inline-flex items-center gap-1 text-xs font-semibold text-purple-700 bg-purple-100 px-2 py-1 rounded-lg">
                 <Store className="w-3 h-3" />
@@ -153,15 +174,31 @@ export function BoutiqueDetailPage() {
             )}
           </div>
 
-          <p className="text-2xl font-bold text-[var(--color-primary)]">
-            {finalPrice.toFixed(2)} €
+          <div className="flex items-baseline gap-3">
+            {produit.discount_percent > 0 ? (
+              <>
+                <p className="text-sm line-through text-[var(--color-text-muted)]">
+                  {finalPrice.toFixed(2)} €
+                </p>
+                <p className="text-2xl font-bold text-green-600">
+                  {(finalPrice * (1 - produit.discount_percent / 100)).toFixed(2)} €
+                </p>
+                <span className="text-xs font-bold px-2 py-1 rounded-lg bg-green-100 text-green-700">
+                  -{produit.discount_percent.toFixed(0)}%
+                </span>
+              </>
+            ) : (
+              <p className="text-2xl font-bold text-[var(--color-primary)]">
+                {finalPrice.toFixed(2)} €
+              </p>
+            )}
             {matchedVariante && matchedVariante.price_modifier !== 0 && (
-              <span className="text-sm text-[var(--color-text-muted)] font-normal ml-2">
+              <span className="text-sm text-[var(--color-text-muted)] font-normal">
                 (base {produit.base_price.toFixed(2)} €
                 {matchedVariante.price_modifier > 0 ? ' + ' : ' '}{matchedVariante.price_modifier.toFixed(2)} €)
               </span>
             )}
-          </p>
+          </div>
 
           {produit.description && (
             <p className="text-sm text-[var(--color-text-muted)] leading-relaxed">{produit.description}</p>

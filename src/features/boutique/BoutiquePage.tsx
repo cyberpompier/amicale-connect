@@ -148,9 +148,36 @@ export function BoutiquePage() {
                       <ShoppingBag className="w-10 h-10 text-gray-300" />
                     </div>
                   )}
-                  <span className={`absolute top-2 left-2 text-xs font-bold px-2 py-0.5 rounded-full ${stock.class}`}>
-                    {stock.label}
-                  </span>
+                  <div className="absolute top-2 left-2 flex flex-col gap-1">
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${stock.class}`}>
+                      {stock.label}
+                    </span>
+                    {produit.badges.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {produit.badges.map((badge) => (
+                          <span
+                            key={badge}
+                            className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                              badge === 'exclusif'
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : badge === 'promotion'
+                                  ? 'bg-orange-100 text-orange-700'
+                                  : badge === 'liquidation'
+                                    ? 'bg-red-100 text-red-700'
+                                    : 'bg-blue-100 text-blue-700'
+                            }`}
+                          >
+                            {badge === 'exclusif' ? '✨ Exclusif' : badge === 'promotion' ? '🔥 Promo' : '❌ Liquidation'}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {produit.discount_percent > 0 && (
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                        -{produit.discount_percent.toFixed(0)}%
+                      </span>
+                    )}
+                  </div>
                   {produit.boutique_vendors?.is_primary === false && (
                     <span className="absolute top-2 right-2 text-xs font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
                       {produit.boutique_vendors.name}
@@ -171,9 +198,22 @@ export function BoutiquePage() {
                     <p className="text-xs text-[var(--color-text-muted)] line-clamp-2 mb-2">{produit.description}</p>
                   )}
                   <div className="flex items-center justify-between mt-auto">
-                    <span className="text-base font-bold text-[var(--color-primary)]">
-                      {produit.base_price.toFixed(2)} €
-                    </span>
+                    <div className="flex flex-col gap-0.5">
+                      {produit.discount_percent > 0 ? (
+                        <>
+                          <span className="text-xs line-through text-[var(--color-text-muted)]">
+                            {produit.base_price.toFixed(2)} €
+                          </span>
+                          <span className="text-base font-bold text-green-600">
+                            {(produit.base_price * (1 - produit.discount_percent / 100)).toFixed(2)} €
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-base font-bold text-[var(--color-primary)]">
+                          {produit.base_price.toFixed(2)} €
+                        </span>
+                      )}
+                    </div>
                     {hasVariantes && (
                       <span className="text-xs text-[var(--color-text-muted)]">
                         {produit.boutique_produit_variantes!.length} variantes

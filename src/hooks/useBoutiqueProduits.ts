@@ -47,6 +47,8 @@ export interface BoutiqueProduit {
   stock_status: 'in_stock' | 'out_of_stock' | 'coming_soon'
   payment_type: 'stripe' | 'manual' | 'both'
   sku: string | null
+  badges: string[]
+  discount_percent: number
   created_by: string | null
   created_at: string
   updated_at: string
@@ -65,6 +67,8 @@ export type BoutiqueProduitInput = {
   stock_status: 'in_stock' | 'out_of_stock' | 'coming_soon'
   payment_type: 'stripe' | 'manual' | 'both'
   sku: string | null
+  badges?: string[]
+  discount_percent?: number
   variantes?: Omit<BoutiqueVariante, 'id' | 'produit_id' | 'created_at'>[]
 }
 

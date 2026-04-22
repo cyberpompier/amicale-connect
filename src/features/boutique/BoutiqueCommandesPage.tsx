@@ -62,9 +62,10 @@ export function BoutiqueCommandesPage() {
             const payment = PAYMENT_CONFIG[commande.payment_status]
             const items = commande.boutique_commande_items ?? []
             return (
-              <div
+              <button
                 key={commande.id}
-                className="bg-white rounded-2xl border border-[var(--color-border)] shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+                onClick={() => navigate(`/boutique/commandes/${commande.id}`)}
+                className="w-full text-left bg-white rounded-2xl border border-[var(--color-border)] shadow-sm overflow-hidden hover:shadow-md hover:border-[var(--color-primary)]/30 transition-all"
               >
                 {/* Header commande */}
                 <div className="flex items-center justify-between px-5 py-3.5 bg-[var(--color-bg-secondary)] border-b border-[var(--color-border)]">
@@ -126,7 +127,7 @@ export function BoutiqueCommandesPage() {
                     <ChevronRight className="w-4 h-4 text-[var(--color-text-muted)]" />
                   </div>
                 </div>
-              </div>
+              </button>
             )
           })}
         </div>
