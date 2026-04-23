@@ -62,6 +62,14 @@ export function BoutiqueDetailPage() {
     return produit.base_price + (matchedVariante?.price_modifier ?? 0)
   }, [produit, matchedVariante])
 
+  const displayPrice = useMemo(() => {
+    if (!produit) return 0
+    if (produit.discount_percent > 0) {
+      return finalPrice * (1 - produit.discount_percent / 100)
+    }
+    return finalPrice
+  }, [finalPrice, produit])
+
   const isAvailable = useMemo(() => {
     if (!produit) return false
     if (varianteTypes.length === 0) return produit.stock_status === 'in_stock'
@@ -289,7 +297,7 @@ export function BoutiqueDetailPage() {
               ) : adding ? (
                 'Ajout en cours...'
               ) : (
-                <><ShoppingCart className="w-4 h-4" /> Ajouter au panier · {(finalPrice * quantity).toFixed(2)} €</>
+                <><ShoppingCart className="w-4 h-4" /> Ajouter au panier · {(displayPrice * quantity).toFixed(2)} €</>
               )}
             </button>
 
