@@ -43,7 +43,7 @@ export type CalendrierVenteInput = {
   sale_date?: string
 }
 
-export function useCalendrierVentes(campagneId?: string, secteurId?: string) {
+export function useCalendrierVentes(campagneId?: string, secteurId?: string, limit?: number) {
   const { currentAssociation } = useAssociation()
   const { user } = useAuthContext()
   const [ventes, setVentes] = useState<CalendrierVente[]>([])
@@ -66,7 +66,9 @@ export function useCalendrierVentes(campagneId?: string, secteurId?: string) {
     if (campagneId) query = query.eq('campagne_id', campagneId)
     if (secteurId) query = query.eq('secteur_id', secteurId)
 
-    const { data, error } = await query.order('created_at', { ascending: false })
+    let finalQuery = query.order('created_at', { ascending: false })
+    if (limit) finalQuery = finalQuery.limit(limit)
+    const { data, error } = await finalQuery
 
     if (!error && data) setVentes(data as any)
     setLoading(false)

@@ -33,11 +33,7 @@ const STATUS_CONFIG: Record<CalendrierSecteur['status'], { label: string; icon: 
 
 export function CalendriersPage() {
   const navigate = useNavigate()
-  const { activeCampagne, loading: campLoading, ensureCurrentCampagne } = useCalendrierCampagnes()
-  const { secteurs, loading: secLoading, updateStatus } = useCalendrierSecteurs(activeCampagne?.id)
-  const { ventes } = useCalendrierVentes(activeCampagne?.id)
-  const { currentAssociation } = useAssociation()
-
+  // State declarations first — some are needed by hooks below
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('toutes')
   const [selectedSecteurId, setSelectedSecteurId] = useState<string | null>(null)
@@ -45,23 +41,32 @@ export function CalendriersPage() {
   const [selectedVenteId, setSelectedVenteId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
 
+  const { activeCampagne, loading: campLoading, ensureCurrentCampagne } = useCalendrierCampagnes()
+  const { secteurs, loading: secLoading, updateStatus } = useCalendrierSecteurs(activeCampagne?.id)
+  const { currentAssociation } = useAssociation()
+  // Fetch ventes only when a sector is selected, limited to 10 recent results
+  const { ventes, loading: ventesLoading } = useCalendrierVentes(
+    selectedSecteurId ? activeCampagne?.id : undefined,
+    selectedSecteurId ?? undefined,
+    10
+  )
+
   const selectedSecteur = useMemo(
     () => secteurs.find((s) => s.id === selectedSecteurId) ?? null,
     [secteurs, selectedSecteurId]
   )
 
-  const secteurVentes = useMemo(() => {
-    if (!selectedSecteurId) return []
-    return ventes.filter((v) => v.secteur_id === selectedSecteurId)
-  }, [ventes, selectedSecteurId])
+  // ventes is already filtered by selectedSecteurId by the hook
+  const secteurVentes = ventes
 
+  // Compute global totals from sector data (already aggregated) — no extra query needed
   const totalCollected = useMemo(
-    () => ventes.reduce((sum, v) => sum + Number(v.amount), 0),
-    [ventes]
+    () => secteurs.reduce((sum, s) => sum + (s.total_collected ?? 0), 0),
+    [secteurs]
   )
   const totalCalendriers = useMemo(
-    () => ventes.reduce((sum, v) => sum + v.quantity, 0),
-    [ventes]
+    () => secteurs.reduce((sum, s) => sum + (s.total_calendriers_sold ?? 0), 0),
+    [secteurs]
   )
 
   const progressionGlobale = useMemo(() => {
@@ -497,7 +502,13 @@ export function CalendriersPage() {
                     <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wide mb-2">
                       Ventes récentes
                     </p>
-                    {secteurVentes.slice(0, 5).length === 0 ? (
+                    {ventesLoading ? (
+                      <div className="space-y-1.5">
+                        {[1,2].map(i => (
+                          <div key={i} className="h-10 bg-[var(--color-bg-secondary)] rounded-lg animate-pulse" />
+                        ))}
+                      </div>
+                    ) : secteurVentes.slice(0, 5).length === 0 ? (
                       <div className="bg-[var(--color-bg-secondary)] rounded-lg p-4 text-center">
                         <Package className="w-6 h-6 text-gray-300 mx-auto mb-1" />
                         <p className="text-xs text-[var(--color-text-muted)] uppercase tracking-wide font-semibold">
