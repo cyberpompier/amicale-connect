@@ -46,7 +46,10 @@ function AppShellContent() {
         className="flex flex-col min-h-screen transition-all duration-300 pb-16 md:pb-0"
         style={{ marginLeft }}
       >
-        <Header associationName={currentAssociation?.name || 'Mon Amicale'} />
+        <Header
+          associationName={currentAssociation?.name || 'Mon Amicale'}
+          logoUrl={currentAssociation?.logo_url}
+        />
         <SubNav />
 
         <main className="flex-1 p-4 md:p-6">

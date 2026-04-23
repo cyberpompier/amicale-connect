@@ -4,9 +4,10 @@ import { useState, useRef, useEffect } from 'react'
 
 interface HeaderProps {
   associationName: string
+  logoUrl?: string | null
 }
 
-export function Header({ associationName }: HeaderProps) {
+export function Header({ associationName, logoUrl }: HeaderProps) {
   const { user, signOut } = useAuthContext()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -26,7 +27,17 @@ export function Header({ associationName }: HeaderProps) {
 
   return (
     <header className="h-14 bg-white border-b border-[var(--color-border)] flex items-center justify-between px-4 md:px-6 sticky top-0 z-30 shadow-sm">
-      <div className="flex items-center gap-2 min-w-0">
+      <div className="flex items-center gap-3 min-w-0">
+        {logoUrl && (
+          <img
+            src={logoUrl}
+            alt="Logo"
+            className="h-8 object-contain flex-shrink-0"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none'
+            }}
+          />
+        )}
         <span className="font-semibold text-[var(--color-text)] truncate">{associationName}</span>
       </div>
 

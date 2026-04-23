@@ -4,6 +4,7 @@ import {
   BookOpen,
   Briefcase,
   Calendar,
+  CalendarCheck,
   Settings,
   BarChart3,
   ShoppingBag,
@@ -86,6 +87,17 @@ export const mainNavItems: NavItem[] = [
       { label: 'Panier', path: '/boutique/panier' },
       { label: 'Mes commandes', path: '/boutique/commandes' },
       { label: 'Gestion', path: '/boutique/gestion' },
+    ],
+  },
+  {
+    label: 'Calendriers',
+    path: '/calendriers',
+    icon: CalendarCheck,
+    subNav: [
+      { label: 'Tournée', path: '/calendriers' },
+      { label: 'Secteurs', path: '/calendriers/secteurs' },
+      { label: 'Statistiques', path: '/calendriers/statistiques' },
+      { label: 'Historique', path: '/calendriers/historique' },
     ],
   },
 ]

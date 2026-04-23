@@ -7,6 +7,7 @@ interface Association {
   name: string
   city: string | null
   subscription_status: string
+  logo_url: string | null
 }
 
 interface AssociationContextType {
@@ -36,7 +37,7 @@ export function AssociationProvider({ children }: { children: ReactNode }) {
     setLoading(true)
     const { data, error } = await supabase
       .from('associations')
-      .select('id, name, city, subscription_status')
+      .select('id, name, city, subscription_status, logo_url')
 
     if (error) {
       console.error('Erreur chargement associations:', error)

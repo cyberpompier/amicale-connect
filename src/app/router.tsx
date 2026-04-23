@@ -30,6 +30,13 @@ import { BoutiqueGestionPage } from '@/features/boutique/BoutiqueGestionPage'
 import { BoutiqueGestionCommandesAdminPage } from '@/features/boutique/BoutiqueGestionCommandesAdminPage'
 import { BoutiqueGestionProduitsList } from '@/features/boutique/BoutiqueGestionProduitsList'
 import { BoutiqueGestionProduitForm } from '@/features/boutique/BoutiqueGestionProduitForm'
+import { CalendriersPage } from '@/features/calendriers/CalendriersPage'
+import { CalendriersSecteursPage } from '@/features/calendriers/CalendriersSecteursPage'
+import { CalendriersSecteurDetailPage } from '@/features/calendriers/CalendriersSecteurDetailPage'
+import { CalendriersSecteurFormPage } from '@/features/calendriers/CalendriersSecteurFormPage'
+import { CalendriersSaisieVentePage } from '@/features/calendriers/CalendriersSaisieVentePage'
+import { CalendriersStatistiquesPage } from '@/features/calendriers/CalendriersStatistiquesPage'
+import { CalendriersHistoriquePage } from '@/features/calendriers/CalendriersHistoriquePage'
 import { ParametresPage } from '@/features/parametres/ParametresPage'
 import { ParametresFacturationPage } from '@/features/parametres/ParametresFacturationPage'
 import { ParametresEquipePage } from '@/features/parametres/ParametresEquipePage'
@@ -179,6 +186,39 @@ export const router = createBrowserRouter([
       {
         path: 'boutique/:id',
         element: <BoutiqueDetailPage />,
+      },
+      // Calendriers
+      {
+        path: 'calendriers',
+        element: <CalendriersPage />,
+      },
+      {
+        path: 'calendriers/secteurs',
+        element: <CalendriersSecteursPage />,
+      },
+      {
+        path: 'calendriers/secteurs/creer',
+        element: <CalendriersSecteurFormPage />,
+      },
+      {
+        path: 'calendriers/secteurs/:id',
+        element: <CalendriersSecteurDetailPage />,
+      },
+      {
+        path: 'calendriers/secteurs/:id/editer',
+        element: <CalendriersSecteurFormPage />,
+      },
+      {
+        path: 'calendriers/secteurs/:id/vente',
+        element: <CalendriersSaisieVentePage />,
+      },
+      {
+        path: 'calendriers/statistiques',
+        element: <CalendriersStatistiquesPage />,
+      },
+      {
+        path: 'calendriers/historique',
+        element: <CalendriersHistoriquePage />,
       },
       // Paramètres
       {

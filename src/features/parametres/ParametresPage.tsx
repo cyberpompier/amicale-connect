@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Building2, User, Lock, LogOut, Save, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react'
+import { Building2, User, Lock, LogOut, Save, CheckCircle2, AlertCircle, Eye, EyeOff, Image } from 'lucide-react'
 import { useAssociation } from '@/features/association/AssociationContext'
 import { useAuthContext } from '@/features/auth/AuthContext'
 import { supabase } from '@/lib/supabase'
@@ -11,6 +11,8 @@ export function ParametresPage() {
 
   // --- Association ---
   const [assocName, setAssocName] = useState(currentAssociation?.name || '')
+  const [logoUrl, setLogoUrl] = useState(currentAssociation?.logo_url || '')
+  const [logoPreview, setLogoPreview] = useState(currentAssociation?.logo_url || '')
   const [savingAssoc, setSavingAssoc] = useState(false)
   const [assocSuccess, setAssocSuccess] = useState(false)
   const [assocError, setAssocError] = useState('')
@@ -30,7 +32,10 @@ export function ParametresPage() {
     setSavingAssoc(true)
     const { error } = await supabase
       .from('associations')
-      .update({ name: assocName.trim() })
+      .update({
+        name: assocName.trim(),
+        logo_url: logoUrl.trim() || null,
+      })
       .eq('id', currentAssociation.id)
     if (error) {
       setAssocError(error.message)
@@ -40,6 +45,15 @@ export function ParametresPage() {
       setTimeout(() => setAssocSuccess(false), 3000)
     }
     setSavingAssoc(false)
+  }
+
+  const handleLogoUrlChange = (url: string) => {
+    setLogoUrl(url)
+    if (url.trim()) {
+      setLogoPreview(url)
+    } else {
+      setLogoPreview('')
+    }
   }
 
   const handleChangePassword = async (e: FormEvent) => {
@@ -103,6 +117,41 @@ export function ParametresPage() {
                 onChange={(e) => setAssocName(e.target.value)}
                 className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text)] mb-1 flex items-center gap-2">
+                <Image className="w-4 h-4" />
+                Logo (URL)
+              </label>
+              <input
+                type="url"
+                placeholder="https://example.com/logo.png"
+                value={logoUrl}
+                onChange={(e) => handleLogoUrlChange(e.target.value)}
+                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
+              />
+              <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                URL du logo (PNG, JPG, SVG) — utilisé dans les reçus PDF
+              </p>
+              {logoPreview && (
+                <div className="mt-3 p-3 bg-[var(--color-bg-secondary)] rounded-lg border border-[var(--color-border)]">
+                  <p className="text-xs font-semibold text-[var(--color-text-muted)] mb-2">
+                    Aperçu du logo :
+                  </p>
+                  <div className="flex justify-center">
+                    <img
+                      src={logoPreview}
+                      alt="Logo preview"
+                      className="h-16 object-contain"
+                      onError={() => {
+                        console.warn('Logo image failed to load')
+                        setLogoPreview('')
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
