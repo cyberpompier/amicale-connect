@@ -18,7 +18,10 @@ import {
 import { useCalendrierCampagnes } from '@/hooks/useCalendrierCampagnes'
 import { useCalendrierSecteurs, type CalendrierSecteur } from '@/hooks/useCalendrierSecteurs'
 import { useCalendrierVentes } from '@/hooks/useCalendrierVentes'
-import { formatDateShort } from '@/lib/utils'
+import { useAssociation } from '@/features/association/AssociationContext'
+import { formatDateShort, formatCurrency } from '@/lib/utils'
+import { ReceiptActions } from './ReceiptActions'
+import { buildReceiptNumber, type ReceiptData } from '@/lib/generateReceipt'
 
 type StatusFilter = 'toutes' | 'todo' | 'in_progress' | 'done'
 
@@ -33,11 +36,13 @@ export function CalendriersPage() {
   const { activeCampagne, loading: campLoading, ensureCurrentCampagne } = useCalendrierCampagnes()
   const { secteurs, loading: secLoading, updateStatus } = useCalendrierSecteurs(activeCampagne?.id)
   const { ventes } = useCalendrierVentes(activeCampagne?.id)
+  const { currentAssociation } = useAssociation()
 
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('toutes')
   const [selectedSecteurId, setSelectedSecteurId] = useState<string | null>(null)
   const [detailTab, setDetailTab] = useState<'current' | 'history'>('current')
+  const [selectedVenteId, setSelectedVenteId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
 
   const selectedSecteur = useMemo(
@@ -502,7 +507,11 @@ export function CalendriersPage() {
                     ) : (
                       <ul className="space-y-1.5">
                         {secteurVentes.slice(0, 5).map((v) => (
-                          <li key={v.id} className="flex items-center justify-between p-2 bg-[var(--color-bg-secondary)] rounded-lg">
+                          <li
+                            key={v.id}
+                            onClick={() => setSelectedVenteId(v.id)}
+                            className="flex items-center justify-between p-2 bg-[var(--color-bg-secondary)] rounded-lg cursor-pointer hover:bg-[var(--color-primary)]/10 transition-colors"
+                          >
                             <div className="min-w-0">
                               <p className="text-xs font-semibold text-[var(--color-text)] truncate">
                                 {v.donor_name || 'Don anonyme'}
@@ -537,4 +546,161 @@ export function CalendriersPage() {
       )}
     </div>
   )
+
+      {/* Modal: Ticket de vente détaillé */}
+      {selectedVenteId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="sticky top-0 bg-white border-b border-[var(--color-border)] p-4 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-[var(--color-text)]">Détail du ticket de vente</h3>
+              <button
+                onClick={() => setSelectedVenteId(null)}
+                className="p-2 hover:bg-[var(--color-bg-secondary)] rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-[var(--color-text-muted)]" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              {(() => {
+                const vente = ventes.find((v) => v.id === selectedVenteId)
+                if (!vente) return null
+
+                const receipt: ReceiptData = {
+                  associationName: currentAssociation?.name ?? 'Amicale',
+                  associationCity: currentAssociation?.city ?? null,
+                  logoUrl: currentAssociation?.logo_url ?? null,
+                  receiptNumber: buildReceiptNumber(vente.id, vente.sale_date),
+                  saleDate: vente.sale_date,
+                  donorName: vente.donor_name,
+                  donorEmail: vente.donor_email,
+                  donorPhone: vente.donor_phone,
+                  donorAddress:
+                    vente.donor_address ??
+                    (vente.calendrier_adresses
+                      ? `${vente.calendrier_adresses.number ?? ''} ${vente.calendrier_adresses.street_name}`
+                      : null),
+                  quantity: vente.quantity,
+                  amount: Number(vente.amount),
+                  unitPrice: Number(activeCampagne?.unit_price ?? 10),
+                  paymentMethod: vente.payment_method,
+                  campagneName: activeCampagne?.name ?? '',
+                  secteurName: vente.calendrier_secteurs?.name ?? '',
+                  amicalisteName: vente.amicalistes
+                    ? `${vente.amicalistes.first_name} ${vente.amicalistes.last_name}`
+                    : null,
+                  notes: vente.notes,
+                }
+
+                return (
+                  <div className="space-y-6">
+                    {/* Receipt Preview */}
+                    <div className="space-y-4">
+                      <h4 className="text-sm font-bold text-[var(--color-text)] uppercase tracking-wide">
+                        Aperçu du ticket
+                      </h4>
+                      <div className="bg-[var(--color-bg-secondary)] p-6 rounded-xl border border-[var(--color-border)]">
+                        {/* Donation details */}
+                        <div className="space-y-3 text-center">
+                          <p className="text-sm font-semibold text-[var(--color-text)]">
+                            Ticket n° {buildReceiptNumber(vente.id, vente.sale_date)}
+                          </p>
+                          <p className="text-[13px] text-[var(--color-text-muted)]">
+                            {new Date(vente.sale_date).toLocaleDateString('fr-FR', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                            })}
+                          </p>
+                          <div className="h-px bg-[var(--color-border)] my-3" />
+                          <p className="text-[11px] text-[var(--color-text-muted)]">
+                            <strong>Donataire :</strong> {vente.donor_name || 'Don anonyme'}
+                          </p>
+                          {vente.donor_address && (
+                            <p className="text-[11px] text-[var(--color-text-muted)]">
+                              {vente.donor_address}
+                            </p>
+                          )}
+                          <div className="h-px bg-[var(--color-border)] my-3" />
+                          <div className="flex justify-between text-sm">
+                            <span className="text-[var(--color-text)]">{vente.quantity} × {activeCampagne?.name}</span>
+                            <span className="font-bold text-green-600">{formatCurrency(Number(vente.amount))}</span>
+                          </div>
+                          {vente.notes && (
+                            <p className="text-[10px] text-[var(--color-text-muted)] italic mt-3">
+                              {vente.notes}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-bold text-[var(--color-text)] uppercase tracking-wide">
+                        Partager ou télécharger
+                      </h4>
+                      <ReceiptActions data={receipt} variant="inline" />
+                    </div>
+
+                    {/* Details */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-bold text-[var(--color-text)] uppercase tracking-wide">
+                        Informations
+                      </h4>
+                      <div className="bg-[var(--color-bg-secondary)] rounded-lg p-4 space-y-2 text-sm">
+                        {vente.amicalistes && (
+                          <p>
+                            <strong className="text-[var(--color-text)]">Collecteur :</strong>{' '}
+                            <span className="text-[var(--color-text-muted)]">
+                              {vente.amicalistes.first_name} {vente.amicalistes.last_name}
+                            </span>
+                          </p>
+                        )}
+                        {vente.calendrier_secteurs && (
+                          <p>
+                            <strong className="text-[var(--color-text)]">Secteur :</strong>{' '}
+                            <span className="text-[var(--color-text-muted)]">{vente.calendrier_secteurs.name}</span>
+                          </p>
+                        )}
+                        <p>
+                          <strong className="text-[var(--color-text)]">Campagne :</strong>{' '}
+                          <span className="text-[var(--color-text-muted)]">{activeCampagne?.name}</span>
+                        </p>
+                        {vente.donor_email && (
+                          <p>
+                            <strong className="text-[var(--color-text)]">Email :</strong>{' '}
+                            <span className="text-[var(--color-text-muted)]">{vente.donor_email}</span>
+                          </p>
+                        )}
+                        {vente.donor_phone && (
+                          <p>
+                            <strong className="text-[var(--color-text)]">Téléphone :</strong>{' '}
+                            <span className="text-[var(--color-text-muted)]">{vente.donor_phone}</span>
+                          </p>
+                        )}
+                        <p>
+                          <strong className="text-[var(--color-text)]">Mode de paiement :</strong>{' '}
+                          <span className="text-[var(--color-text-muted)]">
+                            {vente.payment_method === 'cash'
+                              ? 'Espèces'
+                              : vente.payment_method === 'check'
+                                ? 'Chèque'
+                                : vente.payment_method === 'transfer'
+                                  ? 'Virement'
+                                  : 'Autre'}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+
 }
