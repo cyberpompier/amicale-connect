@@ -703,4 +703,6 @@ export function CalendriersPage() {
         </div>
       )}
 
+    </div>
+  )
 }
