@@ -16,6 +16,7 @@ export function OnboardingPage() {
   const [form, setForm] = useState({
     name: '',
     city: '',
+    postal_code: '',
     address: '',
     phone: '',
     email: '',
@@ -39,6 +40,7 @@ export function OnboardingPage() {
         .insert({
           name: form.name.trim(),
           city: form.city.trim() || null,
+          postal_code: form.postal_code.trim() || null,
           address: form.address.trim() || null,
           phone: form.phone.trim() || null,
           email: form.email.trim() || null,
@@ -140,18 +142,33 @@ export function OnboardingPage() {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-[var(--color-text)] mb-1.5">
-                      Ville <span className="text-[var(--color-text-muted)] font-normal">(optionnel)</span>
-                    </label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" />
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="col-span-2">
+                      <label className="block text-sm font-semibold text-[var(--color-text)] mb-1.5">
+                        Ville <span className="text-[var(--color-text-muted)] font-normal">(optionnel)</span>
+                      </label>
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" />
+                        <input
+                          type="text"
+                          placeholder="Ex : Lyon"
+                          value={form.city}
+                          onChange={set('city')}
+                          className="w-full pl-10 pr-4 py-3 border border-[var(--color-border)] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)] transition-colors"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-[var(--color-text)] mb-1.5">
+                        Code postal
+                      </label>
                       <input
                         type="text"
-                        placeholder="Ex : Lyon"
-                        value={form.city}
-                        onChange={set('city')}
-                        className="w-full pl-10 pr-4 py-3 border border-[var(--color-border)] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)] transition-colors"
+                        placeholder="69000"
+                        maxLength={5}
+                        value={form.postal_code}
+                        onChange={set('postal_code')}
+                        className="w-full px-3 py-3 border border-[var(--color-border)] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)] transition-colors"
                       />
                     </div>
                   </div>

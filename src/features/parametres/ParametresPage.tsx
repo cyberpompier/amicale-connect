@@ -11,6 +11,8 @@ export function ParametresPage() {
 
   // --- Association ---
   const [assocName, setAssocName] = useState(currentAssociation?.name || '')
+  const [assocCity, setAssocCity] = useState(currentAssociation?.city || '')
+  const [assocPostalCode, setAssocPostalCode] = useState(currentAssociation?.postal_code || '')
   const [logoUrl, setLogoUrl] = useState(currentAssociation?.logo_url || '')
   const [logoPreview, setLogoPreview] = useState(currentAssociation?.logo_url || '')
   const [savingAssoc, setSavingAssoc] = useState(false)
@@ -34,6 +36,8 @@ export function ParametresPage() {
       .from('associations')
       .update({
         name: assocName.trim(),
+        city: assocCity.trim() || null,
+        postal_code: assocPostalCode.trim() || null,
         logo_url: logoUrl.trim() || null,
       })
       .eq('id', currentAssociation.id)
@@ -117,6 +121,30 @@ export function ParametresPage() {
                 onChange={(e) => setAssocName(e.target.value)}
                 className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
               />
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Ville</label>
+                <input
+                  type="text"
+                  placeholder="Ex : Lyon"
+                  value={assocCity}
+                  onChange={(e) => setAssocCity(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Code postal</label>
+                <input
+                  type="text"
+                  placeholder="69000"
+                  maxLength={5}
+                  value={assocPostalCode}
+                  onChange={(e) => setAssocPostalCode(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
+                />
+              </div>
             </div>
 
             <div>
