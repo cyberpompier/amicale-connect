@@ -53,10 +53,11 @@ export function CalendriersSecteurMapPage() {
         await import('leaflet.markercluster')
         leafletRef.current = L
 
-        // Créer la carte
+        // Créer la carte — centrage initial sur la première adresse
+        const firstAddr = adressesWithCoords[0]
         const map = L.map('map', {
           attributionControl: false,
-        }).setView([48.8566, 2.3522], 16)
+        }).setView([firstAddr.latitude!, firstAddr.longitude!], 15)
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19,
@@ -101,11 +102,17 @@ export function CalendriersSecteurMapPage() {
         })
         markersRef.current = markers
 
-        // Stocker buildIcon et statusColors pour usage ultérieur
+        // Stocker buildIcon et adresses pour usage ultérieur
         ;(map as any)._buildIcon = buildIcon
         ;(map as any)._adressesWithCoords = adressesWithCoords
 
         map.addLayer(markerClusterGroup)
+
+        // Centrer sur l'ensemble des adresses du secteur
+        const bounds = L.latLngBounds(
+          adressesWithCoords.map((a) => [a.latitude!, a.longitude!] as [number, number])
+        )
+        map.fitBounds(bounds.pad(0.2))
 
         // Localisation du vendeur
         if ('geolocation' in navigator) {
@@ -209,7 +216,7 @@ export function CalendriersSecteurMapPage() {
   const addressesVisited = adressesWithCoords.filter((a) => a.status === 'done').length
 
   return (
-    <div className="flex flex-col h-screen bg-white fixed inset-0">
+    <div className="flex flex-col bg-white -m-4 md:-m-6" style={{ height: 'calc(100vh - 120px)' }}>
       {/* Header */}
       <div className="bg-gradient-to-r from-red-600 to-red-700 text-white p-3 flex items-center justify-between flex-shrink-0 safe-top">
         <button
@@ -246,12 +253,13 @@ export function CalendriersSecteurMapPage() {
         </div>
       )}
 
-      {/* Carte */}
-      <div id="map" className="flex-1 relative" />
+      {/* Carte + adresse flottante */}
+      <div className="flex-1 relative overflow-hidden">
+        <div id="map" className="absolute inset-0" />
 
-      {/* Adresse actuelle flottante */}
+      {/* Adresse actuelle flottante par-dessus la carte */}
       {selectedAddress && (
-        <div className="absolute top-16 left-4 right-4 bg-white rounded-lg p-3 shadow-lg z-400 max-w-96">
+        <div className="absolute top-3 left-3 right-3 bg-white rounded-lg p-3 shadow-lg z-[400]">
           <div className="text-xs text-gray-500 font-bold uppercase mb-1">Adresse actuelle</div>
           <div className="font-bold text-lg mb-2">
             {selectedAddress.number ? `${selectedAddress.number} ` : ''}
@@ -278,6 +286,7 @@ export function CalendriersSecteurMapPage() {
           </span>
         </div>
       )}
+      </div>
 
       {/* Bottom panel actions */}
       <div className="bg-white border-t border-gray-200 p-4 flex flex-col gap-3 flex-shrink-0 safe-bottom">
