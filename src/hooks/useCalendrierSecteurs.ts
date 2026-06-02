@@ -7,6 +7,7 @@ export interface CalendrierSecteurRue {
   id: string
   secteur_id: string
   name: string
+  city: string | null
   order: number
   created_at: string
 }
@@ -68,7 +69,7 @@ export type CalendrierSecteurInput = {
   objective_amount?: number
   objective_calendriers?: number
   color?: string
-  rues?: string[]
+  rues?: Array<{ name: string; city?: string | null }>
   equipiers?: Array<{ amicaliste_id: string; role?: 'responsable' | 'equipier' }>
   allocated_qty?: number
 }
@@ -153,11 +154,14 @@ export function useCalendrierSecteurs(campagneId?: string) {
 
     // Insérer les rues
     if (rues && rues.length > 0) {
-      const ruesData = rues.filter((r) => r.trim()).map((name, index) => ({
-        secteur_id: secteur.id,
-        name: name.trim(),
-        order: index,
-      }))
+      const ruesData = rues
+        .filter((r) => r.name.trim())
+        .map((r, index) => ({
+          secteur_id: secteur.id,
+          name: r.name.trim(),
+          city: r.city?.trim() || null,
+          order: index,
+        }))
       if (ruesData.length > 0) {
         const { error: rErr } = await supabase.from('calendrier_secteur_rues').insert(ruesData)
         if (rErr) console.error('Erreur rues:', rErr)
@@ -205,11 +209,14 @@ export function useCalendrierSecteurs(campagneId?: string) {
     if (rues !== undefined) {
       await supabase.from('calendrier_secteur_rues').delete().eq('secteur_id', id)
       if (rues.length > 0) {
-        const ruesData = rues.filter((r) => r.trim()).map((name, index) => ({
-          secteur_id: id,
-          name: name.trim(),
-          order: index,
-        }))
+        const ruesData = rues
+          .filter((r) => r.name.trim())
+          .map((r, index) => ({
+            secteur_id: id,
+            name: r.name.trim(),
+            city: r.city?.trim() || null,
+            order: index,
+          }))
         if (ruesData.length > 0) {
           await supabase.from('calendrier_secteur_rues').insert(ruesData)
         }
@@ -333,6 +340,7 @@ export function useCalendrierSecteurs(campagneId?: string) {
         const ruesData = calendrier_secteur_rues.map((r: any) => ({
           secteur_id: newSecteur.id,
           name: r.name,
+          city: r.city ?? null,
           order: r.order,
         }))
         const { error: rErr } = await supabase.from('calendrier_secteur_rues').insert(ruesData)

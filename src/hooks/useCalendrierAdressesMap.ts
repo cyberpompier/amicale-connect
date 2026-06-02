@@ -8,6 +8,7 @@ export interface CalendrierAdresseMap {
   number: string | null
   building: string | null
   status: 'todo' | 'done' | 'absent' | 'refuse' | 'skip'
+  city: string | null
   latitude: number | null
   longitude: number | null
   geocoded_at: string | null
@@ -58,7 +59,9 @@ export function useCalendrierAdressesMap(
       try {
         const hasNumber = !!addr.number?.trim()
         const streetPart = hasNumber ? `${addr.number} ${addr.street_name}` : addr.street_name
-        const cityPart = city ? ` ${city}` : ''
+        // Cascade : ville de l'adresse → ville du secteur → ville de l'association
+        const resolvedCity = addr.city || city
+        const cityPart = resolvedCity ? ` ${resolvedCity}` : ''
         const query = `${streetPart}${cityPart}`
 
         // 1er essai : avec numéro de rue (type housenumber si numéro présent)

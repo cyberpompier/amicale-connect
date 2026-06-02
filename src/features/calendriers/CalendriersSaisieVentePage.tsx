@@ -145,6 +145,12 @@ export function CalendriersSaisieVentePage() {
       let adresseId: string | null = null
 
       if (streetName.trim() && saveAddress) {
+        // Récupérer la ville depuis la rue du secteur (si elle en a une)
+        const matchingRue = rues.find(
+          (r) => r.name.toLowerCase().trim() === streetName.toLowerCase().trim()
+        )
+        const adresseCity = matchingRue?.city || secteur?.city || null
+
         // Trouver une adresse existante
         const existing = adresses.find(
           (a) =>
@@ -161,7 +167,8 @@ export function CalendriersSaisieVentePage() {
               street_name: streetName.trim(),
               number: streetNumber.trim() || null,
               building: building.trim() || null,
-            })
+              city: adresseCity,
+            } as any)
             adresseId = created.id
           } catch (err) {
             console.error('Erreur création adresse', err)

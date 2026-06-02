@@ -35,7 +35,7 @@ export function CalendriersSecteurFormPage() {
   const [objectiveCalendriers, setObjectiveCalendriers] = useState<number>(50)
   const [allocatedQty, setAllocatedQty] = useState<number>(50)
   const [color, setColor] = useState(COLORS[0])
-  const [rues, setRues] = useState<string[]>([''])
+  const [rues, setRues] = useState<Array<{ name: string; city: string }>>([{ name: '', city: '' }])
   const [equipiers, setEquipiers] = useState<Equipier[]>([])
   const [amSearch, setAmSearch] = useState('')
   const [saving, setSaving] = useState(false)
@@ -52,8 +52,8 @@ export function CalendriersSecteurFormPage() {
       setColor(existingSecteur.color || COLORS[0])
       setRues(
         existingSecteur.calendrier_secteur_rues && existingSecteur.calendrier_secteur_rues.length > 0
-          ? existingSecteur.calendrier_secteur_rues.map((r) => r.name)
-          : ['']
+          ? existingSecteur.calendrier_secteur_rues.map((r) => ({ name: r.name, city: r.city ?? '' }))
+          : [{ name: '', city: '' }]
       )
       setEquipiers(
         existingSecteur.calendrier_secteur_equipiers?.map((e) => ({
@@ -77,11 +77,11 @@ export function CalendriersSecteurFormPage() {
     )
   }, [amicalistes, equipiers, amSearch])
 
-  const handleAddRue = () => setRues((prev) => [...prev, ''])
-  const handleChangeRue = (idx: number, val: string) =>
-    setRues((prev) => prev.map((r, i) => (i === idx ? val : r)))
+  const handleAddRue = () => setRues((prev) => [...prev, { name: '', city: city }])
+  const handleChangeRue = (idx: number, field: 'name' | 'city', val: string) =>
+    setRues((prev) => prev.map((r, i) => (i === idx ? { ...r, [field]: val } : r)))
   const handleRemoveRue = (idx: number) =>
-    setRues((prev) => (prev.length === 1 ? [''] : prev.filter((_, i) => i !== idx)))
+    setRues((prev) => (prev.length === 1 ? [{ name: '', city: '' }] : prev.filter((_, i) => i !== idx)))
 
   const handleAddEquipier = (amicalisteId: string) => {
     setEquipiers((prev) => [...prev, { amicaliste_id: amicalisteId, role: 'equipier' }])
@@ -112,7 +112,7 @@ export function CalendriersSecteurFormPage() {
         objective_amount: objectiveAmount,
         objective_calendriers: objectiveCalendriers,
         color,
-        rues: rues.filter((r) => r.trim()),
+        rues: rues.filter((r) => r.name.trim()),
         equipiers,
         allocated_qty: allocatedQty,
       }
@@ -289,15 +289,25 @@ export function CalendriersSecteurFormPage() {
             </button>
           </div>
 
+          <p className="text-xs text-[var(--color-text-muted)]">
+            La ville est pré-remplie depuis le secteur. Modifiez-la si une rue est dans une autre commune.
+          </p>
           <div className="space-y-2">
             {rues.map((rue, idx) => (
               <div key={idx} className="flex gap-2">
                 <input
                   type="text"
-                  value={rue}
-                  onChange={(e) => handleChangeRue(idx, e.target.value)}
+                  value={rue.name}
+                  onChange={(e) => handleChangeRue(idx, 'name', e.target.value)}
                   placeholder="Nom de la rue"
                   className="flex-1 px-3 py-2 bg-white border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25"
+                />
+                <input
+                  type="text"
+                  value={rue.city}
+                  onChange={(e) => handleChangeRue(idx, 'city', e.target.value)}
+                  placeholder={city || 'Ville'}
+                  className="w-32 px-3 py-2 bg-white border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25"
                 />
                 <button
                   type="button"
