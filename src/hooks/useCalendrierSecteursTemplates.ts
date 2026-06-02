@@ -8,6 +8,7 @@ export interface CalendrierSecteurTemplate {
   association_id: string
   name: string
   description: string | null
+  city: string | null
   objective_amount: number
   objective_calendriers: number
   color: string
@@ -21,6 +22,7 @@ export interface CalendrierSecteurTemplate {
 export type CalendrierSecteurTemplateInput = {
   name: string
   description?: string | null
+  city?: string | null
   objective_amount?: number
   objective_calendriers?: number
   color?: string

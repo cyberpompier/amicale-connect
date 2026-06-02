@@ -85,6 +85,7 @@ export function CalendriersSecteursTemplatesPage() {
     setFormData({
       name: template.name,
       description: template.description || '',
+      city: template.city || '',
       objective_amount: template.objective_amount,
       objective_calendriers: template.objective_calendriers,
       color: template.color,
