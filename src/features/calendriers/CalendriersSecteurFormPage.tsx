@@ -30,6 +30,7 @@ export function CalendriersSecteurFormPage() {
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [city, setCity] = useState('')
   const [objectiveAmount, setObjectiveAmount] = useState<number>(500)
   const [objectiveCalendriers, setObjectiveCalendriers] = useState<number>(50)
   const [allocatedQty, setAllocatedQty] = useState<number>(50)
@@ -44,6 +45,7 @@ export function CalendriersSecteurFormPage() {
     if (existingSecteur) {
       setName(existingSecteur.name)
       setDescription(existingSecteur.description ?? '')
+      setCity(existingSecteur.city ?? '')
       setObjectiveAmount(Number(existingSecteur.objective_amount))
       setObjectiveCalendriers(existingSecteur.objective_calendriers)
       setAllocatedQty(existingSecteur.calendrier_stocks?.allocated_qty ?? 0)
@@ -106,6 +108,7 @@ export function CalendriersSecteurFormPage() {
         campagne_id: activeCampagne.id,
         name: name.trim(),
         description: description.trim() || null,
+        city: city.trim() || null,
         objective_amount: objectiveAmount,
         objective_calendriers: objectiveCalendriers,
         color,
@@ -181,6 +184,22 @@ export function CalendriersSecteurFormPage() {
               placeholder="Ex: Centre-ville, Quartier Nord..."
               className="w-full px-3 py-2 bg-white border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wide mb-1">
+              Ville / Commune <span className="text-[var(--color-text-muted)] font-normal normal-case">(pour géolocalisation)</span>
+            </label>
+            <input
+              type="text"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder="Ex: Noyon, Compiègne..."
+              className="w-full px-3 py-2 bg-white border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
+            />
+            <p className="text-xs text-[var(--color-text-muted)] mt-1">
+              Permet de géocoder précisément les adresses du secteur sur la carte
+            </p>
           </div>
 
           <div>

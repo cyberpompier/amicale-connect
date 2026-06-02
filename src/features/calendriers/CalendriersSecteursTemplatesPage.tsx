@@ -9,6 +9,7 @@ export function CalendriersSecteursTemplatesPage() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    city: '',
     objective_amount: 500,
     objective_calendriers: 50,
     color: '#3B82F6',
@@ -44,6 +45,7 @@ export function CalendriersSecteursTemplatesPage() {
         await updateTemplate(editingId, {
           name: formData.name,
           description: formData.description || null,
+          city: formData.city || null,
           objective_amount: formData.objective_amount,
           objective_calendriers: formData.objective_calendriers,
           color: formData.color,
@@ -55,6 +57,7 @@ export function CalendriersSecteursTemplatesPage() {
         await createTemplate({
           name: formData.name,
           description: formData.description || null,
+          city: formData.city || null,
           objective_amount: formData.objective_amount,
           objective_calendriers: formData.objective_calendriers,
           color: formData.color,
@@ -66,6 +69,7 @@ export function CalendriersSecteursTemplatesPage() {
       setFormData({
         name: '',
         description: '',
+        city: '',
         objective_amount: 500,
         objective_calendriers: 50,
         color: '#3B82F6',
@@ -126,6 +130,7 @@ export function CalendriersSecteursTemplatesPage() {
           setFormData({
             name: '',
             description: '',
+            city: '',
             objective_amount: 500,
             objective_calendriers: 50,
             color: '#3B82F6',
@@ -172,16 +177,30 @@ export function CalendriersSecteursTemplatesPage() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-[var(--color-text)] mb-1">
-                Description
-              </label>
-              <input
-                type="text"
-                value={formData.description}
-                onChange={(e) => handleChange('description', e.target.value)}
-                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-[var(--color-text)] mb-1">
+                  Ville / Commune <span className="text-[var(--color-text-muted)] font-normal">(géolocalisation)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: Noyon, Compiègne..."
+                  value={formData.city}
+                  onChange={(e) => handleChange('city', e.target.value)}
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-[var(--color-text)] mb-1">
+                  Description
+                </label>
+                <input
+                  type="text"
+                  value={formData.description}
+                  onChange={(e) => handleChange('description', e.target.value)}
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

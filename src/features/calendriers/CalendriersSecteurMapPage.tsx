@@ -24,17 +24,17 @@ export function CalendriersSecteurMapPage() {
   const { activeCampagne } = useCalendrierCampagnes()
   const { secteurs } = useCalendrierSecteurs(activeCampagne?.id)
   const { currentAssociation } = useAssociation()
+  const secteur = useMemo(() => secteurs.find((s) => s.id === secteurId), [secteurs, secteurId])
+
   const { adressesWithCoords, adresses, isGeocoding, geocodingProgress, geocodingTotal, selectedAddress, selectedAddressIndex, goToAddressIndex, goToPrevious, goToNext } = useCalendrierAdressesMap(
     secteurId,
-    currentAssociation?.city,
+    secteur?.city || currentAssociation?.city,   // ville du secteur en priorité
     currentAssociation?.postal_code
   )
   const { ventes } = useCalendrierVentes(activeCampagne?.id, secteurId)
 
   const [mapInitialized, setMapInitialized] = useState(false)
   const [mapInstance, setMapInstance] = useState<any>(null)
-
-  const secteur = useMemo(() => secteurs.find((s) => s.id === secteurId), [secteurs, secteurId])
 
   // Initialiser la carte (lazy-load Leaflet)
   useEffect(() => {

@@ -42,6 +42,7 @@ export interface CalendrierSecteur {
   campagne_id: string
   name: string
   description: string | null
+  city: string | null
   status: 'todo' | 'in_progress' | 'done'
   objective_amount: number
   objective_calendriers: number
@@ -63,6 +64,7 @@ export type CalendrierSecteurInput = {
   campagne_id: string
   name: string
   description?: string | null
+  city?: string | null
   objective_amount?: number
   objective_calendriers?: number
   color?: string
