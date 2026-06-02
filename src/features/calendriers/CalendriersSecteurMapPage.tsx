@@ -26,7 +26,7 @@ export function CalendriersSecteurMapPage() {
   const { currentAssociation } = useAssociation()
   const secteur = useMemo(() => secteurs.find((s) => s.id === secteurId), [secteurs, secteurId])
 
-  const { adressesWithCoords, adresses, isGeocoding, geocodingProgress, geocodingTotal, selectedAddress, selectedAddressIndex, goToAddressIndex, goToPrevious, goToNext } = useCalendrierAdressesMap(
+  const { adressesWithCoords, adresses, isGeocoding, geocodingProgress, geocodingTotal, selectedAddress, selectedAddressIndex, goToAddressIndex, goToPrevious, goToNext, updateStatus } = useCalendrierAdressesMap(
     secteurId,
     secteur?.city || currentAssociation?.city,   // ville du secteur en priorité
     currentAssociation?.postal_code
@@ -390,10 +390,21 @@ export function CalendriersSecteurMapPage() {
         </button>
 
         <div className="grid grid-cols-2 gap-3">
-          <button className="border border-gray-300 bg-white hover:bg-gray-50 font-bold py-2 rounded-lg text-sm">
-            ℹ️ Détail
+          <button
+            onClick={() => navigate(`/calendriers/secteurs/${secteurId}`)}
+            className="border border-gray-300 bg-white hover:bg-gray-50 font-bold py-2 rounded-lg text-sm"
+          >
+            ℹ️ Détail secteur
           </button>
-          <button className="border border-gray-300 bg-white hover:bg-gray-50 font-bold py-2 rounded-lg text-sm">
+          <button
+            onClick={async () => {
+              if (!selectedAddress) return
+              await updateStatus(selectedAddress.id, 'absent')
+              goToNext()
+            }}
+            disabled={!selectedAddress}
+            className="border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 font-bold py-2 rounded-lg text-sm disabled:opacity-40"
+          >
             ⊘ Absent
           </button>
         </div>

@@ -203,6 +203,21 @@ export function useCalendrierAdressesMap(
 
   const isGeocoding = geocodingTotal > 0
 
+  const updateStatus = useCallback(
+    async (id: string, status: CalendrierAdresseMap['status']) => {
+      await supabase
+        .from('calendrier_adresses')
+        .update({
+          status,
+          visited_at: status !== 'todo' ? new Date().toISOString() : null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+      await fetchAdresses()
+    },
+    [fetchAdresses]
+  )
+
   return {
     adresses,
     adressesWithCoords,
@@ -213,6 +228,7 @@ export function useCalendrierAdressesMap(
     selectedAddress,
     selectedAddressIndex,
     refetch: fetchAdresses,
+    updateStatus,
     goToAddressIndex,
     goToPrevious,
     goToNext,
