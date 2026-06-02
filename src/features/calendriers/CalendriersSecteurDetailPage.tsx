@@ -68,6 +68,7 @@ export function CalendriersSecteurDetailPage() {
   const [showStockModal, setShowStockModal] = useState(false)
   const [stockQty, setStockQty] = useState<number>(0)
   const [savingStock, setSavingStock] = useState(false)
+  const [adresseSort, setAdresseSort] = useState<'created_at' | 'number' | 'status'>('created_at')
 
   const handleAddAdresse = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -121,15 +122,32 @@ export function CalendriersSecteurDetailPage() {
   const progression = secteur?.progression_percent ?? 0
   const remainingStock = stock ? stock.allocated_qty - stock.used_qty - stock.returned_qty : null
 
+  // Tri des adresses
+  const sortedAdresses = useMemo(() => {
+    return [...adresses].sort((a, b) => {
+      if (adresseSort === 'number') {
+        const nA = parseInt(a.number ?? '0') || 0
+        const nB = parseInt(b.number ?? '0') || 0
+        return nA - nB
+      }
+      if (adresseSort === 'status') {
+        const order = { todo: 0, done: 1, absent: 2, refuse: 3, skip: 4 }
+        return (order[a.status] ?? 0) - (order[b.status] ?? 0)
+      }
+      // Par défaut : ordre d'ajout (created_at)
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    })
+  }, [adresses, adresseSort])
+
   // Group adresses by rue
   const adressesByRue = useMemo(() => {
     const map = new Map<string, CalendrierAdresse[]>()
-    adresses.forEach((a) => {
+    sortedAdresses.forEach((a) => {
       if (!map.has(a.street_name)) map.set(a.street_name, [])
       map.get(a.street_name)!.push(a)
     })
     return map
-  }, [adresses])
+  }, [sortedAdresses])
 
   if (secLoading) {
     return (
@@ -332,6 +350,30 @@ export function CalendriersSecteurDetailPage() {
           </form>
 
           {/* Liste */}
+          {/* Tri discret */}
+          {adresses.length > 0 && (
+            <div className="flex items-center gap-1 px-4 py-2 border-b border-[var(--color-border)]">
+              <span className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-wide mr-1">Tri :</span>
+              {([
+                { key: 'created_at', label: 'Ajout' },
+                { key: 'number', label: 'N°' },
+                { key: 'status', label: 'Statut' },
+              ] as const).map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => setAdresseSort(opt.key)}
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase transition-colors ${
+                    adresseSort === opt.key
+                      ? 'bg-[var(--color-primary)] text-white'
+                      : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg-secondary)]'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="max-h-[500px] overflow-y-auto">
             {adrLoading ? (
               <div className="flex items-center justify-center py-10">
