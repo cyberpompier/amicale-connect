@@ -38,6 +38,7 @@ export function CalendriersSecteurMapPage() {
   const markersRef = useRef<any[]>([])
   const clusterGroupRef = useRef<any>(null)
   const leafletRef = useRef<any>(null)
+  const addedCountRef = useRef(0) // nombre de markers déjà ajoutés à la carte
 
   // Initialiser la carte (lazy-load Leaflet)
   useEffect(() => {
@@ -91,24 +92,18 @@ export function CalendriersSecteurMapPage() {
           })
         }
 
-        const markers: any[] = []
-        adressesWithCoords.forEach((addr, idx) => {
-          const marker = L.marker([addr.latitude!, addr.longitude!], {
-            icon: buildIcon(addr, false),
-          })
-          marker.on('click', () => goToAddressIndex(idx))
-          markers.push(marker)
-          markerClusterGroup.addLayer(marker)
-        })
-        markersRef.current = markers
-
-        // Stocker buildIcon et adresses pour usage ultérieur
+        // Stocker buildIcon avant d'ajouter les markers
         ;(map as any)._buildIcon = buildIcon
         ;(map as any)._adressesWithCoords = adressesWithCoords
 
         map.addLayer(markerClusterGroup)
 
-        // Centrer sur l'ensemble des adresses du secteur
+        // Les markers seront ajoutés par le useEffect dédié
+        // (on remet addedCountRef à 0 pour que le useEffect les ajoute tous)
+        addedCountRef.current = 0
+        markersRef.current = []
+
+        // Centrer sur la première adresse en attendant le fitBounds complet
         const bounds = L.latLngBounds(
           adressesWithCoords.map((a) => [a.latitude!, a.longitude!] as [number, number])
         )
@@ -146,6 +141,43 @@ export function CalendriersSecteurMapPage() {
 
     initMap()
   }, [secteurId, mapInitialized, adressesWithCoords, goToAddressIndex])
+
+  // Ajouter les nouveaux markers au fur et à mesure du géocodage
+  useEffect(() => {
+    if (!mapInitialized || !clusterGroupRef.current || !leafletRef.current) return
+
+    const L = leafletRef.current
+    const buildIcon = (mapInstance as any)?._buildIcon
+    if (!buildIcon) return
+
+    const newAddresses = adressesWithCoords.slice(addedCountRef.current)
+    if (newAddresses.length === 0) return
+
+    newAddresses.forEach((addr, relIdx) => {
+      const idx = addedCountRef.current + relIdx
+      const marker = L.marker([addr.latitude!, addr.longitude!], {
+        icon: buildIcon(addr, false),
+      })
+      marker.on('click', () => goToAddressIndex(idx))
+      clusterGroupRef.current.addLayer(marker)
+      markersRef.current.push(marker)
+    })
+
+    addedCountRef.current = adressesWithCoords.length
+
+    // Mettre à jour la référence des adresses stockée sur la map
+    if (mapInstance) {
+      ;(mapInstance as any)._adressesWithCoords = adressesWithCoords
+    }
+
+    // Re-fitBounds pour englober toutes les adresses
+    if (mapInstance && adressesWithCoords.length > 1) {
+      const bounds = L.latLngBounds(
+        adressesWithCoords.map((a) => [a.latitude!, a.longitude!] as [number, number])
+      )
+      mapInstance.fitBounds(bounds.pad(0.2))
+    }
+  }, [adressesWithCoords, mapInitialized, mapInstance, goToAddressIndex])
 
   // Centrer sur l'adresse sélectionnée + mettre en évidence le marker
   useEffect(() => {
