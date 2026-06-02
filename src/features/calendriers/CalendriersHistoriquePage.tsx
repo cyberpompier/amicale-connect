@@ -10,7 +10,6 @@ import {
   Euro,
   PlayCircle,
   BarChart3,
-  TrendingUp,
   Download,
   Users,
 } from 'lucide-react'

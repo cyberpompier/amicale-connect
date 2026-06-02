@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, AlertTriangle, Package, TrendingDown, Plus, ArrowRightLeft, History } from 'lucide-react'
+import { ArrowLeft, AlertTriangle, Package, TrendingDown, ArrowRightLeft, History } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAssociation } from '@/features/association/AssociationContext'
@@ -29,7 +29,7 @@ export function CalendriersStockPage() {
   const navigate = useNavigate()
   const { currentAssociation } = useAssociation()
   const { activeCampagne, loading: campLoading } = useCalendrierCampagnes()
-  const { secteurs, updateSecteur } = useCalendrierSecteurs(activeCampagne?.id)
+  const { secteurs } = useCalendrierSecteurs(activeCampagne?.id)
 
   const [stockData, setStockData] = useState<StockData[]>([])
   const [movements, setMovements] = useState<StockMovement[]>([])
@@ -158,7 +158,7 @@ export function CalendriersStockPage() {
         if (totalObjective === 0) {
           // Fallback à équitable si pas d'objectif
           const qtyPerSecteur = Math.floor(deliveryQty / campaignSecteurs.length)
-          campaignSecteurs.forEach((s, idx) => {
+          campaignSecteurs.forEach((s) => {
             allocation[s.id] = qtyPerSecteur
           })
         } else {

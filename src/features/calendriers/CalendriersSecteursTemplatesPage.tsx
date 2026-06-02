@@ -1,7 +1,6 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { Plus, Trash2, Edit, MapPin } from 'lucide-react'
 import { useCalendrierSecteursTemplates } from '@/hooks/useCalendrierSecteursTemplates'
-import { formatDateShort } from '@/lib/utils'
 
 export function CalendriersSecteursTemplatesPage() {
   const { templates, loading, createTemplate, updateTemplate, deleteTemplate } = useCalendrierSecteursTemplates()

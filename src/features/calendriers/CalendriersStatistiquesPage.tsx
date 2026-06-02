@@ -74,12 +74,12 @@ export function CalendriersStatistiquesPage() {
       let yPos = 15
 
       // Couleurs
-      const primaryColor = [220, 38, 38] // Red
-      const secondaryColor = [59, 130, 246] // Blue
-      const accentColor = [34, 197, 94] // Green
-      const lightGray = [249, 250, 251]
-      const darkGray = [75, 85, 99]
-      const textGray = [107, 114, 128]
+      const primaryColor: [number, number, number] = [220, 38, 38] // Red
+      const secondaryColor: [number, number, number] = [59, 130, 246] // Blue
+      const accentColor: [number, number, number] = [34, 197, 94] // Green
+      const lightGray: [number, number, number] = [249, 250, 251]
+      const darkGray: [number, number, number] = [75, 85, 99]
+      const textGray: [number, number, number] = [107, 114, 128]
 
       // ===== PAGE 1: HEADER ET KPIs =====
 
@@ -103,13 +103,13 @@ export function CalendriersStatistiquesPage() {
       // Titre
       doc.setFontSize(24)
       doc.setTextColor(...primaryColor)
-      doc.setFont(undefined, 'bold')
+      doc.setFont('Helvetica', 'bold')
       doc.text('RAPPORT DE TOURNÉE', pageWidth / 2, 18, { align: 'center' })
 
       // Info campagne
       doc.setFontSize(11)
       doc.setTextColor(...textGray)
-      doc.setFont(undefined, 'normal')
+      doc.setFont('Helvetica', 'normal')
       doc.text(`${currentAssociation.name} • ${activeCampagne.year}`, pageWidth / 2, 28, { align: 'center' })
       doc.text(activeCampagne.name, pageWidth / 2, 34, { align: 'center' })
 
@@ -145,7 +145,6 @@ export function CalendriersStatistiquesPage() {
 
       const cardWidth = (pageWidth - 30) / 2
       const cardHeight = 30
-      const cardMargin = 5
 
       kpiCards.forEach((card, idx) => {
         const col = idx % 2
@@ -164,19 +163,19 @@ export function CalendriersStatistiquesPage() {
         // Label
         doc.setFontSize(10)
         doc.setTextColor(...darkGray)
-        doc.setFont(undefined, 'bold')
+        doc.setFont('Helvetica', 'bold')
         doc.text(card.label, x + 8, y + 7)
 
         // Value
         doc.setFontSize(16)
         doc.setTextColor(...card.color)
-        doc.setFont(undefined, 'bold')
+        doc.setFont('Helvetica', 'bold')
         doc.text(card.value, x + 8, y + 18)
 
         // Detail
         doc.setFontSize(9)
         doc.setTextColor(...textGray)
-        doc.setFont(undefined, 'normal')
+        doc.setFont('Helvetica', 'normal')
         doc.text(card.detail, x + 8, y + 26)
       })
 
@@ -188,7 +187,7 @@ export function CalendriersStatistiquesPage() {
         doc.setFillColor(...primaryColor)
         doc.rect(15, yPos - 2, pageWidth - 30, 8, 'F')
         doc.setFontSize(12)
-        doc.setFont(undefined, 'bold')
+        doc.setFont('Helvetica', 'bold')
         doc.setTextColor(255, 255, 255)
         doc.text('CLASSEMENT DES AMICALISTES', 18, yPos + 3)
         yPos += 12
@@ -196,7 +195,7 @@ export function CalendriersStatistiquesPage() {
         // En-têtes tableau
         doc.setFontSize(11)
         doc.setTextColor(255, 255, 255)
-        doc.setFont(undefined, 'bold')
+        doc.setFont('Helvetica', 'bold')
         doc.setFillColor(...primaryColor)
         doc.rect(15, yPos - 5, pageWidth - 30, 8, 'F')
         doc.text('Rang', 18, yPos)
@@ -207,7 +206,7 @@ export function CalendriersStatistiquesPage() {
 
         // Données
         doc.setFontSize(10)
-        doc.setFont(undefined, 'normal')
+        doc.setFont('Helvetica', 'normal')
         amicalisteStats.slice(0, 10).forEach((s, idx) => {
           if (yPos > pageHeight - 25) {
             doc.addPage()
@@ -226,24 +225,24 @@ export function CalendriersStatistiquesPage() {
 
           // Ranking avec couleur
           doc.setTextColor(...primaryColor)
-          doc.setFont(undefined, 'bold')
+          doc.setFont('Helvetica', 'bold')
           const ranking = idx === 0 ? '[1]' : idx === 1 ? '[2]' : idx === 2 ? '[3]' : `[${idx + 1}]`
           doc.text(ranking, 18, yPos)
 
           // Name
           doc.setTextColor(...darkGray)
-          doc.setFont(undefined, 'normal')
+          doc.setFont('Helvetica', 'normal')
           const name = `${s.first_name} ${s.last_name}`.substring(0, 35)
           doc.text(name, 35, yPos)
 
           // Amount
           doc.setTextColor(...accentColor)
-          doc.setFont(undefined, 'bold')
+          doc.setFont('Helvetica', 'bold')
           doc.text(formatCurrency(s.total_amount), 110, yPos)
 
           // Calendriers
           doc.setTextColor(...darkGray)
-          doc.setFont(undefined, 'normal')
+          doc.setFont('Helvetica', 'normal')
           doc.text(`${s.total_calendriers}`, 150, yPos)
 
           yPos += 9
@@ -257,7 +256,7 @@ export function CalendriersStatistiquesPage() {
         doc.setFillColor(...secondaryColor)
         doc.rect(15, yPos - 2, pageWidth - 30, 8, 'F')
         doc.setFontSize(12)
-        doc.setFont(undefined, 'bold')
+        doc.setFont('Helvetica', 'bold')
         doc.setTextColor(255, 255, 255)
         doc.text('SECTEURS LES PLUS PERFORMANTS', 18, yPos + 3)
         yPos += 12
@@ -265,7 +264,7 @@ export function CalendriersStatistiquesPage() {
         // En-têtes
         doc.setFontSize(11)
         doc.setTextColor(255, 255, 255)
-        doc.setFont(undefined, 'bold')
+        doc.setFont('Helvetica', 'bold')
         doc.setFillColor(...secondaryColor)
         doc.rect(15, yPos - 5, pageWidth - 30, 8, 'F')
         doc.text('Secteur', 18, yPos)
@@ -275,7 +274,7 @@ export function CalendriersStatistiquesPage() {
 
         // Données
         doc.setFontSize(10)
-        doc.setFont(undefined, 'normal')
+        doc.setFont('Helvetica', 'normal')
         secteurStats.slice(0, 8).forEach((s, idx) => {
           if (yPos > pageHeight - 25) {
             doc.addPage()
@@ -292,12 +291,12 @@ export function CalendriersStatistiquesPage() {
           doc.rect(15, yPos - 5, pageWidth - 30, 8, 'F')
 
           doc.setTextColor(...darkGray)
-          doc.setFont(undefined, 'normal')
+          doc.setFont('Helvetica', 'normal')
           const secteurName = s.secteur_name.substring(0, 25)
           doc.text(secteurName, 18, yPos)
 
           doc.setTextColor(...accentColor)
-          doc.setFont(undefined, 'bold')
+          doc.setFont('Helvetica', 'bold')
           doc.text(formatCurrency(s.total_amount), 100, yPos)
 
           // Barre de progression
@@ -310,7 +309,7 @@ export function CalendriersStatistiquesPage() {
           doc.rect(145, yPos - 3, (progressBarWidth * progressPercent) / 100, 5, 'F')
 
           doc.setTextColor(...darkGray)
-          doc.setFont(undefined, 'bold')
+          doc.setFont('Helvetica', 'bold')
           doc.setFontSize(9)
           doc.text(`${s.progression_percent.toFixed(0)}%`, 188, yPos)
 
@@ -330,7 +329,7 @@ export function CalendriersStatistiquesPage() {
         doc.setFillColor(...darkGray)
         doc.rect(15, yPos - 2, pageWidth - 30, 8, 'F')
         doc.setFontSize(12)
-        doc.setFont(undefined, 'bold')
+        doc.setFont('Helvetica', 'bold')
         doc.setTextColor(255, 255, 255)
         doc.text('RESUME PAR SECTEUR', 18, yPos + 3)
         yPos += 12
@@ -338,7 +337,7 @@ export function CalendriersStatistiquesPage() {
         // En-têtes
         doc.setFontSize(9)
         doc.setTextColor(255, 255, 255)
-        doc.setFont(undefined, 'bold')
+        doc.setFont('Helvetica', 'bold')
         doc.setFillColor(...darkGray)
         doc.rect(15, yPos - 5, pageWidth - 30, 8, 'F')
         doc.text('Secteur', 18, yPos)
@@ -350,7 +349,7 @@ export function CalendriersStatistiquesPage() {
 
         // Données secteurs
         doc.setFontSize(9)
-        doc.setFont(undefined, 'normal')
+        doc.setFont('Helvetica', 'normal')
         secteursData.forEach((s: any, idx: number) => {
           if (yPos > pageHeight - 25) {
             doc.addPage()
@@ -369,21 +368,21 @@ export function CalendriersStatistiquesPage() {
 
           // Secteur
           doc.setTextColor(...darkGray)
-          doc.setFont(undefined, 'normal')
+          doc.setFont('Helvetica', 'normal')
           const sectorData = secteurStats.find((x) => x.secteur_id === s.id)
           const sectorName = s.name.substring(0, 18)
           doc.text(sectorName, 18, yPos)
 
           // Collecte
           doc.setTextColor(...accentColor)
-          doc.setFont(undefined, 'bold')
+          doc.setFont('Helvetica', 'bold')
           const collected = sectorData?.total_amount ?? 0
           const collecteStr = formatCurrency(collected).substring(0, 12)
           doc.text(collecteStr, 70, yPos)
 
           // Calendriers
           doc.setTextColor(...darkGray)
-          doc.setFont(undefined, 'normal')
+          doc.setFont('Helvetica', 'normal')
           const cals = sectorData?.total_calendriers ?? 0
           doc.text(`${cals}/${s.objective_calendriers}`, 110, yPos)
 
@@ -406,7 +405,7 @@ export function CalendriersStatistiquesPage() {
       yPos += 8
       doc.setFontSize(9)
       doc.setTextColor(...textGray)
-      doc.setFont(undefined, 'normal')
+      doc.setFont('Helvetica', 'normal')
       doc.text(
         `Rapport généré le ${new Date().toLocaleDateString('fr-FR', {
           day: 'numeric',
@@ -424,7 +423,7 @@ export function CalendriersStatistiquesPage() {
         doc.setPage(i)
         doc.setFontSize(9)
         doc.setTextColor(...textGray)
-        doc.setFont(undefined, 'normal')
+        doc.setFont('Helvetica', 'normal')
         doc.text(`Page ${i}/${totalPages}`, pageWidth - 18, pageHeight - 10, { align: 'right' })
       }
 
