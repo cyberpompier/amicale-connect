@@ -386,7 +386,7 @@ export function CalendriersSaisieVentePage() {
 
           <div>
             <label className="block text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wide mb-1">
-              Vendeur (amicaliste) *
+              Vendeur *
             </label>
             {equipiers.length === 0 ? (
               <div className="bg-amber-50 border border-amber-200 text-amber-700 p-3 rounded-lg text-sm">
@@ -419,8 +419,8 @@ export function CalendriersSaisieVentePage() {
 
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wide mb-1">
-                Quantité *
+              <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wide mb-1">
+                Qté *
               </label>
               <input
                 type="number"
@@ -432,7 +432,7 @@ export function CalendriersSaisieVentePage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wide mb-1">
+              <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wide mb-1">
                 Montant (€) *
               </label>
               <input
@@ -446,8 +446,8 @@ export function CalendriersSaisieVentePage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wide mb-1">
-                Paiement
+              <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wide mb-1">
+                Paymt
               </label>
               <select
                 value={paymentMethod}
@@ -557,25 +557,26 @@ export function CalendriersSaisieVentePage() {
             </div>
           )}
 
-          <label className="flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
+          <label className="flex items-center gap-2 text-[10px] text-[var(--color-text-muted)]">
             <input
               type="checkbox"
               checked={saveAddress}
               onChange={(e) => setSaveAddress(e.target.checked)}
+              className="rounded"
             />
-            Enregistrer cette adresse dans le pointage du secteur
+            Enregistrer cette adresse au secteur
           </label>
         </div>
 
         {/* Donateur */}
         <div className="bg-white rounded-2xl border border-[var(--color-border)] p-6 shadow-sm space-y-4">
           <h2 className="font-bold text-[var(--color-text)] flex items-center gap-2">
-            <User className="w-4 h-4 text-[var(--color-primary)]" /> Donateur (optionnel)
+            <User className="w-4 h-4 text-[var(--color-primary)]" /> Donataire (optionnel)
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wide mb-1">
+              <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wide mb-1">
                 Nom
               </label>
               <input
@@ -586,8 +587,8 @@ export function CalendriersSaisieVentePage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wide mb-1">
-                Téléphone
+              <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wide mb-1">
+                Tél.
               </label>
               <input
                 type="tel"
@@ -597,7 +598,7 @@ export function CalendriersSaisieVentePage() {
               />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wide mb-1">
+              <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wide mb-1">
                 Email
               </label>
               <input
@@ -610,7 +611,7 @@ export function CalendriersSaisieVentePage() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wide mb-1">
+            <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wide mb-1">
               Notes
             </label>
             <textarea
