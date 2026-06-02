@@ -22,12 +22,11 @@ export function CalendriersSecteurMapPage() {
   const navigate = useNavigate()
   const { activeCampagne } = useCalendrierCampagnes()
   const { secteurs } = useCalendrierSecteurs(activeCampagne?.id)
-  const { adressesWithCoords, selectedAddress, selectedAddressIndex, goToAddressIndex, goToPrevious, goToNext, geocodeAddress } = useCalendrierAdressesMap(secteurId)
+  const { adressesWithCoords, selectedAddress, selectedAddressIndex, goToAddressIndex, goToPrevious, goToNext } = useCalendrierAdressesMap(secteurId)
   const { ventes } = useCalendrierVentes(activeCampagne?.id, secteurId)
 
   const [mapInitialized, setMapInitialized] = useState(false)
   const [mapInstance, setMapInstance] = useState<any>(null)
-  const [geolocationEnabled, setGeolocationEnabled] = useState(false)
 
   const secteur = useMemo(() => secteurs.find((s) => s.id === secteurId), [secteurs, secteurId])
 
@@ -42,7 +41,7 @@ export function CalendriersSecteurMapPage() {
       try {
         // Import dynamique de Leaflet
         const L = (await import('leaflet')).default
-        const MarkerClusterGroup = (await import('leaflet.markercluster')).default
+        await import('leaflet.markercluster')
 
         // Créer la carte
         const map = L.map('map', {
@@ -53,8 +52,8 @@ export function CalendriersSecteurMapPage() {
           maxZoom: 19,
         }).addTo(map)
 
-        // Ajouter les markers avec clustering
-        const markerClusterGroup = new MarkerClusterGroup()
+        // Ajouter les markers avec clustering (L.markerClusterGroup injecté par le plugin)
+        const markerClusterGroup = (L as any).markerClusterGroup()
 
         const statusColors: Record<string, string> = {
           done: '#10b981',
@@ -93,10 +92,9 @@ export function CalendriersSecteurMapPage() {
                 iconAnchor: [10, 10],
               })
               L.marker([latitude, longitude], { icon: userIcon }).addTo(map)
-              setGeolocationEnabled(true)
             },
             () => {
-              setGeolocationEnabled(false)
+              // Géolocalisation refusée ou indisponible
             },
             { enableHighAccuracy: true, timeout: 10000 }
           )
