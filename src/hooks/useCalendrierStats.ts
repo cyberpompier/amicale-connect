@@ -32,7 +32,7 @@ export interface DailyVente {
   quantity: number
 }
 
-export function useCalendrierStats(campagneId?: string) {
+export function useCalendrierStats(campagneId?: string, secteurId?: string) {
   const { currentAssociation } = useAssociation()
   const [amicalisteStats, setAmicalisteStats] = useState<AmicalisteStat[]>([])
   const [secteurStats, setSecteurStats] = useState<SecteurStat[]>([])
@@ -47,7 +47,7 @@ export function useCalendrierStats(campagneId?: string) {
     setLoading(true)
 
     // Récupérer toutes les ventes de la campagne avec données liées
-    const { data: ventes, error } = await supabase
+    let query = supabase
       .from('calendrier_ventes')
       .select(`
         *,
@@ -56,6 +56,12 @@ export function useCalendrierStats(campagneId?: string) {
       `)
       .eq('association_id', currentAssociation.id)
       .eq('campagne_id', campagneId)
+
+    if (secteurId) {
+      query = query.eq('secteur_id', secteurId)
+    }
+
+    const { data: ventes, error } = await query
 
     if (error || !ventes) {
       setLoading(false)
@@ -161,7 +167,7 @@ export function useCalendrierStats(campagneId?: string) {
     )
 
     setLoading(false)
-  }, [currentAssociation, campagneId])
+  }, [currentAssociation, campagneId, secteurId])
 
   useEffect(() => { fetchStats() }, [fetchStats])
 

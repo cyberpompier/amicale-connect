@@ -9,17 +9,21 @@ import {
   CalendarDays,
   Trophy,
   Download,
+  ChevronDown,
 } from 'lucide-react'
 import jsPDF from 'jspdf'
 import { supabase } from '@/lib/supabase'
 import { useCalendrierCampagnes } from '@/hooks/useCalendrierCampagnes'
 import { useCalendrierStats } from '@/hooks/useCalendrierStats'
 import { useAssociation } from '@/features/association/AssociationContext'
+import { useSecteur } from '@/features/calendriers/SecteurContext'
 import { formatCurrency, formatDateShort } from '@/lib/utils'
 
 export function CalendriersStatistiquesPage() {
   const { currentAssociation } = useAssociation()
   const { activeCampagne, campagnes, loading: campLoading } = useCalendrierCampagnes()
+  const { currentSecteur, secteurs } = useSecteur()
+  const [selectedSecteurId, setSelectedSecteurId] = useState<string | null>(null)
   const {
     amicalisteStats,
     secteurStats,
@@ -28,7 +32,7 @@ export function CalendriersStatistiquesPage() {
     totalCalendriers,
     totalVentes,
     loading,
-  } = useCalendrierStats(activeCampagne?.id)
+  } = useCalendrierStats(activeCampagne?.id, selectedSecteurId || undefined)
   const [exportingPDF, setExportingPDF] = useState(false)
 
   const averageBasket = useMemo(
@@ -474,6 +478,28 @@ export function CalendriersStatistiquesPage() {
           {exportingPDF ? 'Génération...' : 'Export PDF'}
         </button>
       </div>
+
+      {/* Secteur Selection */}
+      {secteurs.length > 0 && (
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-semibold text-[var(--color-text)]">Secteur :</label>
+          <div className="relative inline-block">
+            <select
+              value={selectedSecteurId || ''}
+              onChange={(e) => setSelectedSecteurId(e.target.value || null)}
+              className="appearance-none px-3 py-2 pr-8 bg-white border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text)] cursor-pointer hover:border-[var(--color-primary)] transition-colors"
+            >
+              <option value="">Tous les secteurs</option>
+              {secteurs.map((secteur) => (
+                <option key={secteur.id} value={secteur.id}>
+                  {secteur.name}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)] pointer-events-none" />
+          </div>
+        </div>
+      )}
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

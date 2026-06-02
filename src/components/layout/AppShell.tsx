@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Outlet, Navigate } from 'react-router-dom'
 import { useAuthContext } from '@/features/auth/AuthContext'
 import { AssociationProvider, useAssociation } from '@/features/association/AssociationContext'
+import { SecteurProvider } from '@/features/calendriers/SecteurContext'
 import { OnboardingPage } from '@/features/association/OnboardingPage'
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
@@ -80,7 +81,9 @@ export function AppShell() {
 
   return (
     <AssociationProvider>
-      <AppShellContent />
+      <SecteurProvider>
+        <AppShellContent />
+      </SecteurProvider>
     </AssociationProvider>
   )
 }
