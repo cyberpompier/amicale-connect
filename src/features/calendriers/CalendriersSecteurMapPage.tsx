@@ -54,11 +54,14 @@ export function CalendriersSecteurMapPage() {
         await import('leaflet.markercluster')
         leafletRef.current = L
 
-        // Créer la carte — centrage initial sur la première adresse
+        // Créer la carte — zoom en bas à droite pour ne pas gêner l'étiquette
         const firstAddr = adressesWithCoords[0]
         const map = L.map('map', {
           attributionControl: false,
+          zoomControl: false,
         }).setView([firstAddr.latitude!, firstAddr.longitude!], 15)
+
+        L.control.zoom({ position: 'bottomright' }).addTo(map)
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19,
@@ -291,7 +294,7 @@ export function CalendriersSecteurMapPage() {
 
       {/* Adresse actuelle flottante par-dessus la carte */}
       {selectedAddress && (
-        <div className="absolute top-3 left-3 right-3 bg-white rounded-lg p-3 shadow-lg z-[400]">
+        <div className="absolute top-3 left-3 right-3 bg-white rounded-xl p-3 shadow-lg z-[400] max-w-xs">
           <div className="text-xs text-gray-500 font-bold uppercase mb-1">Adresse actuelle</div>
           <div className="font-bold text-lg mb-2">
             {selectedAddress.number ? `${selectedAddress.number} ` : ''}
