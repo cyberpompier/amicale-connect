@@ -10,6 +10,7 @@ export interface CalendrierAdresseMap {
   status: 'todo' | 'done' | 'absent' | 'refuse' | 'skip'
   latitude: number | null
   longitude: number | null
+  geocoded_at: string | null
   visited_at: string | null
   notes: string | null
   created_at: string
@@ -55,16 +56,15 @@ export function useCalendrierAdressesMap(
   const geocodeOne = useCallback(
     async (addr: CalendrierAdresseMap): Promise<{ lat: number; lng: number } | null> => {
       try {
-        // Construire la requête avec numéro + rue + ville + code postal
-        const streetPart = addr.number ? `${addr.number} ${addr.street_name}` : addr.street_name
+        const hasNumber = !!addr.number?.trim()
+        const streetPart = hasNumber ? `${addr.number} ${addr.street_name}` : addr.street_name
         const cityPart = city ? ` ${city}` : ''
         const query = `${streetPart}${cityPart}`
 
-        const params = new URLSearchParams({
-          q: query,
-          limit: '1',
-        })
+        // 1er essai : avec numéro de rue (type housenumber si numéro présent)
+        const params = new URLSearchParams({ q: query, limit: '1' })
         if (postalCode) params.append('postcode', postalCode)
+        if (hasNumber) params.append('type', 'housenumber')
 
         const response = await fetch(
           `https://api-adresse.data.gouv.fr/search/?${params.toString()}`
@@ -72,23 +72,52 @@ export function useCalendrierAdressesMap(
         if (!response.ok) return null
 
         const data = await response.json()
+
+        let coords: { lat: number; lng: number } | null = null
+
         if (data.features && data.features.length > 0) {
-          const [lng, lat] = data.features[0].geometry.coordinates
-          const score = data.features[0].properties.score
+          const feature = data.features[0]
+          const score = feature.properties.score
+          const type = feature.properties.type
 
-          // On n'accepte que les résultats avec un bon score de confiance
-          if (score < 0.5) return null
+          // Résultat housenumber exact → on accepte même avec score moyen
+          if (type === 'housenumber' && score >= 0.3) {
+            const [lng, lat] = feature.geometry.coordinates
+            coords = { lat, lng }
+          }
+          // Résultat sans numéro → score plus strict
+          else if (score >= 0.5) {
+            const [lng, lat] = feature.geometry.coordinates
+            coords = { lat, lng }
+          }
+        }
 
+        // 2ème essai sans type=housenumber si aucun résultat (fallback rue)
+        if (!coords && hasNumber) {
+          const fallbackParams = new URLSearchParams({ q: query, limit: '1' })
+          if (postalCode) fallbackParams.append('postcode', postalCode)
+          const fallbackRes = await fetch(
+            `https://api-adresse.data.gouv.fr/search/?${fallbackParams.toString()}`
+          )
+          if (fallbackRes.ok) {
+            const fallbackData = await fallbackRes.json()
+            if (fallbackData.features?.length > 0 && fallbackData.features[0].properties.score >= 0.4) {
+              const [lng, lat] = fallbackData.features[0].geometry.coordinates
+              coords = { lat, lng }
+            }
+          }
+        }
+
+        if (coords) {
           await supabase
             .from('calendrier_adresses')
             .update({
-              latitude: lat,
-              longitude: lng,
+              latitude: coords.lat,
+              longitude: coords.lng,
               geocoded_at: new Date().toISOString(),
             })
             .eq('id', addr.id)
-
-          return { lat, lng }
+          return coords
         }
       } catch (err) {
         console.error('Géocodage échoué pour', addr.street_name, err)
@@ -99,8 +128,15 @@ export function useCalendrierAdressesMap(
   )
 
   // Auto-géocodage de toutes les adresses sans coordonnées
+  // (ou déjà géocodées SANS numéro alors qu'elles en ont un → re-géocodage précis)
   const autoGeocode = useCallback(async () => {
-    const toGeocode = adresses.filter((a) => !a.latitude || !a.longitude)
+    const toGeocode = adresses.filter(
+      (a) =>
+        !a.latitude ||
+        !a.longitude ||
+        // Re-géocoder si l'adresse a un numéro mais n'a pas encore été géocodée avec précision
+        (a.number?.trim() && !a.geocoded_at)
+    )
     if (toGeocode.length === 0) return
 
     setGeocodingTotal(toGeocode.length)
