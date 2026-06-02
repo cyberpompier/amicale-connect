@@ -261,6 +261,11 @@ export function CalendriersSecteurMapPage() {
   const totalCollected = ventes.reduce((sum, v) => sum + Number(v.amount), 0)
   const addressesVisited = adressesWithCoords.filter((a) => a.status === 'done').length
 
+  // Vente correspondant à l'adresse sélectionnée
+  const selectedVente = selectedAddress
+    ? ventes.find((v) => v.adresse_id === selectedAddress.id) ?? null
+    : null
+
   return (
     <div className="flex flex-col bg-white -m-4 md:-m-6" style={{ height: 'calc(100vh - 120px)' }}>
       {/* Header */}
@@ -306,30 +311,45 @@ export function CalendriersSecteurMapPage() {
       {/* Adresse actuelle flottante par-dessus la carte */}
       {selectedAddress && (
         <div className="absolute top-3 left-3 right-3 bg-white rounded-xl p-3 shadow-lg z-[400] max-w-xs">
-          <div className="text-xs text-gray-500 font-bold uppercase mb-1">Adresse actuelle</div>
-          <div className="font-bold text-lg mb-2">
-            {selectedAddress.number ? `${selectedAddress.number} ` : ''}
-            {selectedAddress.street_name}
-          </div>
-          <span
-            className={`inline-block text-xs font-bold px-2 py-1 rounded ${
-              selectedAddress.status === 'done'
-                ? 'bg-green-100 text-green-700'
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <div className="font-bold text-base leading-tight">
+              {selectedAddress.number ? `${selectedAddress.number} ` : ''}
+              {selectedAddress.street_name}
+            </div>
+            <span
+              className={`flex-shrink-0 text-xs font-bold px-2 py-0.5 rounded ${
+                selectedAddress.status === 'done'
+                  ? 'bg-green-100 text-green-700'
+                  : selectedAddress.status === 'todo'
+                  ? 'bg-gray-100 text-gray-600'
+                  : selectedAddress.status === 'absent'
+                  ? 'bg-red-100 text-red-700'
+                  : 'bg-orange-100 text-orange-700'
+              }`}
+            >
+              {selectedAddress.status === 'done'
+                ? '✓ Visitée'
                 : selectedAddress.status === 'todo'
-                ? 'bg-gray-100 text-gray-700'
+                ? '○ À faire'
                 : selectedAddress.status === 'absent'
-                ? 'bg-red-100 text-red-700'
-                : 'bg-orange-100 text-orange-700'
-            }`}
-          >
-            {selectedAddress.status === 'done'
-              ? '✓ Visitée'
-              : selectedAddress.status === 'todo'
-              ? '○ À faire'
-              : selectedAddress.status === 'absent'
-              ? '⊘ Absent'
-              : '✗ Refusé'}
-          </span>
+                ? '⊘ Absent'
+                : '✗ Refusé'}
+            </span>
+          </div>
+          {selectedVente?.donor_name && (
+            <div className="flex items-center gap-1 text-sm text-gray-600 mt-1">
+              <span>👤</span>
+              <span className="font-medium">{selectedVente.donor_name}</span>
+              {selectedVente.amount && (
+                <span className="ml-auto text-green-600 font-bold text-xs">
+                  {Number(selectedVente.amount).toFixed(0)}€
+                </span>
+              )}
+            </div>
+          )}
+          {selectedVente?.donor_phone && (
+            <div className="text-xs text-gray-500 mt-0.5">📞 {selectedVente.donor_phone}</div>
+          )}
         </div>
       )}
       </div>
