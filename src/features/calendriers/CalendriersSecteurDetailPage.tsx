@@ -330,8 +330,14 @@ export function CalendriersSecteurDetailPage() {
                 value={adresseStreet}
                 onChange={(e) => setAdresseStreet(e.target.value)}
                 required
+                list="secteur-rues-list"
                 className="col-span-2 px-2 py-2 bg-white border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25"
               />
+              <datalist id="secteur-rues-list">
+                {(secteur?.calendrier_secteur_rues ?? []).map((r) => (
+                  <option key={r.id} value={r.name} />
+                ))}
+              </datalist>
               <input
                 type="text"
                 placeholder="Bât."
