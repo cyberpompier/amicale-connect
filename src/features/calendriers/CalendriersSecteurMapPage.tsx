@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -35,6 +35,9 @@ export function CalendriersSecteurMapPage() {
 
   const [mapInitialized, setMapInitialized] = useState(false)
   const [mapInstance, setMapInstance] = useState<any>(null)
+  const markersRef = useRef<any[]>([])
+  const clusterGroupRef = useRef<any>(null)
+  const leafletRef = useRef<any>(null)
 
   // Initialiser la carte (lazy-load Leaflet)
   useEffect(() => {
@@ -48,6 +51,7 @@ export function CalendriersSecteurMapPage() {
         // Import dynamique de Leaflet
         const L = (await import('leaflet')).default
         await import('leaflet.markercluster')
+        leafletRef.current = L
 
         // Créer la carte
         const map = L.map('map', {
@@ -58,8 +62,9 @@ export function CalendriersSecteurMapPage() {
           maxZoom: 19,
         }).addTo(map)
 
-        // Ajouter les markers avec clustering (L.markerClusterGroup injecté par le plugin)
-        const markerClusterGroup = (L as any).markerClusterGroup()
+        // Ajouter les markers avec clustering
+        const markerClusterGroup = (L as any).markerClusterGroup({ maxClusterRadius: 40 })
+        clusterGroupRef.current = markerClusterGroup
 
         const statusColors: Record<string, string> = {
           done: '#10b981',
@@ -69,21 +74,36 @@ export function CalendriersSecteurMapPage() {
           skip: '#6b7280',
         }
 
-        adressesWithCoords.forEach((addr, idx) => {
+        const buildIcon = (addr: typeof adressesWithCoords[0], selected = false) => {
           const color = statusColors[addr.status] || '#9ca3af'
-          const icon = L.divIcon({
-            html: `<div style="background: ${color}; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 20px; border: 4px solid white; box-shadow: 0 3px 10px rgba(0,0,0,0.2);">${
-              addr.status === 'done' ? '✓' : addr.status === 'todo' ? '○' : '✗'
-            }</div>`,
+          const size = selected ? 52 : 40
+          const border = selected ? '4px solid #1e40af' : '4px solid white'
+          const shadow = selected
+            ? '0 0 0 4px rgba(30,64,175,0.3), 0 4px 14px rgba(0,0,0,0.3)'
+            : '0 3px 10px rgba(0,0,0,0.2)'
+          const symbol = addr.status === 'done' ? '✓' : addr.status === 'todo' ? '○' : '✗'
+          return L.divIcon({
+            html: `<div style="background:${color};width:${size}px;height:${size}px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:${selected ? 24 : 20}px;border:${border};box-shadow:${shadow};transition:all 0.2s;">${symbol}</div>`,
             className: '',
-            iconSize: [40, 40],
-            iconAnchor: [20, 20],
+            iconSize: [size, size],
+            iconAnchor: [size / 2, size / 2],
           })
+        }
 
-          const marker = L.marker([addr.latitude!, addr.longitude!], { icon })
+        const markers: any[] = []
+        adressesWithCoords.forEach((addr, idx) => {
+          const marker = L.marker([addr.latitude!, addr.longitude!], {
+            icon: buildIcon(addr, false),
+          })
           marker.on('click', () => goToAddressIndex(idx))
+          markers.push(marker)
           markerClusterGroup.addLayer(marker)
         })
+        markersRef.current = markers
+
+        // Stocker buildIcon et statusColors pour usage ultérieur
+        ;(map as any)._buildIcon = buildIcon
+        ;(map as any)._adressesWithCoords = adressesWithCoords
 
         map.addLayer(markerClusterGroup)
 
@@ -120,12 +140,29 @@ export function CalendriersSecteurMapPage() {
     initMap()
   }, [secteurId, mapInitialized, adressesWithCoords, goToAddressIndex])
 
-  // Centrer sur l'adresse sélectionnée
+  // Centrer sur l'adresse sélectionnée + mettre en évidence le marker
   useEffect(() => {
-    if (mapInstance && selectedAddress && selectedAddress.latitude && selectedAddress.longitude) {
-      mapInstance.flyTo([selectedAddress.latitude, selectedAddress.longitude], 17, {
-        duration: 0.5,
+    if (!mapInstance || !selectedAddress?.latitude || !selectedAddress?.longitude) return
+
+    const L = leafletRef.current
+    const buildIcon = (mapInstance as any)._buildIcon
+    const addrs = (mapInstance as any)._adressesWithCoords
+
+    // Remettre tous les markers à leur icône normale
+    if (L && buildIcon && addrs) {
+      markersRef.current.forEach((marker, idx) => {
+        marker.setIcon(buildIcon(addrs[idx], idx === selectedAddressIndex))
       })
+    }
+
+    // Extraire le marker du cluster si nécessaire et zoomer dessus
+    const marker = markersRef.current[selectedAddressIndex ?? -1]
+    if (marker && clusterGroupRef.current) {
+      clusterGroupRef.current.zoomToShowLayer(marker, () => {
+        mapInstance.panTo([selectedAddress.latitude!, selectedAddress.longitude!])
+      })
+    } else {
+      mapInstance.flyTo([selectedAddress.latitude, selectedAddress.longitude], 17, { duration: 0.4 })
     }
   }, [mapInstance, selectedAddress])
 
