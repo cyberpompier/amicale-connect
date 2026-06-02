@@ -11,6 +11,7 @@ import { useCalendrierCampagnes } from '@/hooks/useCalendrierCampagnes'
 import { useCalendrierSecteurs } from '@/hooks/useCalendrierSecteurs'
 import { useCalendrierAdressesMap } from '@/hooks/useCalendrierAdressesMap'
 import { useCalendrierVentes } from '@/hooks/useCalendrierVentes'
+import { useAssociation } from '@/features/association/AssociationContext'
 
 // CSS Leaflet — importé statiquement pour Vite
 import 'leaflet/dist/leaflet.css'
@@ -22,7 +23,12 @@ export function CalendriersSecteurMapPage() {
   const navigate = useNavigate()
   const { activeCampagne } = useCalendrierCampagnes()
   const { secteurs } = useCalendrierSecteurs(activeCampagne?.id)
-  const { adressesWithCoords, selectedAddress, selectedAddressIndex, goToAddressIndex, goToPrevious, goToNext } = useCalendrierAdressesMap(secteurId)
+  const { currentAssociation } = useAssociation()
+  const { adressesWithCoords, adresses, isGeocoding, geocodingProgress, geocodingTotal, selectedAddress, selectedAddressIndex, goToAddressIndex, goToPrevious, goToNext } = useCalendrierAdressesMap(
+    secteurId,
+    currentAssociation?.city,
+    currentAssociation?.postal_code
+  )
   const { ventes } = useCalendrierVentes(activeCampagne?.id, secteurId)
 
   const [mapInitialized, setMapInitialized] = useState(false)
@@ -134,32 +140,28 @@ export function CalendriersSecteurMapPage() {
     )
   }
 
-  if (adressesWithCoords.length === 0) {
+  // Aucune adresse du tout dans ce secteur
+  if (!isGeocoding && adresses.length === 0) {
     return (
       <div className="flex flex-col h-screen bg-white">
         <div className="bg-red-600 text-white p-4 flex items-center justify-between">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-red-700 rounded-lg"
-          >
+          <button onClick={() => navigate(-1)} className="p-2 hover:bg-red-700 rounded-lg">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <div className="text-center flex-1">
-            <div className="font-bold">{secteur.name}</div>
-            <div className="text-sm opacity-90">{activeCampagne.name}</div>
-          </div>
+          <div className="text-center flex-1 font-bold">{secteur.name}</div>
           <div className="w-10" />
         </div>
-
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="text-center">
-            <Loader className="w-12 h-12 text-gray-400 mx-auto mb-4 animate-spin" />
-            <p className="text-gray-600 font-medium">Géolocalisation en cours...</p>
-            <p className="text-sm text-gray-500 mt-2">
-              {adressesWithCoords.length === 0 && ventes.length > 0
-                ? 'Conversion des adresses en coordonnées GPS...'
-                : 'Aucune adresse géolocalisée pour ce secteur'}
-            </p>
+        <div className="flex-1 flex items-center justify-center p-6 text-center">
+          <div>
+            <AlertCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <p className="font-medium text-gray-600">Aucune adresse dans ce secteur</p>
+            <p className="text-sm text-gray-400 mt-1">Ajoutez des adresses depuis la page détail du secteur</p>
+            <button
+              onClick={() => navigate(`/calendriers/secteurs/${secteurId}`)}
+              className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold"
+            >
+              Aller au détail
+            </button>
           </div>
         </div>
       </div>
@@ -185,6 +187,27 @@ export function CalendriersSecteurMapPage() {
         </div>
         <div className="w-10" />
       </div>
+
+      {/* Barre de géocodage */}
+      {isGeocoding && (
+        <div className="bg-blue-50 border-b border-blue-200 px-4 py-2 flex items-center gap-3 flex-shrink-0">
+          <Loader className="w-4 h-4 text-blue-500 animate-spin flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="text-xs text-blue-700 font-medium">
+              Géocodage {geocodingProgress}/{geocodingTotal} adresses...
+            </div>
+            <div className="w-full h-1.5 bg-blue-200 rounded-full mt-1 overflow-hidden">
+              <div
+                className="h-full bg-blue-500 rounded-full transition-all duration-300"
+                style={{ width: `${geocodingTotal > 0 ? (geocodingProgress / geocodingTotal) * 100 : 0}%` }}
+              />
+            </div>
+          </div>
+          <div className="text-xs text-blue-600 font-bold flex-shrink-0">
+            {geocodingTotal > 0 ? Math.round((geocodingProgress / geocodingTotal) * 100) : 0}%
+          </div>
+        </div>
+      )}
 
       {/* Carte */}
       <div id="map" className="flex-1 relative" />
