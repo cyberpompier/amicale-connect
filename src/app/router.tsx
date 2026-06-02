@@ -39,6 +39,7 @@ import { CalendriersSaisieVentePage } from '@/features/calendriers/CalendriersSa
 import { CalendriersStatistiquesPage } from '@/features/calendriers/CalendriersStatistiquesPage'
 import { CalendriersStockPage } from '@/features/calendriers/CalendriersStockPage'
 import { CalendriersHistoriquePage } from '@/features/calendriers/CalendriersHistoriquePage'
+import { CalendriersSecteurMapPage } from '@/features/calendriers/CalendriersSecteurMapPage'
 import { ParametresPage } from '@/features/parametres/ParametresPage'
 import { ParametresFacturationPage } from '@/features/parametres/ParametresFacturationPage'
 import { ParametresEquipePage } from '@/features/parametres/ParametresEquipePage'
@@ -217,6 +218,10 @@ export const router = createBrowserRouter([
       {
         path: 'calendriers/secteurs/:id/vente',
         element: <CalendriersSaisieVentePage />,
+      },
+      {
+        path: 'calendriers/secteurs/:id/carte',
+        element: <CalendriersSecteurMapPage />,
       },
       {
         path: 'calendriers/statistiques',

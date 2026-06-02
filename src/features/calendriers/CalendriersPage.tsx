@@ -508,13 +508,21 @@ export function CalendriersPage() {
                       </button>
                     )}
 
-                    <button
-                      onClick={() => navigate(`/calendriers/secteurs/${selectedSecteur.id}`)}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] bg-white hover:bg-[var(--color-bg-secondary)] text-[var(--color-text)] rounded-lg text-sm font-semibold transition-colors"
-                    >
-                      <FileArchive className="w-4 h-4" />
-                      Voir le détail complet
-                    </button>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => navigate(`/calendriers/secteurs/${selectedSecteur.id}/carte`)}
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] bg-white hover:bg-[var(--color-bg-secondary)] text-[var(--color-text)] rounded-lg text-sm font-semibold transition-colors"
+                      >
+                        🗺️ Carte
+                      </button>
+                      <button
+                        onClick={() => navigate(`/calendriers/secteurs/${selectedSecteur.id}`)}
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] bg-white hover:bg-[var(--color-bg-secondary)] text-[var(--color-text)] rounded-lg text-sm font-semibold transition-colors"
+                      >
+                        <FileArchive className="w-4 h-4" />
+                        Détail
+                      </button>
+                    </div>
                   </div>
 
                   {/* Ventes récentes */}
