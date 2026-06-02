@@ -75,23 +75,34 @@ export function CalendriersSecteurMapPage() {
           done: '#10b981',
           absent: '#ef4444',
           refuse: '#f97316',
-          todo: '#9ca3af',
-          skip: '#6b7280',
+          todo: '#6b7280',
+          skip: '#9ca3af',
         }
 
         const buildIcon = (addr: typeof adressesWithCoords[0], selected = false) => {
-          const color = statusColors[addr.status] || '#9ca3af'
-          const size = selected ? 52 : 40
-          const border = selected ? '4px solid #1e40af' : '4px solid white'
-          const shadow = selected
-            ? '0 0 0 4px rgba(30,64,175,0.3), 0 4px 14px rgba(0,0,0,0.3)'
-            : '0 3px 10px rgba(0,0,0,0.2)'
-          const symbol = addr.status === 'done' ? '✓' : addr.status === 'todo' ? '○' : '✗'
+          const color = statusColors[addr.status] || '#6b7280'
+
+          if (selected) {
+            // Sélectionné : pin avec pointe vers le bas, bien visible
+            return L.divIcon({
+              html: `<div style="position:relative;width:32px;height:40px;">
+                <div style="background:${color};width:32px;height:32px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.35);position:absolute;top:0;left:0;"></div>
+                <div style="position:absolute;top:6px;left:6px;width:20px;height:20px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;color:${color};">
+                  ${addr.status === 'done' ? '✓' : addr.status === 'absent' ? '✗' : addr.status === 'refuse' ? '!' : '•'}
+                </div>
+              </div>`,
+              className: '',
+              iconSize: [32, 40],
+              iconAnchor: [16, 40],
+            })
+          }
+
+          // Normal : petit cercle discret
           return L.divIcon({
-            html: `<div style="background:${color};width:${size}px;height:${size}px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:${selected ? 24 : 20}px;border:${border};box-shadow:${shadow};transition:all 0.2s;">${symbol}</div>`,
+            html: `<div style="background:${color};width:16px;height:16px;border-radius:50%;border:2.5px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.25);"></div>`,
             className: '',
-            iconSize: [size, size],
-            iconAnchor: [size / 2, size / 2],
+            iconSize: [16, 16],
+            iconAnchor: [8, 8],
           })
         }
 
