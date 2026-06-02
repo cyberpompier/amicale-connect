@@ -52,7 +52,8 @@ export function useCalendrierCampagnes() {
     if (!error && data) {
       setCampagnes(data)
       // Campagne active = la plus récente avec status 'active'
-      const active = data.find((c) => c.status === 'active')
+      const activeCampagnes = data.filter((c) => c.status === 'active')
+      const active = activeCampagnes.length > 0 ? activeCampagnes[0] : null
       setActiveCampagne(active ?? null)
     }
     setLoading(false)
@@ -142,6 +143,12 @@ export function useCalendrierCampagnes() {
     })
   }
 
+  // Obtenir la campagne précédente (fermée)
+  const getPreviousCampagne = () => {
+    const closedCampagnes = campagnes.filter((c) => c.status === 'closed')
+    return closedCampagnes.length > 0 ? closedCampagnes[0] : null
+  }
+
   return {
     campagnes,
     activeCampagne,
@@ -154,5 +161,6 @@ export function useCalendrierCampagnes() {
     reactivateCampagne,
     deleteCampagne,
     ensureCurrentCampagne,
+    getPreviousCampagne,
   }
 }

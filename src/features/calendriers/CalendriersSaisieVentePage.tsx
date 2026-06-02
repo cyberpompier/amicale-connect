@@ -34,7 +34,7 @@ export function CalendriersSaisieVentePage() {
   const { currentAssociation } = useAssociation()
   const { activeCampagne, loading: campLoading } = useCalendrierCampagnes()
   const { secteurs, loading: secLoading } = useCalendrierSecteurs(activeCampagne?.id)
-  const { createVente } = useCalendrierVentes(activeCampagne?.id, secteurId)
+  const { createVente, lookupDonorByAddress } = useCalendrierVentes(activeCampagne?.id, secteurId)
   const { adresses, checkAddressAlreadyVisited, createAdresse } = useCalendrierAdresses(secteurId)
   const { amicalistes } = useAmicalistes()
 
@@ -64,6 +64,14 @@ export function CalendriersSaisieVentePage() {
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null)
+  const [donorSuggestion, setDonorSuggestion] = useState<{
+    donor_name: string | null
+    donor_email: string | null
+    donor_phone: string | null
+    donor_address: string | null
+    campagne_name: string | null
+    campagne_year: number | null
+  } | null>(null)
 
   useEffect(() => {
     if (activeCampagne) setAmount(unitPrice * quantity)
@@ -100,6 +108,33 @@ export function CalendriersSaisieVentePage() {
     }, 400)
     return () => clearTimeout(timer)
   }, [secteurId, streetName, streetNumber, checkAddressAlreadyVisited])
+
+  // Recherche de donateur connu pour cette adresse (campagnes précédentes)
+  useEffect(() => {
+    if (!streetName.trim()) {
+      setDonorSuggestion(null)
+      return
+    }
+    const timer = setTimeout(async () => {
+      const suggestion = await lookupDonorByAddress(streetName, streetNumber.trim() || null)
+      // N'afficher que si on n'a pas déjà rempli les champs manuellement
+      if (suggestion && !donorName && !donorEmail && !donorPhone) {
+        setDonorSuggestion(suggestion)
+      } else if (!suggestion) {
+        setDonorSuggestion(null)
+      }
+    }, 600)
+    return () => clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [streetName, streetNumber])
+
+  const applyDonorSuggestion = () => {
+    if (!donorSuggestion) return
+    if (donorSuggestion.donor_name) setDonorName(donorSuggestion.donor_name)
+    if (donorSuggestion.donor_email) setDonorEmail(donorSuggestion.donor_email)
+    if (donorSuggestion.donor_phone) setDonorPhone(donorSuggestion.donor_phone)
+    setDonorSuggestion(null)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -472,6 +507,37 @@ export function CalendriersSaisieVentePage() {
             <div className="flex items-center gap-2 p-2 rounded-lg bg-green-50 border border-green-200 text-green-700 text-xs">
               <CheckCircle2 className="w-4 h-4" />
               Adresse non visitée.
+            </div>
+          )}
+
+          {donorSuggestion && (
+            <div className="flex items-start justify-between gap-3 p-3 rounded-lg bg-blue-50 border border-blue-200 text-blue-800 text-sm">
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-xs uppercase tracking-wide text-blue-600 mb-1">
+                  Donateur connu — campagne {donorSuggestion.campagne_year ?? ''} {donorSuggestion.campagne_name ?? ''}
+                </p>
+                <p className="text-sm">
+                  {donorSuggestion.donor_name && <span className="font-medium">{donorSuggestion.donor_name}</span>}
+                  {donorSuggestion.donor_phone && <span className="text-blue-700"> · {donorSuggestion.donor_phone}</span>}
+                  {donorSuggestion.donor_email && <span className="text-blue-700"> · {donorSuggestion.donor_email}</span>}
+                </p>
+              </div>
+              <div className="flex gap-2 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={applyDonorSuggestion}
+                  className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-colors"
+                >
+                  Pré-remplir
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDonorSuggestion(null)}
+                  className="px-2 py-1 text-blue-500 hover:text-blue-700 rounded-lg text-xs transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
           )}
 

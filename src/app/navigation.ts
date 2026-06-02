@@ -96,6 +96,8 @@ export const mainNavItems: NavItem[] = [
     subNav: [
       { label: 'Tournée', path: '/calendriers' },
       { label: 'Secteurs', path: '/calendriers/secteurs' },
+      { label: 'Modèles de secteurs', path: '/calendriers/templates' },
+      { label: 'Gestion du stock', path: '/calendriers/stock' },
       { label: 'Statistiques', path: '/calendriers/statistiques' },
       { label: 'Historique', path: '/calendriers/historique' },
     ],

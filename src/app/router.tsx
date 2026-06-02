@@ -32,10 +32,12 @@ import { BoutiqueGestionProduitsList } from '@/features/boutique/BoutiqueGestion
 import { BoutiqueGestionProduitForm } from '@/features/boutique/BoutiqueGestionProduitForm'
 import { CalendriersPage } from '@/features/calendriers/CalendriersPage'
 import { CalendriersSecteursPage } from '@/features/calendriers/CalendriersSecteursPage'
+import { CalendriersSecteursTemplatesPage } from '@/features/calendriers/CalendriersSecteursTemplatesPage'
 import { CalendriersSecteurDetailPage } from '@/features/calendriers/CalendriersSecteurDetailPage'
 import { CalendriersSecteurFormPage } from '@/features/calendriers/CalendriersSecteurFormPage'
 import { CalendriersSaisieVentePage } from '@/features/calendriers/CalendriersSaisieVentePage'
 import { CalendriersStatistiquesPage } from '@/features/calendriers/CalendriersStatistiquesPage'
+import { CalendriersStockPage } from '@/features/calendriers/CalendriersStockPage'
 import { CalendriersHistoriquePage } from '@/features/calendriers/CalendriersHistoriquePage'
 import { ParametresPage } from '@/features/parametres/ParametresPage'
 import { ParametresFacturationPage } from '@/features/parametres/ParametresFacturationPage'
@@ -193,6 +195,10 @@ export const router = createBrowserRouter([
         element: <CalendriersPage />,
       },
       {
+        path: 'calendriers/templates',
+        element: <CalendriersSecteursTemplatesPage />,
+      },
+      {
         path: 'calendriers/secteurs',
         element: <CalendriersSecteursPage />,
       },
@@ -215,6 +221,10 @@ export const router = createBrowserRouter([
       {
         path: 'calendriers/statistiques',
         element: <CalendriersStatistiquesPage />,
+      },
+      {
+        path: 'calendriers/stock',
+        element: <CalendriersStockPage />,
       },
       {
         path: 'calendriers/historique',

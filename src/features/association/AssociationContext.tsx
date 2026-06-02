@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useMemo, type ReactNode } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuthContext } from '@/features/auth/AuthContext'
 
@@ -63,10 +63,13 @@ export function AssociationProvider({ children }: { children: ReactNode }) {
     fetchAssociations()
   }, [user])
 
+  const contextValue = useMemo(
+    () => ({ currentAssociation, associations, loading, setCurrentAssociation, refetch: fetchAssociations }),
+    [currentAssociation, associations, loading]
+  )
+
   return (
-    <AssociationContext.Provider
-      value={{ currentAssociation, associations, loading, setCurrentAssociation, refetch: fetchAssociations }}
-    >
+    <AssociationContext.Provider value={contextValue}>
       {children}
     </AssociationContext.Provider>
   )

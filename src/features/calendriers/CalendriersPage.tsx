@@ -19,9 +19,11 @@ import { useCalendrierCampagnes } from '@/hooks/useCalendrierCampagnes'
 import { useCalendrierSecteurs, type CalendrierSecteur } from '@/hooks/useCalendrierSecteurs'
 import { useCalendrierVentes } from '@/hooks/useCalendrierVentes'
 import { useAssociation } from '@/features/association/AssociationContext'
+import { useTransactions } from '@/hooks/useTransactions'
 import { formatDateShort, formatCurrency } from '@/lib/utils'
 import { ReceiptActions } from './ReceiptActions'
 import { buildReceiptNumber, type ReceiptData } from '@/lib/generateReceipt'
+import { CreateCampaigneModal } from './CreateCampaigneModal'
 
 type StatusFilter = 'toutes' | 'todo' | 'in_progress' | 'done'
 
@@ -39,10 +41,11 @@ export function CalendriersPage() {
   const [selectedSecteurId, setSelectedSecteurId] = useState<string | null>(null)
   const [detailTab, setDetailTab] = useState<'current' | 'history'>('current')
   const [selectedVenteId, setSelectedVenteId] = useState<string | null>(null)
-  const [creating, setCreating] = useState(false)
+  const [showCreateModal, setShowCreateModal] = useState(false)
 
-  const { activeCampagne, loading: campLoading, ensureCurrentCampagne } = useCalendrierCampagnes()
+  const { activeCampagne, loading: campLoading, refetch: refetchCampagnes } = useCalendrierCampagnes()
   const { secteurs, loading: secLoading, updateStatus } = useCalendrierSecteurs(activeCampagne?.id)
+  const { addTransaction } = useTransactions()
   const { currentAssociation } = useAssociation()
   // Fetch ventes only when a sector is selected, limited to 10 recent results
   const { ventes, loading: ventesLoading } = useCalendrierVentes(
@@ -84,14 +87,8 @@ export function CalendriersPage() {
     })
   }, [secteurs, search, statusFilter])
 
-  const handleCreateCampagne = async () => {
-    setCreating(true)
-    try {
-      await ensureCurrentCampagne()
-    } catch (err) {
-      console.error(err)
-    }
-    setCreating(false)
+  const handleCampaigneSuccess = () => {
+    refetchCampagnes()
   }
 
   if (campLoading || secLoading) {
@@ -105,26 +102,32 @@ export function CalendriersPage() {
   // Aucune campagne active → Proposer d'en créer une
   if (!activeCampagne) {
     return (
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-2xl border border-[var(--color-border)] p-12 text-center shadow-sm">
-          <div className="w-16 h-16 rounded-2xl bg-[var(--color-primary)]/10 mx-auto flex items-center justify-center mb-4">
-            <MapPin className="w-8 h-8 text-[var(--color-primary)]" />
+      <>
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white rounded-2xl border border-[var(--color-border)] p-12 text-center shadow-sm">
+            <div className="w-16 h-16 rounded-2xl bg-[var(--color-primary)]/10 mx-auto flex items-center justify-center mb-4">
+              <MapPin className="w-8 h-8 text-[var(--color-primary)]" />
+            </div>
+            <h2 className="text-xl font-bold text-[var(--color-text)] mb-2">
+              Démarrer la tournée {new Date().getFullYear()}
+            </h2>
+            <p className="text-sm text-[var(--color-text-muted)] mb-6">
+              Aucune campagne de calendriers n'est active. Lancez votre tournée annuelle pour commencer à enregistrer les ventes.
+            </p>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="px-6 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white font-semibold rounded-lg transition-colors"
+            >
+              Lancer une nouvelle campagne
+            </button>
           </div>
-          <h2 className="text-xl font-bold text-[var(--color-text)] mb-2">
-            Démarrer la tournée {new Date().getFullYear()}
-          </h2>
-          <p className="text-sm text-[var(--color-text-muted)] mb-6">
-            Aucune campagne de calendriers n'est active. Lancez votre tournée annuelle pour commencer à enregistrer les ventes.
-          </p>
-          <button
-            onClick={handleCreateCampagne}
-            disabled={creating}
-            className="px-6 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
-          >
-            {creating ? 'Création...' : 'Lancer une nouvelle campagne'}
-          </button>
         </div>
-      </div>
+        <CreateCampaigneModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={handleCampaigneSuccess}
+        />
+      </>
     )
   }
 
@@ -480,7 +483,24 @@ export function CalendriersPage() {
                       </button>
                     ) : (
                       <button
-                        onClick={() => updateStatus(selectedSecteur.id, 'done')}
+                        onClick={async () => {
+                          await updateStatus(selectedSecteur.id, 'done')
+                          const montant = selectedSecteur.total_collected ?? 0
+                          if (montant > 0) {
+                            try {
+                              await addTransaction({
+                                type: 'income',
+                                amount: montant,
+                                description: `Calendriers — ${selectedSecteur.name} (${activeCampagne?.name ?? ''})`,
+                                category_id: null,
+                                date: new Date().toISOString().split('T')[0],
+                                notes: `Clôture secteur "${selectedSecteur.name}" · ${selectedSecteur.total_calendriers_sold ?? 0} calendriers vendus`,
+                              })
+                            } catch {
+                              // Ne pas bloquer si la transaction échoue
+                            }
+                          }
+                        }}
                         className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-green-200 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg text-sm font-semibold transition-colors"
                       >
                         <CheckCircle2 className="w-4 h-4" />
@@ -626,6 +646,12 @@ export function CalendriersPage() {
           </div>
         </div>
       )}
+
+      <CreateCampaigneModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={handleCampaigneSuccess}
+      />
     </div>
   )
 }

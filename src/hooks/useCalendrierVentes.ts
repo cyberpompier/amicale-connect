@@ -152,6 +152,103 @@ export function useCalendrierVentes(campagneId?: string, secteurId?: string, lim
     await fetchVentes()
   }
 
+  // Recherche des infos donateur par adresse (toutes campagnes confondues)
+  const lookupDonorByAddress = useCallback(
+    async (streetName: string, streetNumber: string | null) => {
+      if (!currentAssociation || !streetName.trim()) return null
+
+      // Trouver les adresses correspondantes dans tous les secteurs de l'association
+      let adressesQuery = supabase
+        .from('calendrier_adresses')
+        .select('id, calendrier_secteurs!inner(association_id)')
+        .eq('calendrier_secteurs.association_id', currentAssociation.id)
+        .ilike('street_name', streetName.trim())
+
+      if (streetNumber?.trim()) {
+        adressesQuery = adressesQuery.eq('number', streetNumber.trim())
+      }
+
+      const { data: adresses } = await adressesQuery
+
+      if (!adresses || adresses.length === 0) return null
+
+      const adresseIds = adresses.map((a: any) => a.id)
+
+      const { data } = await supabase
+        .from('calendrier_ventes')
+        .select(
+          'donor_name, donor_email, donor_phone, donor_address, sale_date, calendrier_campagnes(name, year)'
+        )
+        .eq('association_id', currentAssociation.id)
+        .in('adresse_id', adresseIds)
+        .or('donor_name.not.is.null,donor_email.not.is.null,donor_phone.not.is.null')
+        .order('created_at', { ascending: false })
+        .limit(1)
+      if (!data || data.length === 0) return null
+
+      const v = data[0] as any
+      return {
+        donor_name: v.donor_name as string | null,
+        donor_email: v.donor_email as string | null,
+        donor_phone: v.donor_phone as string | null,
+        donor_address: v.donor_address as string | null,
+        campagne_name: v.calendrier_campagnes?.name as string | null,
+        campagne_year: v.calendrier_campagnes?.year as number | null,
+        sale_date: v.sale_date as string,
+      }
+    },
+    [currentAssociation]
+  )
+
+  // Export CSV des contacts donateurs (dédupliqués par email ou nom+téléphone)
+  const exportContactsCSV = useCallback(
+    async (campagneId?: string) => {
+      if (!currentAssociation) return
+
+      let query = supabase
+        .from('calendrier_ventes')
+        .select('donor_name, donor_email, donor_phone, donor_address, sale_date')
+        .eq('association_id', currentAssociation.id)
+        .or('donor_name.not.is.null,donor_email.not.is.null,donor_phone.not.is.null')
+        .order('sale_date', { ascending: false })
+
+      if (campagneId) query = query.eq('campagne_id', campagneId)
+
+      const { data } = await query
+      if (!data || data.length === 0) return
+
+      // Déduplication par email (priorité) ou par nom+téléphone
+      const seen = new Set<string>()
+      const unique = data.filter((v: any) => {
+        const key = v.donor_email?.trim().toLowerCase() || `${v.donor_name}|${v.donor_phone}`
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
+
+      const header = 'Nom,Email,Téléphone,Adresse,Dernière vente'
+      const rows = unique.map((v: any) =>
+        [
+          `"${(v.donor_name ?? '').replace(/"/g, '""')}"`,
+          `"${(v.donor_email ?? '').replace(/"/g, '""')}"`,
+          `"${(v.donor_phone ?? '').replace(/"/g, '""')}"`,
+          `"${(v.donor_address ?? '').replace(/"/g, '""')}"`,
+          `"${v.sale_date ?? ''}"`,
+        ].join(',')
+      )
+
+      const csv = [header, ...rows].join('\n')
+      const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `contacts-donateurs${campagneId ? `-${campagneId.slice(0, 8)}` : ''}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+    },
+    [currentAssociation]
+  )
+
   // Stats
   const totalAmount = ventes.reduce((sum, v) => sum + Number(v.amount), 0)
   const totalQuantity = ventes.reduce((sum, v) => sum + v.quantity, 0)
@@ -165,5 +262,7 @@ export function useCalendrierVentes(campagneId?: string, secteurId?: string, lim
     createVente,
     updateVente,
     deleteVente,
+    lookupDonorByAddress,
+    exportContactsCSV,
   }
 }

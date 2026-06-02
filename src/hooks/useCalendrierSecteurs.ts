@@ -79,9 +79,11 @@ export function useCalendrierSecteurs(campagneId?: string) {
 
   const fetchSecteurs = useCallback(async () => {
     if (!currentAssociation) { setLoading(false); return }
+    // Sans campagneId, ne rien charger — évite de mélanger des secteurs de plusieurs campagnes
+    if (!campagneId) { setSecteurs([]); setLoading(false); return }
     setLoading(true)
 
-    let query = supabase
+    const { data, error } = await supabase
       .from('calendrier_secteurs')
       .select(`
         *,
@@ -93,20 +95,17 @@ export function useCalendrierSecteurs(campagneId?: string) {
         calendrier_stocks(*)
       `)
       .eq('association_id', currentAssociation.id)
-
-    if (campagneId) {
-      query = query.eq('campagne_id', campagneId)
-    }
-
-    const { data, error } = await query.order('created_at', { ascending: true })
+      .eq('campagne_id', campagneId)
+      .order('created_at', { ascending: true })
 
     if (!error && data) {
-      // Calcul des totaux depuis les ventes
+      // Calcul des totaux depuis les ventes — filtré strictement par campagne ET secteur
       const secteurIds = data.map((s) => s.id)
       if (secteurIds.length > 0) {
         const { data: ventes } = await supabase
           .from('calendrier_ventes')
           .select('secteur_id, amount, quantity')
+          .eq('campagne_id', campagneId)
           .in('secteur_id', secteurIds)
 
         const enriched = data.map((secteur: any) => {
@@ -271,6 +270,156 @@ export function useCalendrierSecteurs(campagneId?: string) {
     await fetchSecteurs()
   }
 
+  const copySecteursFromPreviousCampagne = async (fromCampagneId: string, toCampagneId: string) => {
+    if (!currentAssociation || !user) throw new Error('Non authentifié')
+
+    // Récupérer les secteurs de l'ancienne campagne
+    const { data: oldSecteurs } = await supabase
+      .from('calendrier_secteurs')
+      .select(`
+        *,
+        calendrier_secteur_rues(*),
+        calendrier_secteur_equipiers(*),
+        calendrier_stocks(*)
+      `)
+      .eq('campagne_id', fromCampagneId)
+
+    if (!oldSecteurs || oldSecteurs.length === 0) return
+
+    // Copier chaque secteur
+    for (const oldSecteur of oldSecteurs) {
+      const {
+        id,
+        association_id,
+        created_at,
+        updated_at,
+        calendrier_secteur_rues,
+        calendrier_secteur_equipiers,
+        calendrier_stocks,
+        // Exclure les champs calculés
+        total_collected,
+        total_calendriers_sold,
+        progression_percent,
+        ...secteurData
+      } = oldSecteur
+
+      // Créer le nouveau secteur avec les champs sélectionnés
+      const { data: newSecteur, error: sErr } = await supabase
+        .from('calendrier_secteurs')
+        .insert({
+          association_id: currentAssociation.id,
+          campagne_id: toCampagneId,
+          name: secteurData.name,
+          description: secteurData.description,
+          objective_amount: secteurData.objective_amount,
+          objective_calendriers: secteurData.objective_calendriers,
+          color: secteurData.color,
+          notes: secteurData.notes,
+          status: 'todo', // Réinitialiser le statut
+          created_by: user.id,
+        })
+        .select()
+        .single()
+
+      if (sErr) {
+        console.error('Erreur création secteur:', sErr)
+        continue
+      }
+
+      // Copier les rues
+      if (calendrier_secteur_rues && calendrier_secteur_rues.length > 0) {
+        const ruesData = calendrier_secteur_rues.map((r: any) => ({
+          secteur_id: newSecteur.id,
+          name: r.name,
+          order: r.order,
+        }))
+        const { error: rErr } = await supabase.from('calendrier_secteur_rues').insert(ruesData)
+        if (rErr) console.error('Erreur copie rues:', rErr)
+      }
+
+      // Copier les équipiers
+      if (calendrier_secteur_equipiers && calendrier_secteur_equipiers.length > 0) {
+        const equipiersData = calendrier_secteur_equipiers.map((e: any) => ({
+          secteur_id: newSecteur.id,
+          amicaliste_id: e.amicaliste_id,
+          role: e.role,
+        }))
+        const { error: eErr } = await supabase.from('calendrier_secteur_equipiers').insert(equipiersData)
+        if (eErr) console.error('Erreur copie équipiers:', eErr)
+      }
+
+      // Copier le stock avec used_qty et returned_qty réinitialisés
+      if (calendrier_stocks && calendrier_stocks.length > 0) {
+        const stock = calendrier_stocks[0]
+        const { error: stErr } = await supabase.from('calendrier_stocks').insert({
+          secteur_id: newSecteur.id,
+          allocated_qty: stock.allocated_qty,
+          used_qty: 0,
+          returned_qty: 0,
+          updated_by: user.id,
+        })
+        if (stErr) console.error('Erreur copie stock:', stErr)
+      }
+    }
+
+    // Note: Don't call fetchSecteurs() here - let the parent component refetch
+    // with the correct campagneId context after activeCampagne is updated
+  }
+
+  const copySecteursFromTemplates = async (toCampagneId: string) => {
+    if (!currentAssociation || !user) throw new Error('Non authentifié')
+
+    // Récupérer les templates de l'association
+    const { data: templates } = await supabase
+      .from('calendrier_secteurs_templates')
+      .select(`
+        *,
+        calendrier_secteurs_templates_rues(*)
+      `)
+      .eq('association_id', currentAssociation.id)
+
+    if (!templates || templates.length === 0) return
+
+    // Copier chaque template
+    for (const template of templates) {
+      const { id, association_id, created_at, updated_at, calendrier_secteurs_templates_rues, ...templateData } = template as any
+
+      // Créer le nouveau secteur
+      const { data: newSecteur, error: sErr } = await supabase
+        .from('calendrier_secteurs')
+        .insert({
+          association_id: currentAssociation.id,
+          campagne_id: toCampagneId,
+          name: templateData.name,
+          description: templateData.description,
+          objective_amount: templateData.objective_amount,
+          objective_calendriers: templateData.objective_calendriers,
+          color: templateData.color,
+          notes: templateData.notes,
+          status: 'todo',
+          created_by: user.id,
+        })
+        .select()
+        .single()
+
+      if (sErr) {
+        console.error('Erreur création secteur depuis template:', sErr)
+        continue
+      }
+
+      // Copier les rues du template
+      if (calendrier_secteurs_templates_rues && calendrier_secteurs_templates_rues.length > 0) {
+        const ruesData = calendrier_secteurs_templates_rues.map((r: any) => ({
+          secteur_id: newSecteur.id,
+          name: r.name,
+          order: r.order,
+        }))
+        const { error: rErr } = await supabase.from('calendrier_secteur_rues').insert(ruesData)
+        if (rErr) console.error('Erreur copie rues:', rErr)
+      }
+    }
+  }
+
   return {
     secteurs,
     loading,
@@ -279,5 +428,7 @@ export function useCalendrierSecteurs(campagneId?: string) {
     updateSecteur,
     updateStatus,
     deleteSecteur,
+    copySecteursFromPreviousCampagne,
+    copySecteursFromTemplates,
   }
 }
