@@ -22,7 +22,7 @@ import { formatCurrency, formatDateShort } from '@/lib/utils'
 export function CalendriersStatistiquesPage() {
   const { currentAssociation } = useAssociation()
   const { activeCampagne, campagnes, loading: campLoading } = useCalendrierCampagnes()
-  const { currentSecteur, secteurs } = useSecteur()
+  const { secteurs } = useSecteur()
   const [selectedSecteurId, setSelectedSecteurId] = useState<string | null>(null)
   const {
     amicalisteStats,
