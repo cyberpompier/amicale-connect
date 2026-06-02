@@ -176,12 +176,21 @@ export function CalendriersSaisieVentePage() {
         }
       }
 
+      // Résoudre la ville : rue → secteur → association
+      const matchingRueForAddress = rues.find(
+        (r) => r.name.toLowerCase().trim() === streetName.toLowerCase().trim()
+      )
+      const resolvedCity = matchingRueForAddress?.city || secteur?.city || currentAssociation?.city || null
+
       const fullAddress =
         donorAddress.trim() ||
         (streetName
-          ? `${streetNumber ? streetNumber + ' ' : ''}${streetName}${
-              building ? ' — Bât. ' + building : ''
-            }`
+          ? [
+              `${streetNumber ? streetNumber + ' ' : ''}${streetName}${building ? ' — Bât. ' + building : ''}`,
+              resolvedCity,
+            ]
+              .filter(Boolean)
+              .join(', ')
           : null)
 
       const vente = await createVente({
