@@ -29,7 +29,7 @@ export function CalendriersStockPage() {
   const navigate = useNavigate()
   const { currentAssociation } = useAssociation()
   const { activeCampagne, loading: campLoading } = useCalendrierCampagnes()
-  const { secteurs } = useCalendrierSecteurs(activeCampagne?.id)
+  useCalendrierSecteurs(activeCampagne?.id)
 
   const [stockData, setStockData] = useState<StockData[]>([])
   const [movements, setMovements] = useState<StockMovement[]>([])

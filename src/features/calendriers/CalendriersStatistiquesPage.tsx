@@ -116,7 +116,7 @@ export function CalendriersStatistiquesPage() {
       yPos = 55
 
       // ===== KPIs CARDS =====
-      const kpiCards = [
+      const kpiCards: Array<{ label: string; value: string; detail: string; color: [number, number, number] }> = [
         {
           label: 'Collecte',
           value: formatCurrency(totalAmount),
@@ -139,7 +139,7 @@ export function CalendriersStatistiquesPage() {
           label: 'Ventes',
           value: `${totalVentes}`,
           detail: `Panier moy. ${formatCurrency(totalVentes > 0 ? totalAmount / totalVentes : 0)}`,
-          color: [168, 85, 247],
+          color: [168, 85, 247] as [number, number, number],
         },
       ]
 
