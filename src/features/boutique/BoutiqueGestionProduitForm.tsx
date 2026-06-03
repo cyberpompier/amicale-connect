@@ -344,23 +344,52 @@ export function BoutiqueGestionProduitForm() {
             <p className="text-sm text-[var(--color-text-muted)] text-center py-2">Aucune variante — article vendu sans option de taille/couleur.</p>
           )}
 
+          {variantes.length > 0 && (
+            <div className="hidden sm:grid grid-cols-5 gap-2 px-3 py-2 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+              <span>Type</span>
+              <span>Valeur</span>
+              <span>Quantité</span>
+              <span>Surcoût</span>
+              <span></span>
+            </div>
+          )}
+
           <div className="space-y-3">
             {variantes.map((v, i) => (
-              <div key={i} className="grid grid-cols-2 sm:grid-cols-5 gap-2 p-3 bg-[var(--color-bg-secondary)] rounded-xl">
-                <select value={v.type} onChange={(e) => updateVariante(i, 'type', e.target.value)}
-                  className="px-2 py-2 border border-[var(--color-border)] rounded-lg text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25">
-                  {Object.entries(TYPE_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
-                </select>
-                <input type="text" placeholder="Valeur (ex: M, Bleu)" value={v.value} onChange={(e) => updateVariante(i, 'value', e.target.value)}
-                  className="px-2 py-2 border border-[var(--color-border)] rounded-lg text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25" />
-                <input type="number" placeholder="Stock" min="0" value={v.stock_qty} onChange={(e) => updateVariante(i, 'stock_qty', parseInt(e.target.value) || 0)}
-                  className="px-2 py-2 border border-[var(--color-border)] rounded-lg text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25" />
-                <input type="number" step="0.01" placeholder="Surcoût (€)" value={v.price_modifier} onChange={(e) => updateVariante(i, 'price_modifier', parseFloat(e.target.value) || 0)}
-                  className="px-2 py-2 border border-[var(--color-border)] rounded-lg text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25" />
-                <button type="button" onClick={() => removeVariante(i)}
-                  className="flex items-center justify-center p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                  <Trash2 className="w-4 h-4" />
-                </button>
+              <div key={i}>
+                <div className="sm:hidden text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-2 space-y-1">
+                  <div>Type : <span className="text-[var(--color-text)]">{TYPE_LABELS[v.type]}</span></div>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 p-3 bg-[var(--color-bg-secondary)] rounded-xl">
+                  <div className="sm:col-span-1">
+                    <label className="sm:hidden block text-xs font-medium text-[var(--color-text)] mb-1">Type *</label>
+                    <select value={v.type} onChange={(e) => updateVariante(i, 'type', e.target.value)}
+                      className="w-full px-2 py-2 border border-[var(--color-border)] rounded-lg text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25">
+                      {Object.entries(TYPE_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+                    </select>
+                  </div>
+                  <div className="sm:col-span-1">
+                    <label className="sm:hidden block text-xs font-medium text-[var(--color-text)] mb-1">Valeur *</label>
+                    <input type="text" placeholder="M, Bleu..." value={v.value} onChange={(e) => updateVariante(i, 'value', e.target.value)}
+                      className="w-full px-2 py-2 border border-[var(--color-border)] rounded-lg text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25" />
+                  </div>
+                  <div className="sm:col-span-1">
+                    <label className="sm:hidden block text-xs font-medium text-[var(--color-text)] mb-1">Quantité en stock</label>
+                    <input type="number" placeholder="0" min="0" value={v.stock_qty} onChange={(e) => updateVariante(i, 'stock_qty', parseInt(e.target.value) || 0)}
+                      className="w-full px-2 py-2 border border-[var(--color-border)] rounded-lg text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25" />
+                  </div>
+                  <div className="sm:col-span-1">
+                    <label className="sm:hidden block text-xs font-medium text-[var(--color-text)] mb-1">Surcoût (€)</label>
+                    <input type="number" step="0.01" placeholder="0.00" value={v.price_modifier} onChange={(e) => updateVariante(i, 'price_modifier', parseFloat(e.target.value) || 0)}
+                      className="w-full px-2 py-2 border border-[var(--color-border)] rounded-lg text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25" />
+                  </div>
+                  <div className="flex items-end">
+                    <button type="button" onClick={() => removeVariante(i)}
+                      className="w-full flex items-center justify-center p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
