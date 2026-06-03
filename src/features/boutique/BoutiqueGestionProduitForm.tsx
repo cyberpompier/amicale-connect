@@ -28,6 +28,7 @@ export function BoutiqueGestionProduitForm() {
     base_price: '',
     sku: '',
     stock_status: 'in_stock' as 'in_stock' | 'out_of_stock' | 'coming_soon',
+    stock_quantity: '0',
     payment_type: 'both' as 'stripe' | 'manual' | 'both',
     badges: [] as string[],
     discount_percent: '',
@@ -49,6 +50,7 @@ export function BoutiqueGestionProduitForm() {
         base_price: existing.base_price.toString(),
         sku: existing.sku ?? '',
         stock_status: existing.stock_status,
+        stock_quantity: (existing.stock_quantity ?? 0).toString(),
         payment_type: existing.payment_type,
         badges: existing.badges ?? [],
         discount_percent: existing.discount_percent?.toString() ?? '',
@@ -126,6 +128,7 @@ export function BoutiqueGestionProduitForm() {
         base_price: price,
         sku: form.sku.trim() || null,
         stock_status: form.stock_status,
+        stock_quantity: parseInt(form.stock_quantity) || 0,
         payment_type: form.payment_type,
         image_url: imagePreview,
         badges: form.badges,
@@ -297,16 +300,31 @@ export function BoutiqueGestionProduitForm() {
               </select>
             </div>
 
-            {/* Paiement */}
+            {/* Quantité en stock */}
             <div>
-              <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Mode paiement</label>
-              <select value={form.payment_type} onChange={(e) => setForm((p) => ({ ...p, payment_type: e.target.value as typeof form.payment_type }))}
-                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25">
-                <option value="both">Les deux</option>
-                <option value="stripe">Carte uniquement</option>
-                <option value="manual">Manuel uniquement</option>
-              </select>
+              <label className="block text-sm font-medium text-[var(--color-text)] mb-1">
+                Quantité en stock
+                <span className="ml-1 text-xs font-normal text-[var(--color-text-muted)]">(0 = illimité)</span>
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={form.stock_quantity}
+                onChange={(e) => setForm((p) => ({ ...p, stock_quantity: e.target.value }))}
+                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25"
+              />
             </div>
+          </div>
+
+          {/* Paiement */}
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Mode paiement</label>
+            <select value={form.payment_type} onChange={(e) => setForm((p) => ({ ...p, payment_type: e.target.value as typeof form.payment_type }))}
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25">
+              <option value="both">Les deux</option>
+              <option value="stripe">Carte uniquement</option>
+              <option value="manual">Manuel uniquement</option>
+            </select>
           </div>
         </section>
 
