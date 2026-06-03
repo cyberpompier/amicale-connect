@@ -43,6 +43,7 @@ import { CalendriersSecteurMapPage } from '@/features/calendriers/CalendriersSec
 import { ParametresPage } from '@/features/parametres/ParametresPage'
 import { ParametresFacturationPage } from '@/features/parametres/ParametresFacturationPage'
 import { ParametresEquipePage } from '@/features/parametres/ParametresEquipePage'
+import { ParametresAccesPage } from '@/features/parametres/ParametresAccesPage'
 
 export const router = createBrowserRouter([
   // Auth routes (publiques)
@@ -247,6 +248,10 @@ export const router = createBrowserRouter([
       {
         path: 'parametres/equipe',
         element: <ParametresEquipePage />,
+      },
+      {
+        path: 'parametres/acces',
+        element: <ParametresAccesPage />,
       },
     ],
   },

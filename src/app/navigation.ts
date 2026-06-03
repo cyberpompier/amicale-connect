@@ -112,5 +112,6 @@ export const settingsNavItem: NavItem = {
     { label: 'Général', path: '/parametres' },
     { label: 'Facturation', path: '/parametres/facturation' },
     { label: 'Équipe', path: '/parametres/equipe' },
+    { label: 'Accès', path: '/parametres/acces' },
   ],
 }
