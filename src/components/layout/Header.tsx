@@ -1,5 +1,7 @@
-import { LogOut, ChevronDown } from 'lucide-react'
+import { LogOut, ChevronDown, Bell, BellOff } from 'lucide-react'
 import { useAuthContext } from '@/features/auth/AuthContext'
+import { useAssociation } from '@/features/association/AssociationContext'
+import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { useState, useRef, useEffect } from 'react'
 
 interface HeaderProps {
@@ -9,6 +11,8 @@ interface HeaderProps {
 
 export function Header({ associationName, logoUrl }: HeaderProps) {
   const { user, signOut } = useAuthContext()
+  const { currentAssociation } = useAssociation()
+  const { isSupported, isSubscribed, loading, subscribe, unsubscribe } = usePushNotifications(currentAssociation?.id)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -61,6 +65,16 @@ export function Header({ associationName, logoUrl }: HeaderProps) {
               <p className="text-sm font-semibold text-[var(--color-text)] truncate">{displayName}</p>
               <p className="text-xs text-[var(--color-text-muted)] truncate mt-0.5">{user?.email}</p>
             </div>
+            {isSupported && (
+              <button
+                onClick={() => { isSubscribed ? unsubscribe() : subscribe() }}
+                disabled={loading}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg-secondary)] transition-colors disabled:opacity-50"
+              >
+                {isSubscribed ? <BellOff className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
+                {isSubscribed ? 'Désactiver les notifs' : 'Activer les notifs'}
+              </button>
+            )}
             <button
               onClick={() => { setMenuOpen(false); signOut() }}
               className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
