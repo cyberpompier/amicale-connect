@@ -45,6 +45,7 @@ export interface BoutiqueProduit {
   image_url: string | null
   base_price: number
   stock_status: 'in_stock' | 'out_of_stock' | 'coming_soon'
+  stock_quantity: number
   payment_type: 'stripe' | 'manual' | 'both'
   sku: string | null
   badges: string[]
@@ -65,6 +66,7 @@ export type BoutiqueProduitInput = {
   image_url: string | null
   base_price: number
   stock_status: 'in_stock' | 'out_of_stock' | 'coming_soon'
+  stock_quantity?: number
   payment_type: 'stripe' | 'manual' | 'both'
   sku: string | null
   badges?: string[]
@@ -180,6 +182,22 @@ export function useBoutiqueProduits() {
     await fetchAll()
   }
 
+  const updateStockInline = async (id: string, stock_status: BoutiqueProduit['stock_status'], stock_quantity: number) => {
+    // Optimistic update
+    setProduits((prev) =>
+      prev.map((p) => p.id === id ? { ...p, stock_status, stock_quantity } : p)
+    )
+    const { error } = await supabase
+      .from('boutique_produits')
+      .update({ stock_status, stock_quantity, updated_at: new Date().toISOString() })
+      .eq('id', id)
+    if (error) {
+      // Rollback on error
+      await fetchAll()
+      throw error
+    }
+  }
+
   const deleteProduit = async (id: string) => {
     const { error } = await supabase.from('boutique_produits').delete().eq('id', id)
     if (error) throw error
@@ -229,6 +247,7 @@ export function useBoutiqueProduits() {
     ensurePrimaryVendor,
     addProduit,
     updateProduit,
+    updateStockInline,
     deleteProduit,
     addVariante,
     updateVariante,

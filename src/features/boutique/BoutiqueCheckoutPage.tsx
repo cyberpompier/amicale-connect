@@ -1,9 +1,10 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, CreditCard, Banknote, ShoppingBag, CheckCircle2 } from 'lucide-react'
 import { useBoutiqueCart } from '@/hooks/useBoutiqueCart'
 import { useBoutiqueCommandes } from '@/hooks/useBoutiqueCommandes'
 import { useAuthContext } from '@/features/auth/AuthContext'
+import { supabase } from '@/lib/supabase'
 
 export function BoutiqueCheckoutPage() {
   const navigate = useNavigate()
@@ -23,6 +24,26 @@ export function BoutiqueCheckoutPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState<string | null>(null)
+
+  // Pré-remplir depuis le profil utilisateur
+  useEffect(() => {
+    if (!user) return
+    supabase
+      .from('profiles')
+      .select('first_name, last_name, phone, email')
+      .eq('id', user.id)
+      .single()
+      .then(({ data }) => {
+        if (!data) return
+        const fullName = [data.first_name, data.last_name].filter(Boolean).join(' ')
+        setForm((prev) => ({
+          ...prev,
+          user_name: fullName || prev.user_name,
+          user_email: data.email || user.email || prev.user_email,
+          user_phone: data.phone || prev.user_phone,
+        }))
+      })
+  }, [user])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
