@@ -2,15 +2,17 @@ self.addEventListener('push', (event) => {
   let data = {}
   try { data = event.data?.json() ?? {} } catch { data = { title: event.data?.text() ?? '' } }
   const title = data.title || 'Amicale Connect'
-  const options = {
+  const baseOptions = {
     body: data.body || '',
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
-    image: data.image || undefined,
     data: data.url ? { url: data.url } : {},
     vibrate: [100, 50, 100],
   }
-  event.waitUntil(self.registration.showNotification(title, options))
+  const imageUrl = data.image && data.image.startsWith('http') ? data.image : undefined
+  event.waitUntil(self.registration.showNotification(title,
+    imageUrl ? { ...baseOptions, image: imageUrl } : baseOptions
+  ))
 })
 
 self.addEventListener('notificationclick', (event) => {
