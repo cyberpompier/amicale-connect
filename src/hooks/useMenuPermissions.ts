@@ -79,9 +79,10 @@ export function useMenuPermissions() {
 
   const isAllowed = useCallback(
     (menuPath: string) => {
+      // Extraire le premier segment : '/calendriers/secteurs' → 'calendriers'
+      const key = menuPath.split('/').filter(Boolean)[0] ?? ''
       // Paramètres toujours visibles
-      if (menuPath === '/parametres') return true
-      const key = menuPath.replace('/', '')
+      if (key === 'parametres') return true
       return allowedKeys.has(key)
     },
     [allowedKeys]
