@@ -1,9 +1,11 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { mainNavItems, settingsNavItem, type SubNavItem } from '@/app/navigation'
+import { useMenuPermissionsContext } from '@/features/auth/MenuPermissionsContext'
 
 export function SubNav() {
   const location = useLocation()
+  const { isAllowed } = useMenuPermissionsContext()
 
   const allItems = [...mainNavItems, settingsNavItem]
   const activeModule = allItems.find((item) => {
@@ -13,7 +15,7 @@ export function SubNav() {
     return location.pathname.startsWith(item.path)
   })
 
-  const subItems: SubNavItem[] = activeModule?.subNav ?? []
+  const subItems: SubNavItem[] = (activeModule?.subNav ?? []).filter((sub) => isAllowed(sub.path))
 
   if (subItems.length === 0) return null
 

@@ -13,9 +13,11 @@ interface TeamMember {
 }
 
 const ROLE_CONFIG: Record<string, { label: string; icon: typeof Crown; color: string }> = {
-  owner: { label: 'Propriétaire', icon: Crown, color: 'text-amber-600 bg-amber-50 border-amber-200' },
-  admin: { label: 'Administrateur', icon: ShieldCheck, color: 'text-blue-600 bg-blue-50 border-blue-200' },
-  member: { label: 'Membre', icon: Eye, color: 'text-gray-600 bg-gray-50 border-gray-200' },
+  owner:     { label: 'Propriétaire',  icon: Crown,       color: 'text-amber-600  bg-amber-50  border-amber-200'  },
+  admin:     { label: 'Administrateur',icon: ShieldCheck, color: 'text-blue-600   bg-blue-50   border-blue-200'   },
+  bureau:    { label: 'Bureau',        icon: Users,       color: 'text-purple-600 bg-purple-50 border-purple-200' },
+  tresorier: { label: 'Trésorier',     icon: Eye,         color: 'text-green-600  bg-green-50  border-green-200'  },
+  membre:    { label: 'Membre',        icon: Eye,         color: 'text-gray-600   bg-gray-50   border-gray-200'   },
 }
 
 export function ParametresEquipePage() {
@@ -122,7 +124,9 @@ export function ParametresEquipePage() {
                   className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25"
                 >
                   <option value="admin">Administrateur</option>
-                  <option value="member">Membre</option>
+                  <option value="bureau">Bureau</option>
+                  <option value="tresorier">Trésorier</option>
+                  <option value="membre">Membre</option>
                 </select>
               </div>
               <div className="flex gap-2">
@@ -225,9 +229,11 @@ export function ParametresEquipePage() {
                     <Icon className="w-3 h-3" /> {conf.label}
                   </span>
                   <span className="text-xs text-[var(--color-text-muted)]">
-                    {key === 'owner' && 'Accès total, gestion de l\'abonnement'}
-                    {key === 'admin' && 'Accès complet sauf facturation'}
-                    {key === 'member' && 'Consultation uniquement'}
+                    {key === 'owner'     && 'Accès total, gestion de l\'abonnement'}
+                    {key === 'admin'     && 'Accès complet sauf facturation'}
+                    {key === 'bureau'    && 'Accès selon configuration Paramètres > Accès'}
+                    {key === 'tresorier' && 'Accès selon configuration Paramètres > Accès'}
+                    {key === 'membre'    && 'Accès selon configuration Paramètres > Accès'}
                   </span>
                 </div>
               )

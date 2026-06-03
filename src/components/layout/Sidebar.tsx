@@ -2,6 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { Flame, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { mainNavItems, settingsNavItem } from '@/app/navigation'
+import { useMenuPermissionsContext } from '@/features/auth/MenuPermissionsContext'
 
 const MOBILE_LABELS: Record<string, string> = {
   'Dashboard': 'Accueil',
@@ -18,6 +19,9 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const location = useLocation()
+  const { isAllowed } = useMenuPermissionsContext()
+
+  const visibleNavItems = mainNavItems.filter((item) => isAllowed(item.path))
 
   const isActive = (path: string) => {
     if (path === '/dashboard') return location.pathname === '/dashboard' || location.pathname === '/'
@@ -50,7 +54,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
         {/* Navigation principale */}
         <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
-          {mainNavItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
@@ -104,7 +108,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* ── Mobile Bottom Nav ── */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[var(--color-border)] z-50 md:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="flex items-stretch h-14">
-          {mainNavItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const active = isActive(item.path)
             return (
               <NavLink
