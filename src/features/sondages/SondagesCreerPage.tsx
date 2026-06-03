@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, Trash2, Radio, CheckSquare, Calendar, Upload, X } from 'lucide-react'
 import { useSondages } from '@/hooks/useSondages'
+import { supabase } from '@/lib/supabase'
 
 export function SondagesCreerPage() {
   const navigate = useNavigate()
@@ -13,6 +14,7 @@ export function SondagesCreerPage() {
     type: 'unique' as 'unique' | 'multiple',
     date_fin: '',
   })
+  const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [options, setOptions] = useState(['', ''])
   const [saving, setSaving] = useState(false)
@@ -21,10 +23,20 @@ export function SondagesCreerPage() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      setImageFile(file)
       const reader = new FileReader()
       reader.onload = (evt) => setImagePreview(evt.target?.result as string)
       reader.readAsDataURL(file)
     }
+  }
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    const ext = file.name.split('.').pop()
+    const path = `${crypto.randomUUID()}.${ext}`
+    const { error } = await supabase.storage.from('sondages').upload(path, file)
+    if (error) return null
+    const { data } = supabase.storage.from('sondages').getPublicUrl(path)
+    return data.publicUrl
   }
 
   const addOption = () => setOptions((prev) => [...prev, ''])
@@ -44,12 +56,13 @@ export function SondagesCreerPage() {
 
     setSaving(true)
     try {
+      const imageUrl = imageFile ? await uploadImage(imageFile) : null
       await addSondage({
         titre: form.titre.trim(),
         description: form.description.trim() || null,
         type: form.type,
         date_fin: form.date_fin || null,
-        image_url: imagePreview || null,
+        image_url: imageUrl,
         options: validOptions,
       })
       navigate('/sondages')
@@ -90,7 +103,7 @@ export function SondagesCreerPage() {
                 <img src={imagePreview} alt="Preview" className="w-full h-36 object-cover rounded-xl border border-[var(--color-border)]" />
                 <button
                   type="button"
-                  onClick={() => setImagePreview(null)}
+                  onClick={() => { setImagePreview(null); setImageFile(null) }}
                   className="absolute top-2 right-2 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
                 >
                   <X className="w-4 h-4" />
