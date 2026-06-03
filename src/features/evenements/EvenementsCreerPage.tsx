@@ -2,6 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react'
 import { useEvenements } from '@/hooks/useEvenements'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Calendar, Upload, X } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 export function EvenementsCreerPage() {
   const { addEvenement, updateEvenement, evenements, loading } = useEvenements()
@@ -19,8 +20,18 @@ export function EvenementsCreerPage() {
     tarif_amicaliste: '',
     tarif_exterieur: '',
   })
+  const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    const ext = file.name.split('.').pop()
+    const path = `${crypto.randomUUID()}.${ext}`
+    const { error } = await supabase.storage.from('evenements').upload(path, file)
+    if (error) return null
+    const { data } = supabase.storage.from('evenements').getPublicUrl(path)
+    return data.publicUrl
+  }
 
   useEffect(() => {
     if (editId && evenements.length > 0) {
@@ -46,12 +57,9 @@ export function EvenementsCreerPage() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      setImageFile(file)
       const reader = new FileReader()
-      reader.onload = (event) => {
-        const base64 = event.target?.result as string
-        setImagePreview(base64)
-        setFormData((p) => ({ ...p, image_url: base64 }))
-      }
+      reader.onload = (event) => setImagePreview(event.target?.result as string)
       reader.readAsDataURL(file)
     }
   }
@@ -62,8 +70,10 @@ export function EvenementsCreerPage() {
 
     setSaving(true)
     try {
+      const imageUrl = imageFile ? await uploadImage(imageFile) : formData.image_url || null
       const payload = {
         ...formData,
+        image_url: imageUrl || '',
         tarif_amicaliste: formData.tarif_amicaliste ? parseFloat(formData.tarif_amicaliste) : null,
         tarif_exterieur: formData.tarif_exterieur ? parseFloat(formData.tarif_exterieur) : null,
       }
@@ -132,6 +142,7 @@ export function EvenementsCreerPage() {
                     type="button"
                     onClick={() => {
                       setImagePreview(null)
+                      setImageFile(null)
                       setFormData((p) => ({ ...p, image_url: '' }))
                     }}
                     className="absolute top-2 right-2 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
