@@ -41,6 +41,12 @@ export function MembresAddPage() {
     join_date: new Date().toISOString().split('T')[0],
     notes: null,
     avatar_url: null,
+    user_id: null,
+    birth_date: null,
+    address_street: null,
+    address_city: null,
+    address_postal_code: null,
+    marital_status: null,
   })
 
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
@@ -60,6 +66,12 @@ export function MembresAddPage() {
         join_date: existing.join_date,
         notes: existing.notes,
         avatar_url: existing.avatar_url || null,
+        user_id: existing.user_id || null,
+        birth_date: existing.birth_date || null,
+        address_street: existing.address_street || null,
+        address_city: existing.address_city || null,
+        address_postal_code: existing.address_postal_code || null,
+        marital_status: existing.marital_status || null,
       })
       if (existing.avatar_url) {
         setAvatarPreview(existing.avatar_url)
