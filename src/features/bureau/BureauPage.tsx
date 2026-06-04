@@ -21,6 +21,7 @@ export function BureauPage() {
   const { positions, loading, addPosition, endMandate, deletePosition } = useBureauPositions()
   const { amicalistes } = useAmicalistes()
   const { links, loading: linksLoading, addLink, deleteLink } = useBureauDriveLinks()
+  const [activeTab, setActiveTab] = useState<'composition' | 'historique' | 'drive'>('composition')
   const [showForm, setShowForm] = useState(false)
   const [showDriveForm, setShowDriveForm] = useState(false)
   const [driveFormData, setDriveFormData] = useState({ title: '', url: '', icon: '📄' })
@@ -119,19 +120,63 @@ export function BureauPage() {
   return (
     <div>
       <PageHeader
-        title="Composition du bureau"
-        subtitle={`${positions.length} poste${positions.length !== 1 ? 's' : ''} actif${positions.length !== 1 ? 's' : ''}`}
-        action={
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Ajouter un poste</span>
-            <span className="sm:hidden">Ajouter</span>
-          </button>
-        }
+        title="Bureau"
+        subtitle="Composition et gestion du bureau"
       />
+
+      {/* Tabs */}
+      <div className="flex gap-4 mb-6 border-b border-[var(--color-border)]">
+        <button
+          onClick={() => setActiveTab('composition')}
+          className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${
+            activeTab === 'composition'
+              ? 'border-[var(--color-primary)] text-[var(--color-primary)]'
+              : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+          }`}
+        >
+          Composition
+        </button>
+        <button
+          onClick={() => setActiveTab('historique')}
+          className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${
+            activeTab === 'historique'
+              ? 'border-[var(--color-primary)] text-[var(--color-primary)]'
+              : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+          }`}
+        >
+          Historique
+        </button>
+        <button
+          onClick={() => setActiveTab('drive')}
+          className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${
+            activeTab === 'drive'
+              ? 'border-[var(--color-primary)] text-[var(--color-primary)]'
+              : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+          }`}
+        >
+          Drive
+        </button>
+      </div>
+
+      {/* Composition Tab */}
+      {activeTab === 'composition' && (
+        <div>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-lg font-bold text-[var(--color-text)]">Composition du bureau</h2>
+              <p className="text-sm text-[var(--color-text-muted)] mt-1">
+                {positions.length} poste{positions.length !== 1 ? 's' : ''} actif{positions.length !== 1 ? 's' : ''}
+              </p>
+            </div>
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">Ajouter un poste</span>
+              <span className="sm:hidden">Ajouter</span>
+            </button>
+          </div>
 
       {showForm && (
         <div className="bg-white rounded-xl border border-[var(--color-border)] p-5 mb-5 shadow-[var(--shadow-sm)]">
@@ -311,11 +356,20 @@ export function BureauPage() {
               </div>
             </div>
           )}
+          </div>
         </div>
       )}
 
-      {/* Section Drive */}
-      <div className="mt-12 pt-8 border-t border-[var(--color-border)]">
+      {/* Historique Tab */}
+      {activeTab === 'historique' && (
+        <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center shadow-[var(--shadow-sm)]">
+          <p className="text-sm text-[var(--color-text-muted)]">Historique des mandats — à venir</p>
+        </div>
+      )}
+
+      {/* Drive Tab */}
+      {activeTab === 'drive' && (
+      <div>
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-lg font-bold text-[var(--color-text)]">Drive</h2>
@@ -423,6 +477,7 @@ export function BureauPage() {
           </div>
         )}
       </div>
+      )}
     </div>
   )
 }
