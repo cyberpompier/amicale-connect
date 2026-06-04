@@ -53,7 +53,9 @@ export function BoutiqueCartPage() {
             {cartItems.map((item) => {
               const produit = item.boutique_produits
               const variante = item.boutique_produit_variantes
-              const price = (produit?.base_price ?? 0) + (variante?.price_modifier ?? 0)
+              const basePrice = (produit?.base_price ?? 0) + (variante?.price_modifier ?? 0)
+              const discount = produit?.discount_percent ?? 0
+              const price = basePrice * (1 - discount / 100)
               return (
                 <div key={item.id} className="flex items-center gap-4 p-4">
                   {/* Image */}
@@ -73,7 +75,15 @@ export function BoutiqueCartPage() {
                     {variante && (
                       <p className="text-xs text-[var(--color-text-muted)] capitalize">{variante.type} : {variante.value}</p>
                     )}
-                    <p className="text-sm font-bold text-[var(--color-primary)] mt-0.5">{price.toFixed(2)} €</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-sm font-bold text-[var(--color-primary)]">{price.toFixed(2)} €</p>
+                      {discount > 0 && (
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs line-through text-[var(--color-text-muted)]">{basePrice.toFixed(2)} €</span>
+                          <span className="text-xs font-semibold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">-{discount.toFixed(0)}%</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Quantité */}
