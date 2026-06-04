@@ -111,7 +111,9 @@ export function useBoutiqueCart() {
     const subtotal = cartItems.reduce((sum, item) => {
       const basePrice = item.boutique_produits?.base_price ?? 0
       const modifier = item.boutique_produit_variantes?.price_modifier ?? 0
-      return sum + (basePrice + modifier) * item.quantity
+      const discount = item.boutique_produits?.discount_percent ?? 0
+      const unitPrice = (basePrice + modifier) * (1 - discount / 100)
+      return sum + unitPrice * item.quantity
     }, 0)
     const tax = subtotal * TAX_RATE
     return {
