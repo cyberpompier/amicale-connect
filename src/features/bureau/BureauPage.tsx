@@ -356,7 +356,6 @@ export function BureauPage() {
               </div>
             </div>
           )}
-          </div>
         </div>
       )}
 
