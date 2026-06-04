@@ -178,7 +178,7 @@ export function BureauPage() {
             </button>
           </div>
 
-      {showForm && (
+          {showForm && (
         <div className="bg-white rounded-xl border border-[var(--color-border)] p-5 mb-5 shadow-[var(--shadow-sm)]">
           <h3 className="text-sm font-semibold text-[var(--color-text)] mb-4">Nouveau poste</h3>
           <form onSubmit={handleSubmit}>
@@ -233,10 +233,10 @@ export function BureauPage() {
               </button>
             </div>
           </form>
-        </div>
-      )}
+          </div>
+          )}
 
-      {positions.length === 0 ? (
+          {positions.length === 0 ? (
         <div className="bg-white rounded-xl border border-[var(--color-border)] p-16 text-center shadow-[var(--shadow-sm)]">
           <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Users2 className="w-7 h-7 text-gray-400" />
@@ -356,6 +356,7 @@ export function BureauPage() {
               </div>
             </div>
           )}
+        </div>
         </div>
       )}
 
