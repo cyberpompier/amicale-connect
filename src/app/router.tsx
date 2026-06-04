@@ -14,6 +14,7 @@ import { CategoriesPage } from '@/features/comptabilite/CategoriesPage'
 import { BilanPage } from '@/features/comptabilite/BilanPage'
 import { BureauPage } from '@/features/bureau/BureauPage'
 import { BureauHistoriquePage } from '@/features/bureau/BureauHistoriquePage'
+import { BureauDrivePage } from '@/features/bureau/BureauDrivePage'
 import { EvenementsPage } from '@/features/evenements/EvenementsPage'
 import { EvenementsCreerPage } from '@/features/evenements/EvenementsCreerPage'
 import { EvenementsArchivesPage } from '@/features/evenements/EvenementsArchivesPage'
@@ -128,6 +129,10 @@ export const router = createBrowserRouter([
       {
         path: 'bureau/historique',
         element: <BureauHistoriquePage />,
+      },
+      {
+        path: 'bureau/drive',
+        element: <BureauDrivePage />,
       },
       // Événements
       {

@@ -57,6 +57,7 @@ export const mainNavItems: NavItem[] = [
     subNav: [
       { label: 'Composition', path: '/bureau' },
       { label: 'Historique', path: '/bureau/historique' },
+      { label: 'Drive', path: '/bureau/drive' },
     ],
   },
   {
