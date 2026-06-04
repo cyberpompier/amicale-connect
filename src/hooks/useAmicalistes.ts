@@ -5,6 +5,7 @@ import { useAssociation } from '@/features/association/AssociationContext'
 export interface Amicaliste {
   id: string
   association_id: string
+  user_id: string | null
   first_name: string
   last_name: string
   email: string | null
@@ -14,6 +15,11 @@ export interface Amicaliste {
   join_date: string
   notes: string | null
   avatar_url: string | null
+  birth_date: string | null
+  address_street: string | null
+  address_city: string | null
+  address_postal_code: string | null
+  marital_status: string | null
   created_at: string
   updated_at: string
 }

@@ -44,8 +44,17 @@ import { ParametresPage } from '@/features/parametres/ParametresPage'
 import { ParametresFacturationPage } from '@/features/parametres/ParametresFacturationPage'
 import { ParametresEquipePage } from '@/features/parametres/ParametresEquipePage'
 import { ParametresAccesPage } from '@/features/parametres/ParametresAccesPage'
+import { ProfilWizard } from '@/features/profil/ProfilWizard'
+import { ProfilPage } from '@/features/profil/ProfilPage'
+import { AssociationProvider } from '@/features/association/AssociationContext'
 
 export const router = createBrowserRouter([
+  // Profil wizard (hors AppShell, plein écran)
+  {
+    path: '/profil/completer',
+    element: <AssociationProvider><ProfilWizard /></AssociationProvider>,
+  },
+
   // Auth routes (publiques)
   {
     path: '/auth/login',
@@ -235,6 +244,11 @@ export const router = createBrowserRouter([
       {
         path: 'calendriers/historique',
         element: <CalendriersHistoriquePage />,
+      },
+      // Profil utilisateur
+      {
+        path: 'profil',
+        element: <ProfilPage />,
       },
       // Paramètres
       {
