@@ -232,10 +232,9 @@ export function DashboardPage() {
             </div>
           )}
         </div>
-      </div>
 
-      {/* Sondages en cours */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] shadow-[var(--shadow-sm)] overflow-hidden">
+        {/* Sondages en cours */}
+        <div className="lg:col-span-3 bg-white rounded-xl border border-[var(--color-border)] shadow-[var(--shadow-sm)] overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)]">
           <div className="flex items-center gap-2">
             <Radio className="w-4 h-4 text-[var(--color-primary)]" />
