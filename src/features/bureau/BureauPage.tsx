@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { useBureauPositions } from '@/hooks/useBureauPositions'
 import { useAmicalistes } from '@/hooks/useAmicalistes'
-import { Plus, Trash2, Users2 } from 'lucide-react'
+import { Plus, Trash2, Users2, FolderOpen, ExternalLink } from 'lucide-react'
+import { useBureauDriveLinks } from '@/hooks/useBureauDriveLinks'
 import { formatDateShort } from '@/lib/utils'
 import { PageHeader } from '@/components/ui/PageHeader'
 
@@ -19,7 +20,11 @@ const BUREAU_POSITIONS = [
 export function BureauPage() {
   const { positions, loading, addPosition, endMandate, deletePosition } = useBureauPositions()
   const { amicalistes } = useAmicalistes()
+  const { links, loading: linksLoading, addLink, deleteLink } = useBureauDriveLinks()
   const [showForm, setShowForm] = useState(false)
+  const [showDriveForm, setShowDriveForm] = useState(false)
+  const [driveFormData, setDriveFormData] = useState({ title: '', url: '', icon: '📄' })
+  const [savingDrive, setSavingDrive] = useState(false)
   const [formData, setFormData] = useState({
     position: BUREAU_POSITIONS[0],
     amicaliste_id: '',
@@ -64,6 +69,35 @@ export function BureauPage() {
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce poste ?')) return
     try {
       await deletePosition(id)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erreur')
+    }
+  }
+
+  const handleAddDriveLink = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!driveFormData.title.trim() || !driveFormData.url.trim()) return
+
+    setSavingDrive(true)
+    try {
+      await addLink({
+        title: driveFormData.title,
+        url: driveFormData.url,
+        icon: driveFormData.icon,
+        order: links.length,
+      })
+      setDriveFormData({ title: '', url: '', icon: '📄' })
+      setShowDriveForm(false)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erreur')
+    }
+    setSavingDrive(false)
+  }
+
+  const handleDeleteDriveLink = async (id: string) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce lien ?')) return
+    try {
+      await deleteLink(id)
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Erreur')
     }
@@ -279,6 +313,116 @@ export function BureauPage() {
           )}
         </div>
       )}
+
+      {/* Section Drive */}
+      <div className="mt-12 pt-8 border-t border-[var(--color-border)]">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-lg font-bold text-[var(--color-text)]">Drive</h2>
+            <p className="text-sm text-[var(--color-text-muted)] mt-1">Accès rapide aux documents du bureau</p>
+          </div>
+          <button
+            onClick={() => setShowDriveForm(!showDriveForm)}
+            className="flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Ajouter un lien</span>
+            <span className="sm:hidden">Ajouter</span>
+          </button>
+        </div>
+
+        {showDriveForm && (
+          <div className="bg-white rounded-xl border border-[var(--color-border)] p-5 mb-5 shadow-[var(--shadow-sm)]">
+            <form onSubmit={handleAddDriveLink}>
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <input
+                  type="text"
+                  required
+                  placeholder="Titre du lien"
+                  value={driveFormData.title}
+                  onChange={(e) => setDriveFormData((p) => ({ ...p, title: e.target.value }))}
+                  className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
+                />
+                <input
+                  type="url"
+                  required
+                  placeholder="URL Google Drive"
+                  value={driveFormData.url}
+                  onChange={(e) => setDriveFormData((p) => ({ ...p, url: e.target.value }))}
+                  className="sm:col-span-2 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
+                />
+                <input
+                  type="text"
+                  placeholder="Icône (emoji)"
+                  value={driveFormData.icon}
+                  onChange={(e) => setDriveFormData((p) => ({ ...p, icon: e.target.value.slice(0, 2) }))}
+                  maxLength={2}
+                  className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
+                />
+              </div>
+
+              <div className="flex gap-2 mt-4">
+                <button
+                  type="submit"
+                  disabled={savingDrive}
+                  className="px-4 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {savingDrive ? 'Ajout...' : 'Ajouter'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowDriveForm(false)}
+                  className="px-4 py-2 border border-[var(--color-border)] text-[var(--color-text)] text-sm font-medium rounded-lg hover:bg-[var(--color-bg-secondary)] transition-colors"
+                >
+                  Annuler
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {linksLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin w-6 h-6 border-3 border-[var(--color-primary)] border-t-transparent rounded-full" />
+          </div>
+        ) : links.length === 0 ? (
+          <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center shadow-[var(--shadow-sm)]">
+            <FolderOpen className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+            <p className="text-sm text-[var(--color-text-muted)]">Aucun lien Drive pour le moment</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {links.map((link) => (
+              <a
+                key={link.id}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group bg-white rounded-xl border border-[var(--color-border)] p-4 shadow-sm hover:shadow-md hover:border-[var(--color-primary)] transition-all"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <span className="text-2xl">{link.icon}</span>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault()
+                      handleDeleteDriveLink(link.id)
+                    }}
+                    className="p-1 text-[var(--color-text-muted)] hover:text-red-600 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-all"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+                <h3 className="text-sm font-semibold text-[var(--color-text)] group-hover:text-[var(--color-primary)] transition-colors truncate">
+                  {link.title}
+                </h3>
+                <div className="flex items-center gap-1 text-xs text-[var(--color-text-muted)] mt-2 group-hover:text-[var(--color-primary)] transition-colors">
+                  Ouvrir <ExternalLink className="w-3 h-3" />
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
