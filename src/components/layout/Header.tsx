@@ -1,8 +1,9 @@
-import { LogOut, ChevronDown, Bell, BellOff } from 'lucide-react'
+import { LogOut, ChevronDown, Bell, BellOff, User } from 'lucide-react'
 import { useAuthContext } from '@/features/auth/AuthContext'
 import { useAssociation } from '@/features/association/AssociationContext'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 interface HeaderProps {
   associationName: string
@@ -15,6 +16,7 @@ export function Header({ associationName, logoUrl }: HeaderProps) {
   const { isSupported, isSubscribed, loading, subscribe, unsubscribe } = usePushNotifications(currentAssociation?.id)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -65,6 +67,13 @@ export function Header({ associationName, logoUrl }: HeaderProps) {
               <p className="text-sm font-semibold text-[var(--color-text)] truncate">{displayName}</p>
               <p className="text-xs text-[var(--color-text-muted)] truncate mt-0.5">{user?.email}</p>
             </div>
+            <button
+              onClick={() => { setMenuOpen(false); navigate('/profil') }}
+              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg-secondary)] transition-colors"
+            >
+              <User className="w-4 h-4" />
+              Mon profil
+            </button>
             {isSupported && (
               <button
                 onClick={() => { isSubscribed ? unsubscribe() : subscribe() }}

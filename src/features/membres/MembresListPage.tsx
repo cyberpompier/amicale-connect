@@ -116,10 +116,10 @@ export function MembresListPage() {
                   <tr className="bg-[var(--color-bg-secondary)] border-b border-[var(--color-border)]">
                     <th className="text-center px-4 py-3 font-medium text-[var(--color-text-muted)] text-xs uppercase tracking-wide w-12">Photo</th>
                     <th className="text-left px-4 py-3 font-medium text-[var(--color-text-muted)] text-xs uppercase tracking-wide">Nom</th>
-                    <th className="text-left px-4 py-3 font-medium text-[var(--color-text-muted)] text-xs uppercase tracking-wide">Grade</th>
+                    <th className="text-left px-4 py-3 font-medium text-[var(--color-text-muted)] text-xs uppercase tracking-wide hidden sm:table-cell">Grade</th>
                     <th className="text-left px-4 py-3 font-medium text-[var(--color-text-muted)] text-xs uppercase tracking-wide hidden md:table-cell">Email</th>
                     <th className="text-left px-4 py-3 font-medium text-[var(--color-text-muted)] text-xs uppercase tracking-wide hidden lg:table-cell">Téléphone</th>
-                    <th className="text-left px-4 py-3 font-medium text-[var(--color-text-muted)] text-xs uppercase tracking-wide">Statut</th>
+                    <th className="text-left px-4 py-3 font-medium text-[var(--color-text-muted)] text-xs uppercase tracking-wide hidden sm:table-cell">Statut</th>
                     <th className="text-left px-4 py-3 font-medium text-[var(--color-text-muted)] text-xs uppercase tracking-wide hidden md:table-cell">Depuis</th>
                     <th className="text-right px-4 py-3 font-medium text-[var(--color-text-muted)] text-xs uppercase tracking-wide">Actions</th>
                   </tr>
@@ -150,10 +150,10 @@ export function MembresListPage() {
                       <td className="px-4 py-3 font-medium text-[var(--color-text)]">
                         {m.last_name} {m.first_name}
                       </td>
-                      <td className="px-4 py-3 text-[var(--color-text-muted)]">{m.grade || '—'}</td>
+                      <td className="px-4 py-3 text-[var(--color-text-muted)] hidden sm:table-cell">{m.grade || '—'}</td>
                       <td className="px-4 py-3 text-[var(--color-text-muted)] hidden md:table-cell">{m.email || '—'}</td>
                       <td className="px-4 py-3 text-[var(--color-text-muted)] hidden lg:table-cell">{m.phone || '—'}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 hidden sm:table-cell">
                         <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[m.status] || 'bg-amber-100 text-amber-700'}`}>
                           {m.status}
                         </span>
@@ -170,7 +170,7 @@ export function MembresListPage() {
                           <button
                             onClick={() => handleDelete(m.id, `${m.first_name} ${m.last_name}`)}
                             disabled={deletingId === m.id}
-                            className="p-1.5 text-[var(--color-text-muted)] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40"
+                            className="hidden sm:block p-1.5 text-[var(--color-text-muted)] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>

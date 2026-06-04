@@ -117,7 +117,7 @@ export function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
         {/* Événements à venir */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-[var(--color-border)] shadow-[var(--shadow-sm)] overflow-hidden">
+        <div className="order-1 lg:col-span-2 bg-white rounded-xl border border-[var(--color-border)] shadow-[var(--shadow-sm)] overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)]">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-[var(--color-primary)]" />
@@ -170,7 +170,7 @@ export function DashboardPage() {
         </div>
 
         {/* Aperçu membres */}
-        <div className="bg-white rounded-xl border border-[var(--color-border)] shadow-[var(--shadow-sm)] overflow-hidden">
+        <div className="order-3 lg:order-2 bg-white rounded-xl border border-[var(--color-border)] shadow-[var(--shadow-sm)] overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)]">
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-[var(--color-primary)]" />
@@ -234,7 +234,7 @@ export function DashboardPage() {
         </div>
 
         {/* Sondages en cours */}
-        <div className="lg:col-span-3 bg-white rounded-xl border border-[var(--color-border)] shadow-[var(--shadow-sm)] overflow-hidden">
+        <div className="order-2 lg:order-3 lg:col-span-3 bg-white rounded-xl border border-[var(--color-border)] shadow-[var(--shadow-sm)] overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)]">
             <div className="flex items-center gap-2">
               <Radio className="w-4 h-4 text-[var(--color-primary)]" />

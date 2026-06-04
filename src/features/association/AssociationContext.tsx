@@ -47,8 +47,13 @@ export function AssociationProvider({ children }: { children: ReactNode }) {
     }
 
     setAssociations(data || [])
-    if (data && data.length > 0 && !currentAssociation) {
-      setCurrentAssociation(data[0])
+    if (data && data.length > 0) {
+      if (!currentAssociation) {
+        setCurrentAssociation(data[0])
+      } else {
+        const updated = data.find((a) => a.id === currentAssociation.id)
+        if (updated) setCurrentAssociation(updated)
+      }
     }
     setLoading(false)
   }

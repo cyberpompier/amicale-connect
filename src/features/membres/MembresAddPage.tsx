@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAmicalistes, type AmicalisteInput } from '@/hooks/useAmicalistes'
+import { supabase } from '@/lib/supabase'
+import { resizeImage } from '@/lib/imageResize'
 import { ArrowLeft, Upload, X } from 'lucide-react'
 import { useEffect } from 'react'
 
@@ -42,6 +44,7 @@ export function MembresAddPage() {
   })
 
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -71,14 +74,18 @@ export function MembresAddPage() {
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      const reader = new FileReader()
-      reader.onload = (event) => {
-        const base64 = event.target?.result as string
-        setAvatarPreview(base64)
-        setForm((prev) => ({ ...prev, avatar_url: base64 }))
-      }
-      reader.readAsDataURL(file)
+      setAvatarFile(file)
+      setAvatarPreview(URL.createObjectURL(file))
     }
+  }
+
+  const uploadAvatar = async (file: File): Promise<string | null> => {
+    const resized = await resizeImage(file)
+    const path = `amicalistes/${Date.now()}.jpg`
+    const { error } = await supabase.storage.from('avatars').upload(path, resized, { upsert: true })
+    if (error) throw new Error(error.message)
+    const { data } = supabase.storage.from('avatars').getPublicUrl(path)
+    return data.publicUrl
   }
 
   const handleSubmit = async (e: FormEvent) => {
@@ -92,10 +99,15 @@ export function MembresAddPage() {
 
     setSaving(true)
     try {
+      let finalForm = { ...form }
+      if (avatarFile) {
+        const url = await uploadAvatar(avatarFile)
+        finalForm = { ...finalForm, avatar_url: url }
+      }
       if (isEdit && id) {
-        await updateAmicaliste(id, form)
+        await updateAmicaliste(id, finalForm)
       } else {
-        await addAmicaliste(form)
+        await addAmicaliste(finalForm)
       }
       navigate('/membres')
     } catch (err) {
@@ -139,6 +151,7 @@ export function MembresAddPage() {
                 type="button"
                 onClick={() => {
                   setAvatarPreview(null)
+                  setAvatarFile(null)
                   setForm((p) => ({ ...p, avatar_url: null }))
                 }}
                 className="absolute top-1 right-1 p-1 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"

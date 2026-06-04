@@ -1,8 +1,9 @@
-import { useState, type FormEvent } from 'react'
-import { Building2, User, Lock, LogOut, Save, CheckCircle2, AlertCircle, Eye, EyeOff, Image } from 'lucide-react'
+import { useState, useEffect, type FormEvent } from 'react'
+import { Building2, User, Lock, LogOut, Save, CheckCircle2, AlertCircle, Eye, EyeOff, Upload, X } from 'lucide-react'
 import { useAssociation } from '@/features/association/AssociationContext'
 import { useAuthContext } from '@/features/auth/AuthContext'
 import { supabase } from '@/lib/supabase'
+import { resizeImage } from '@/lib/imageResize'
 import { PageHeader } from '@/components/ui/PageHeader'
 
 export function ParametresPage() {
@@ -15,9 +16,20 @@ export function ParametresPage() {
   const [assocPostalCode, setAssocPostalCode] = useState(currentAssociation?.postal_code || '')
   const [logoUrl, setLogoUrl] = useState(currentAssociation?.logo_url || '')
   const [logoPreview, setLogoPreview] = useState(currentAssociation?.logo_url || '')
+  const [logoFile, setLogoFile] = useState<File | null>(null)
   const [savingAssoc, setSavingAssoc] = useState(false)
   const [assocSuccess, setAssocSuccess] = useState(false)
   const [assocError, setAssocError] = useState('')
+
+  // Resynchroniser quand currentAssociation change (après refetch)
+  useEffect(() => {
+    if (!currentAssociation) return
+    setAssocName(currentAssociation.name || '')
+    setAssocCity(currentAssociation.city || '')
+    setAssocPostalCode(currentAssociation.postal_code || '')
+    setLogoUrl(currentAssociation.logo_url || '')
+    setLogoPreview(currentAssociation.logo_url || '')
+  }, [currentAssociation?.id, currentAssociation?.logo_url])
 
   // --- Mot de passe ---
   const [pwdForm, setPwdForm] = useState({ current: '', next: '', confirm: '' })
@@ -26,38 +38,60 @@ export function ParametresPage() {
   const [pwdSuccess, setPwdSuccess] = useState(false)
   const [pwdError, setPwdError] = useState('')
 
+  const uploadLogo = async (file: File): Promise<string> => {
+    const resized = await resizeImage(file, 400)
+    const path = `${currentAssociation!.id}/logo.jpg`
+    const { error } = await supabase.storage.from('logos').upload(path, resized, { upsert: true })
+    if (error) throw new Error(error.message)
+    const { data } = supabase.storage.from('logos').getPublicUrl(path)
+    return data.publicUrl
+  }
+
   const handleSaveAssociation = async (e: FormEvent) => {
     e.preventDefault()
     if (!currentAssociation) return
     setAssocError('')
     setAssocSuccess(false)
     setSavingAssoc(true)
-    const { error } = await supabase
-      .from('associations')
-      .update({
-        name: assocName.trim(),
-        city: assocCity.trim() || null,
-        postal_code: assocPostalCode.trim() || null,
-        logo_url: logoUrl.trim() || null,
-      })
-      .eq('id', currentAssociation.id)
-    if (error) {
-      setAssocError(error.message)
-    } else {
+    try {
+      let finalLogoUrl = logoUrl.trim() || null
+      if (logoFile) {
+        finalLogoUrl = await uploadLogo(logoFile)
+        setLogoUrl(finalLogoUrl!)
+        setLogoPreview(finalLogoUrl!)
+        setLogoFile(null)
+      }
+      const { error } = await supabase
+        .from('associations')
+        .update({
+          name: assocName.trim(),
+          city: assocCity.trim() || null,
+          postal_code: assocPostalCode.trim() || null,
+          logo_url: finalLogoUrl,
+        })
+        .eq('id', currentAssociation.id)
+      if (error) throw new Error(error.message)
       setAssocSuccess(true)
       refetch()
       setTimeout(() => setAssocSuccess(false), 3000)
+    } catch (err) {
+      setAssocError(err instanceof Error ? err.message : 'Erreur lors de la sauvegarde')
     }
     setSavingAssoc(false)
   }
 
-  const handleLogoUrlChange = (url: string) => {
-    setLogoUrl(url)
-    if (url.trim()) {
-      setLogoPreview(url)
-    } else {
-      setLogoPreview('')
+  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setLogoFile(file)
+      setLogoPreview(URL.createObjectURL(file))
     }
+  }
+
+  const handleRemoveLogo = () => {
+    setLogoFile(null)
+    setLogoUrl('')
+    setLogoPreview('')
   }
 
   const handleChangePassword = async (e: FormEvent) => {
@@ -148,38 +182,44 @@ export function ParametresPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[var(--color-text)] mb-1 flex items-center gap-2">
-                <Image className="w-4 h-4" />
-                Logo (URL)
-              </label>
-              <input
-                type="url"
-                placeholder="https://example.com/logo.png"
-                value={logoUrl}
-                onChange={(e) => handleLogoUrlChange(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
-              />
-              <p className="text-xs text-[var(--color-text-muted)] mt-1">
-                URL du logo (PNG, JPG, SVG) — utilisé dans les reçus PDF
-              </p>
-              {logoPreview && (
-                <div className="mt-3 p-3 bg-[var(--color-bg-secondary)] rounded-lg border border-[var(--color-border)]">
-                  <p className="text-xs font-semibold text-[var(--color-text-muted)] mb-2">
-                    Aperçu du logo :
-                  </p>
-                  <div className="flex justify-center">
+              <label className="block text-sm font-medium text-[var(--color-text)] mb-2">Logo</label>
+              {logoPreview ? (
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-[var(--color-bg-secondary)] rounded-lg border border-[var(--color-border)]">
                     <img
                       src={logoPreview}
-                      alt="Logo preview"
+                      alt="Logo"
                       className="h-16 object-contain"
-                      onError={() => {
-                        console.warn('Logo image failed to load')
-                        setLogoPreview('')
-                      }}
+                      onError={() => setLogoPreview('')}
                     />
                   </div>
+                  <div className="flex flex-col gap-2 mt-1">
+                    <label className="flex items-center gap-1.5 px-3 py-1.5 border border-[var(--color-border)] rounded-lg text-xs font-medium text-[var(--color-text)] hover:bg-[var(--color-bg-secondary)] cursor-pointer transition-colors">
+                      <Upload className="w-3.5 h-3.5" />
+                      Changer
+                      <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={handleLogoFileChange} className="hidden" />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleRemoveLogo}
+                      className="flex items-center gap-1.5 px-3 py-1.5 border border-red-200 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                      Supprimer
+                    </button>
+                  </div>
                 </div>
+              ) : (
+                <label className="block w-full px-4 py-6 border-2 border-dashed border-[var(--color-border)] rounded-xl cursor-pointer hover:border-[var(--color-primary)] hover:bg-[var(--color-primary)]/5 transition-colors">
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <Upload className="w-5 h-5 text-[var(--color-text-muted)]" />
+                    <span className="text-sm font-medium text-[var(--color-text)]">Ajouter un logo</span>
+                    <span className="text-xs text-[var(--color-text-muted)]">PNG, JPG, WebP ou SVG — max 2 Mo</span>
+                  </div>
+                  <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={handleLogoFileChange} className="hidden" />
+                </label>
               )}
+              <p className="text-xs text-[var(--color-text-muted)] mt-1.5">Utilisé dans les reçus PDF et l'en-tête de l'application.</p>
             </div>
 
             <div>
