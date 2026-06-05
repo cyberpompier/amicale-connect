@@ -96,8 +96,36 @@ export function useExportAmicalistes() {
     XLSX.writeFile(workbook, `amicalistes_${status || 'tous'}_${new Date().toISOString().split('T')[0]}.xlsx`)
   }
 
+  // Convertit une URL d'image en base64 pour contourner CORS dans html2canvas
+  const toBase64 = async (url: string): Promise<string | null> => {
+    try {
+      const response = await fetch(url)
+      if (!response.ok) return null
+      const blob = await response.blob()
+      return new Promise((resolve) => {
+        const reader = new FileReader()
+        reader.onloadend = () => resolve(reader.result as string)
+        reader.onerror = () => resolve(null)
+        reader.readAsDataURL(blob)
+      })
+    } catch {
+      return null
+    }
+  }
+
   const exportToPDF = async (amicalistes: Amicaliste[], status?: string) => {
     const filtered = status ? amicalistes.filter((a) => a.status === status) : amicalistes
+
+    // Pré-charger toutes les images en base64 (contourne CORS html2canvas)
+    const avatarMap = new Map<string, string>()
+    await Promise.all(
+      filtered
+        .filter((m) => m.avatar_url)
+        .map(async (m) => {
+          const b64 = await toBase64(m.avatar_url!)
+          if (b64) avatarMap.set(m.avatar_url!, b64)
+        })
+    )
 
     // Créer un conteneur HTML temporaire
     const container = document.createElement('div')
@@ -149,19 +177,34 @@ export function useExportAmicalistes() {
       const row = document.createElement('tr')
       row.style.borderBottom = '1px solid #eee'
 
-      // Photo
+      // Photo — utilise le base64 pré-chargé pour éviter CORS
       const photoCell = document.createElement('td')
       photoCell.style.padding = '4px'
       if (member.avatar_url) {
+        const src = avatarMap.get(member.avatar_url) ?? member.avatar_url
         const img = document.createElement('img')
-        img.src = member.avatar_url
-        img.style.width = '30px'
-        img.style.height = '30px'
-        img.style.borderRadius = '4px'
+        img.src = src
+        img.style.width = '36px'
+        img.style.height = '36px'
+        img.style.borderRadius = '6px'
         img.style.objectFit = 'cover'
+        img.style.display = 'block'
         photoCell.appendChild(img)
       } else {
-        photoCell.textContent = '—'
+        // Avatar initiales
+        const initials = document.createElement('div')
+        initials.textContent = `${member.first_name[0]}${member.last_name[0]}`
+        initials.style.width = '36px'
+        initials.style.height = '36px'
+        initials.style.borderRadius = '6px'
+        initials.style.backgroundColor = '#fee2e2'
+        initials.style.color = '#dc2626'
+        initials.style.display = 'flex'
+        initials.style.alignItems = 'center'
+        initials.style.justifyContent = 'center'
+        initials.style.fontWeight = 'bold'
+        initials.style.fontSize = '12px'
+        photoCell.appendChild(initials)
       }
       row.appendChild(photoCell)
 
