@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { X, Download, Maximize2, ExternalLink, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { X, Download, ExternalLink, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react'
 
 interface DocumentViewerProps {
   document: {
@@ -14,7 +13,7 @@ interface DocumentViewerProps {
 export function DocumentViewer({ document, onClose }: DocumentViewerProps) {
   const [scale, setScale] = useState(1)
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
+  const [totalPages] = useState(1)
   const [loading, setLoading] = useState(true)
 
   const isPDF = document.url.toLowerCase().endsWith('.pdf')

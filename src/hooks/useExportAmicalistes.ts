@@ -3,7 +3,6 @@ import type { Amicaliste } from './useAmicalistes'
 import * as XLSX from 'xlsx'
 import Papa from 'papaparse'
 import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
 
 export type ExportColumn = 'photo' | 'nom' | 'prenom' | 'email' | 'telephone' | 'grade' | 'statut' | 'adhesion' | 'naissance' | 'adresse' | 'etat_civil' | 'notes'
 
@@ -220,11 +219,11 @@ export function useExportAmicalistes() {
 
       // Titre
       pdf.setFontSize(14)
-      pdf.setFont(undefined, 'bold')
+      pdf.setFont('helvetica', 'bold')
       pdf.text(currentAssociation?.name || 'Amicalistes', margin + logoSize + 5, currentY + 5)
 
       pdf.setFontSize(10)
-      pdf.setFont(undefined, 'normal')
+      pdf.setFont('helvetica', 'normal')
       const infoText = `Statut: ${status ? getStatusLabel(status) : 'Tous'} | Total: ${filtered.length} | Date: ${new Date().toLocaleDateString('fr-FR')}`
       pdf.text(infoText, margin + logoSize + 5, currentY + 12)
 
@@ -232,7 +231,7 @@ export function useExportAmicalistes() {
 
       // Ajouter le tableau avec les données
       pdf.setFontSize(9)
-      pdf.setFont(undefined, 'bold')
+      pdf.setFont('helvetica', 'bold')
 
       const colWidth = (pageWidth - 2 * margin) / columns.length
       const maxCellHeight = 8
@@ -244,7 +243,7 @@ export function useExportAmicalistes() {
         pdf.text(EXPORT_COLUMNS[col], x + 2, currentY + 5, { maxWidth: colWidth - 4 })
       })
 
-      pdf.setFont(undefined, 'normal')
+      pdf.setFont('helvetica', 'normal')
       currentY += maxCellHeight
 
       // Données
