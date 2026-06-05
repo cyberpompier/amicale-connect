@@ -74,7 +74,7 @@ export function ProfilPage() {
           setGrade(data.grade || '')
           setStatus(data.status || 'actif')
           setBirthDate(data.birth_date || '')
-          setEmail(data.email || '')
+          setEmail(data.email || user.email || '')
           setPhone(data.phone || '')
           setStreet(data.address_street || '')
           setCity(data.address_city || '')
@@ -82,6 +82,9 @@ export function ProfilPage() {
           setMaritalStatus(data.marital_status || '')
           setNotes(data.notes || '')
           setAvatarPreview(data.avatar_url || null)
+        } else {
+          // Pré-remplir l'email depuis le compte auth
+          setEmail(user.email || '')
         }
         setLoading(false)
       })
@@ -113,46 +116,70 @@ export function ProfilPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    if (!amicaliste) return
+    if (!user || !currentAssociation) return
+    if (!firstName.trim() || !lastName.trim()) {
+      setError('Le prénom et le nom sont obligatoires')
+      return
+    }
     setSaving(true)
     setError('')
     setSuccess(false)
     try {
-      let avatar_url = amicaliste.avatar_url
+      let avatar_url = amicaliste?.avatar_url ?? null
       if (avatarFile) avatar_url = await uploadAvatar(avatarFile)
 
-      const { data: updated, error: updateErr } = await supabase
-        .from('amicalistes')
-        .update({
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-          grade: grade || null,
-          status,
-          email: email.trim() || null,
-          phone: phone.trim() || null,
-          avatar_url,
-          birth_date: birthDate || null,
-          address_street: street.trim() || null,
-          address_city: city.trim() || null,
-          address_postal_code: postalCode.trim() || null,
-          marital_status: maritalStatus || null,
-          notes: notes.trim() || null,
-        })
-        .eq('id', amicaliste.id)
-        .select().single()
+      const payload = {
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        grade: grade || null,
+        status,
+        email: email.trim() || null,
+        phone: phone.trim() || null,
+        avatar_url,
+        birth_date: birthDate || null,
+        address_street: street.trim() || null,
+        address_city: city.trim() || null,
+        address_postal_code: postalCode.trim() || null,
+        marital_status: maritalStatus || null,
+        notes: notes.trim() || null,
+      }
 
-      if (updateErr) throw updateErr
-      setAmicaliste(updated)
+      let saved: Amicaliste
+      if (amicaliste) {
+        // Mise à jour
+        const { data: updated, error: updateErr } = await supabase
+          .from('amicalistes')
+          .update(payload)
+          .eq('id', amicaliste.id)
+          .select().single()
+        if (updateErr) throw updateErr
+        saved = updated
+      } else {
+        // Création de la fiche amicaliste liée au compte
+        const { data: created, error: createErr } = await supabase
+          .from('amicalistes')
+          .insert({
+            ...payload,
+            user_id: user.id,
+            association_id: currentAssociation.id,
+            join_date: new Date().toISOString().split('T')[0],
+          })
+          .select().single()
+        if (createErr) throw createErr
+        saved = created
+      }
+
+      setAmicaliste(saved)
       setAvatarFile(null)
 
       // Sauvegarder enfants
-      await saveAll(amicaliste.id, localChildren
+      await saveAll(saved.id, localChildren
         .filter(c => c.first_name.trim())
         .map(({ _key: _, ...c }) => ({ ...c, first_name: c.first_name.trim() }))
       )
 
       // Rediriger vers la fiche complète
-      navigate(`/membres/${amicaliste.id}`)
+      navigate(`/membres/${saved.id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la sauvegarde')
     }
@@ -165,18 +192,21 @@ export function ProfilPage() {
     </div>
   )
 
-  if (!amicaliste) return (
-    <div className="text-center py-20 text-[var(--color-text-muted)]">
-      <User className="w-12 h-12 mx-auto mb-3 text-gray-200" />
-      <p>Aucune fiche amicaliste liée à votre compte.</p>
-    </div>
-  )
-
   const age = birthDate ? calcAge(birthDate) : null
 
   return (
     <div>
-      <PageHeader title="Mon profil" subtitle="Vos informations personnelles" />
+      <PageHeader
+        title="Mon profil"
+        subtitle={amicaliste ? 'Vos informations personnelles' : 'Créer votre fiche dans la liste des amicalistes'}
+      />
+
+      {!amicaliste && (
+        <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 text-blue-800 text-sm px-4 py-3 rounded-xl mb-6 max-w-2xl">
+          <User className="w-5 h-5 flex-shrink-0 mt-0.5" />
+          <p>Votre compte n'est pas encore lié à une fiche amicaliste. Remplissez le formulaire ci-dessous pour créer votre profil et apparaître dans la liste des membres.</p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
 
