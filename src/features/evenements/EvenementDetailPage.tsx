@@ -4,11 +4,12 @@ import {
   ArrowLeft, MapPin, Clock, Users, MessageSquare, Star,
   Check, X, HelpCircle, Plus, Pencil, Trash2, Share2,
   Link2, Phone, Mail, ChevronDown, ChevronUp, UserPlus,
-  CheckCircle2, AlertCircle, UserMinus, Copy,
+  CheckCircle2, AlertCircle, UserMinus, Copy, Calendar,
 } from 'lucide-react'
 import { useEvenementDetail, type Participant, type Invite } from '@/hooks/useEvenementDetail'
 import { useAmicalistes } from '@/hooks/useAmicalistes'
 import { cn, formatDateShort } from '@/lib/utils'
+import { downloadICalendar } from '@/lib/icalendar'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -227,6 +228,20 @@ export function EvenementDetailPage() {
           >
             {copied ? <Check className="w-3.5 h-3.5" /> : <Link2 className="w-3.5 h-3.5" />}
             {copied ? 'Copié !' : 'Partager'}
+          </button>
+          <button
+            onClick={() => downloadICalendar({
+              titre: evenement.titre,
+              date: evenement.date,
+              heure: evenement.heure,
+              lieu: evenement.lieu,
+              description: evenement.description,
+            })}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border bg-white text-[var(--color-text-muted)] border-[var(--color-border)] hover:text-[var(--color-text)] hover:border-gray-300"
+            title="Ajouter au calendrier de votre téléphone"
+          >
+            <Calendar className="w-3.5 h-3.5" />
+            Calendrier
           </button>
           <button
             onClick={() => navigate(`/evenements/creer?id=${evenement.id}`)}
