@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, UserPlus, Pencil, Trash2, Users } from 'lucide-react'
+import { Search, UserPlus, Pencil, Trash2, Users, Download, FileJson, File, FileText } from 'lucide-react'
 import { useAmicalistes } from '@/hooks/useAmicalistes'
+import { useExportAmicalistes } from '@/hooks/useExportAmicalistes'
 import { formatDate } from '@/lib/utils'
 import { PageHeader } from '@/components/ui/PageHeader'
 
@@ -12,9 +13,13 @@ const STATUS_STYLES: Record<string, string> = {
 
 export function MembresListPage() {
   const { amicalistes, loading, deleteAmicaliste } = useAmicalistes()
+  const { exportToCSV, exportToExcel, exportToPDF } = useExportAmicalistes()
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [exportStatus, setExportStatus] = useState<string>('all')
+  const [showExportMenu, setShowExportMenu] = useState(false)
+  const [exporting, setExporting] = useState(false)
   const navigate = useNavigate()
 
   const filtered = amicalistes.filter((m) => {
@@ -37,6 +42,24 @@ export function MembresListPage() {
       alert(err instanceof Error ? err.message : 'Erreur')
     }
     setDeletingId(null)
+  }
+
+  const handleExport = async (format: 'csv' | 'xlsx' | 'pdf') => {
+    setExporting(true)
+    try {
+      const status = exportStatus === 'all' ? undefined : exportStatus
+      if (format === 'csv') {
+        exportToCSV(amicalistes, status)
+      } else if (format === 'xlsx') {
+        await exportToExcel(amicalistes, status)
+      } else if (format === 'pdf') {
+        await exportToPDF(amicalistes, status)
+      }
+      setShowExportMenu(false)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erreur lors de l\'export')
+    }
+    setExporting(false)
   }
 
   if (loading) {
@@ -103,6 +126,57 @@ export function MembresListPage() {
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
+            <div className="relative">
+              <button
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                disabled={exporting}
+                className="flex items-center gap-2 px-3 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                <Download className="w-4 h-4" />
+                <span className="hidden sm:inline">Exporter</span>
+              </button>
+              {showExportMenu && (
+                <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg border border-[var(--color-border)] shadow-lg z-10">
+                  <div className="p-3 border-b border-[var(--color-border)]">
+                    <label className="block text-xs font-semibold text-[var(--color-text-muted)] mb-2 uppercase">Statut à exporter</label>
+                    <select
+                      value={exportStatus}
+                      onChange={(e) => setExportStatus(e.target.value)}
+                      className="w-full px-2 py-1 border border-[var(--color-border)] rounded text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30"
+                    >
+                      <option value="all">Tous les statuts</option>
+                      {statuses.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    onClick={() => handleExport('xlsx')}
+                    disabled={exporting}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-[var(--color-bg-secondary)] transition-colors disabled:opacity-50"
+                  >
+                    <FileJson className="w-4 h-4" />
+                    Excel (.xlsx)
+                  </button>
+                  <button
+                    onClick={() => handleExport('csv')}
+                    disabled={exporting}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-[var(--color-bg-secondary)] transition-colors disabled:opacity-50"
+                  >
+                    <FileText className="w-4 h-4" />
+                    CSV (.csv)
+                  </button>
+                  <button
+                    onClick={() => handleExport('pdf')}
+                    disabled={exporting}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-[var(--color-bg-secondary)] transition-colors disabled:opacity-50 border-t border-[var(--color-border)]"
+                  >
+                    <File className="w-4 h-4" />
+                    PDF (.pdf)
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           <p className="text-xs text-[var(--color-text-muted)] mb-3">
