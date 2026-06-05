@@ -57,6 +57,7 @@ export const mainNavItems: NavItem[] = [
     subNav: [
       { label: 'Composition', path: '/bureau' },
       { label: 'Historique', path: '/bureau/historique' },
+      { label: 'Documents', path: '/bureau/documents' },
       { label: 'Drive', path: '/bureau/drive' },
     ],
   },
@@ -66,6 +67,7 @@ export const mainNavItems: NavItem[] = [
     icon: Calendar,
     subNav: [
       { label: 'Calendrier', path: '/evenements' },
+      { label: 'Planning', path: '/evenements/planning' },
       { label: 'Créer', path: '/evenements/creer' },
       { label: 'Archives', path: '/evenements/archives' },
     ],

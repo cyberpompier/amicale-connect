@@ -15,10 +15,12 @@ import { BilanPage } from '@/features/comptabilite/BilanPage'
 import { BureauPage } from '@/features/bureau/BureauPage'
 import { BureauHistoriquePage } from '@/features/bureau/BureauHistoriquePage'
 import { BureauDrivePage } from '@/features/bureau/BureauDrivePage'
+import { BureauDocumentsPage } from '@/features/bureau/BureauDocumentsPage'
 import { EvenementsPage } from '@/features/evenements/EvenementsPage'
 import { EvenementsCreerPage } from '@/features/evenements/EvenementsCreerPage'
 import { EvenementsArchivesPage } from '@/features/evenements/EvenementsArchivesPage'
 import { EvenementDetailPage } from '@/features/evenements/EvenementDetailPage'
+import { PlanningPage } from '@/features/evenements/PlanningPage'
 import { SondagesPage } from '@/features/sondages/SondagesPage'
 import { SondagesCreerPage } from '@/features/sondages/SondagesCreerPage'
 import { BoutiquePage } from '@/features/boutique/BoutiquePage'
@@ -134,6 +136,10 @@ export const router = createBrowserRouter([
         path: 'bureau/drive',
         element: <BureauDrivePage />,
       },
+      {
+        path: 'bureau/documents',
+        element: <BureauDocumentsPage />,
+      },
       // Événements
       {
         path: 'evenements',
@@ -146,6 +152,10 @@ export const router = createBrowserRouter([
       {
         path: 'evenements/archives',
         element: <EvenementsArchivesPage />,
+      },
+      {
+        path: 'evenements/planning',
+        element: <PlanningPage />,
       },
       {
         path: 'evenements/:id',
