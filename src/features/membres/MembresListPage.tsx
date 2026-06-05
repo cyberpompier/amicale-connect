@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, UserPlus, Pencil, Trash2, Users, Download, FileJson, File, FileText, X } from 'lucide-react'
+import { Search, UserPlus, Pencil, Trash2, Users, Download, FileJson, File, FileText } from 'lucide-react'
 import { useAmicalistes } from '@/hooks/useAmicalistes'
 import { useExportAmicalistes, EXPORT_COLUMNS, type ExportColumn } from '@/hooks/useExportAmicalistes'
 import { useAssociation } from '@/features/association/AssociationContext'
@@ -21,7 +21,6 @@ export function MembresListPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [exportStatus, setExportStatus] = useState<string>('all')
   const [showExportMenu, setShowExportMenu] = useState(false)
-  const [showColumnSelect, setShowColumnSelect] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [selectedColumns, setSelectedColumns] = useState<ExportColumn[]>([
     'nom', 'prenom', 'email', 'telephone', 'grade', 'statut', 'adhesion'
@@ -84,7 +83,6 @@ export function MembresListPage() {
         await exportToPDF(amicalistes, selectedColumns, status)
       }
       setShowExportMenu(false)
-      setShowColumnSelect(false)
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Erreur lors de l\'export')
     }
