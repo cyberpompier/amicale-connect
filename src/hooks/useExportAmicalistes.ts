@@ -5,6 +5,23 @@ import Papa from 'papaparse'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 
+export type ExportColumn = 'photo' | 'nom' | 'prenom' | 'email' | 'telephone' | 'grade' | 'statut' | 'adhesion' | 'naissance' | 'adresse' | 'etat_civil' | 'notes'
+
+export const EXPORT_COLUMNS: Record<ExportColumn, string> = {
+  photo: 'Photo',
+  nom: 'Nom',
+  prenom: 'Prénom',
+  email: 'Email',
+  telephone: 'Téléphone',
+  grade: 'Grade',
+  statut: 'Statut',
+  adhesion: 'Date adhésion',
+  naissance: 'Date de naissance',
+  adresse: 'Adresse',
+  etat_civil: 'État civil',
+  notes: 'Notes',
+}
+
 export function useExportAmicalistes() {
   const { currentAssociation } = useAssociation()
 
@@ -22,22 +39,56 @@ export function useExportAmicalistes() {
     return new Date(date).toLocaleDateString('fr-FR')
   }
 
-  const exportToCSV = (amicalistes: Amicaliste[], status?: string) => {
+  const buildRowData = (amicaliste: Amicaliste, columns: ExportColumn[]) => {
+    const row: Record<string, string> = {}
+
+    columns.forEach((col) => {
+      switch (col) {
+        case 'photo':
+          row['Photo'] = amicaliste.avatar_url || ''
+          break
+        case 'nom':
+          row['Nom'] = amicaliste.last_name
+          break
+        case 'prenom':
+          row['Prénom'] = amicaliste.first_name
+          break
+        case 'email':
+          row['Email'] = amicaliste.email || ''
+          break
+        case 'telephone':
+          row['Téléphone'] = amicaliste.phone || ''
+          break
+        case 'grade':
+          row['Grade'] = amicaliste.grade || ''
+          break
+        case 'statut':
+          row['Statut'] = getStatusLabel(amicaliste.status)
+          break
+        case 'adhesion':
+          row['Date adhésion'] = formatDate(amicaliste.join_date)
+          break
+        case 'naissance':
+          row['Date de naissance'] = amicaliste.birth_date ? formatDate(amicaliste.birth_date) : ''
+          break
+        case 'adresse':
+          row['Adresse'] = `${amicaliste.address_street || ''}, ${amicaliste.address_postal_code || ''} ${amicaliste.address_city || ''}`.trim()
+          break
+        case 'etat_civil':
+          row['État civil'] = amicaliste.marital_status || ''
+          break
+        case 'notes':
+          row['Notes'] = amicaliste.notes || ''
+          break
+      }
+    })
+
+    return row
+  }
+
+  const exportToCSV = (amicalistes: Amicaliste[], columns: ExportColumn[], status?: string) => {
     const filtered = status ? amicalistes.filter((a) => a.status === status) : amicalistes
-    const data = filtered.map((a) => ({
-      Prénom: a.first_name,
-      Nom: a.last_name,
-      Email: a.email || '',
-      Téléphone: a.phone || '',
-      Grade: a.grade || '',
-      Statut: getStatusLabel(a.status),
-      'Date adhésion': formatDate(a.join_date),
-      'Date de naissance': a.birth_date ? formatDate(a.birth_date) : '',
-      'Adresse': `${a.address_street || ''}, ${a.address_postal_code || ''} ${a.address_city || ''}`.trim(),
-      'État civil': a.marital_status || '',
-      Photo: a.avatar_url || '',
-      Notes: a.notes || '',
-    }))
+    const data = filtered.map((a) => buildRowData(a, columns))
 
     const csv = Papa.unparse(data)
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
@@ -49,49 +100,74 @@ export function useExportAmicalistes() {
 
   const truncate = (text: string | null | undefined, max: number = 32000): string => {
     if (!text) return ''
-    return text.length > max ? text.substring(0, max - 3) + '...' : text
+    return text.length > max ? text.slice(0, max - 3) + '...' : text
   }
 
-  const exportToExcel = async (amicalistes: Amicaliste[], status?: string) => {
+  const exportToExcel = async (amicalistes: Amicaliste[], columns: ExportColumn[], status?: string) => {
     const filtered = status ? amicalistes.filter((a) => a.status === status) : amicalistes
-    const data = filtered.map((a) => ({
-      Prénom: truncate(a.first_name, 100),
-      Nom: truncate(a.last_name, 100),
-      Email: truncate(a.email, 100),
-      Téléphone: truncate(a.phone, 50),
-      Grade: truncate(a.grade, 50),
-      Statut: getStatusLabel(a.status),
-      'Date adhésion': formatDate(a.join_date),
-      'Date de naissance': a.birth_date ? formatDate(a.birth_date) : '',
-      'Rue': truncate(a.address_street, 200),
-      'Code postal': truncate(a.address_postal_code, 20),
-      'Ville': truncate(a.address_city, 100),
-      'État civil': truncate(a.marital_status, 50),
-      'Lien photo': truncate(a.avatar_url, 1000),
-      Notes: truncate(a.notes, 1000),
-    }))
 
-    const worksheet = XLSX.utils.json_to_sheet(data)
+    // Construire les données avec colonnes filtrées
+    const data = filtered.map((a) => {
+      const row: Record<string, string> = {}
+
+      columns.forEach((col) => {
+        const header = EXPORT_COLUMNS[col]
+        let value = ''
+
+        switch (col) {
+          case 'nom':
+            value = truncate(a.last_name, 100)
+            break
+          case 'prenom':
+            value = truncate(a.first_name, 100)
+            break
+          case 'email':
+            value = truncate(a.email || '', 100)
+            break
+          case 'telephone':
+            value = truncate(a.phone || '', 20)
+            break
+          case 'grade':
+            value = truncate(a.grade || '', 50)
+            break
+          case 'statut':
+            value = getStatusLabel(a.status)
+            break
+          case 'adhesion':
+            value = formatDate(a.join_date)
+            break
+          case 'naissance':
+            value = a.birth_date ? formatDate(a.birth_date) : ''
+            break
+          case 'adresse':
+            value = truncate(`${a.address_street || ''}, ${a.address_postal_code || ''} ${a.address_city || ''}`.trim(), 200)
+            break
+          case 'etat_civil':
+            value = truncate(a.marital_status || '', 50)
+            break
+          case 'notes':
+            value = truncate(a.notes || '', 1000)
+            break
+          case 'photo':
+            value = truncate(a.avatar_url || '', 1000)
+            break
+        }
+
+        row[header] = value
+      })
+
+      return row
+    })
+
     const workbook = XLSX.utils.book_new()
+    const worksheet = XLSX.utils.json_to_sheet(data)
+    worksheet.A1.s = { bold: true, fill: { fgColor: { rgb: 'FFF2E6' } } }
+
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Amicalistes')
 
-    // Auto-ajuster les largeurs
-    worksheet['!cols'] = [
-      { wch: 12 },
-      { wch: 15 },
-      { wch: 20 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 12 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 20 },
-      { wch: 12 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 25 },
-      { wch: 30 },
-    ]
+    // Ajuster les largeurs de colonnes
+    const colWidths = columns.map(() => ({ wch: 15 }))
+    worksheet['!cols'] = colWidths
 
     XLSX.writeFile(workbook, `amicalistes_${status || 'tous'}_${new Date().toISOString().split('T')[0]}.xlsx`)
   }
@@ -113,7 +189,7 @@ export function useExportAmicalistes() {
     }
   }
 
-  const exportToPDF = async (amicalistes: Amicaliste[], status?: string) => {
+  const exportToPDF = async (amicalistes: Amicaliste[], columns: ExportColumn[], status?: string) => {
     const filtered = status ? amicalistes.filter((a) => a.status === status) : amicalistes
 
     // Pré-charger toutes les images en base64 (contourne CORS html2canvas)
@@ -127,25 +203,46 @@ export function useExportAmicalistes() {
         })
     )
 
+    // Pré-charger le logo
+    let logoBase64: string | null = null
+    if (currentAssociation?.logo_url) {
+      logoBase64 = await toBase64(currentAssociation.logo_url)
+    }
+
     // Créer un conteneur HTML temporaire
     const container = document.createElement('div')
     container.style.padding = '20px'
     container.style.backgroundColor = 'white'
     container.style.width = '1200px'
 
-    // En-tête
+    // En-tête avec logo
     const header = document.createElement('div')
     header.style.marginBottom = '20px'
     header.style.borderBottom = '2px solid #333'
     header.style.paddingBottom = '10px'
-    header.innerHTML = `
-      <h1 style="margin: 0; font-size: 24px; font-weight: bold;">Amicalistes ${currentAssociation?.name || ''}</h1>
+    header.style.display = 'flex'
+    header.style.alignItems = 'center'
+    header.style.gap = '15px'
+
+    if (logoBase64) {
+      const logo = document.createElement('img')
+      logo.src = logoBase64
+      logo.style.width = '60px'
+      logo.style.height = '60px'
+      logo.style.objectFit = 'contain'
+      header.appendChild(logo)
+    }
+
+    const headerText = document.createElement('div')
+    headerText.innerHTML = `
+      <h1 style="margin: 0; font-size: 24px; font-weight: bold;">${currentAssociation?.name || 'Amicalistes'}</h1>
       <p style="margin: 5px 0 0 0; font-size: 12px; color: #666;">
         Statut: ${status ? getStatusLabel(status) : 'Tous'} |
         Total: ${filtered.length} |
         Date: ${new Date().toLocaleDateString('fr-FR')}
       </p>
     `
+    header.appendChild(headerText)
     container.appendChild(header)
 
     // Tableau
@@ -159,15 +256,17 @@ export function useExportAmicalistes() {
     const headerRow = document.createElement('tr')
     headerRow.style.backgroundColor = '#f0f0f0'
     headerRow.style.borderBottom = '1px solid #ddd'
-    ;['Photo', 'Nom', 'Email', 'Téléphone', 'Grade', 'Statut', 'Adhésion'].forEach((col) => {
+
+    columns.forEach((col) => {
       const th = document.createElement('th')
-      th.textContent = col
+      th.textContent = EXPORT_COLUMNS[col]
       th.style.padding = '8px'
       th.style.textAlign = 'left'
       th.style.fontWeight = 'bold'
       th.style.borderBottom = '1px solid #ddd'
       headerRow.appendChild(th)
     })
+
     thead.appendChild(headerRow)
     table.appendChild(thead)
 
@@ -177,113 +276,84 @@ export function useExportAmicalistes() {
       const row = document.createElement('tr')
       row.style.borderBottom = '1px solid #eee'
 
-      // Photo — utilise le base64 pré-chargé pour éviter CORS
-      const photoCell = document.createElement('td')
-      photoCell.style.padding = '4px'
-      if (member.avatar_url) {
-        const src = avatarMap.get(member.avatar_url) ?? member.avatar_url
-        const img = document.createElement('img')
-        img.src = src
-        img.style.width = '36px'
-        img.style.height = '36px'
-        img.style.borderRadius = '6px'
-        img.style.objectFit = 'cover'
-        img.style.display = 'block'
-        photoCell.appendChild(img)
-      } else {
-        // Avatar initiales
-        const initials = document.createElement('div')
-        initials.textContent = `${member.first_name[0]}${member.last_name[0]}`
-        initials.style.width = '36px'
-        initials.style.height = '36px'
-        initials.style.borderRadius = '6px'
-        initials.style.backgroundColor = '#fee2e2'
-        initials.style.color = '#dc2626'
-        initials.style.display = 'flex'
-        initials.style.alignItems = 'center'
-        initials.style.justifyContent = 'center'
-        initials.style.fontWeight = 'bold'
-        initials.style.fontSize = '12px'
-        photoCell.appendChild(initials)
-      }
-      row.appendChild(photoCell)
+      columns.forEach((col) => {
+        const cell = document.createElement('td')
+        cell.style.padding = '4px'
+        cell.style.wordWrap = 'break-word'
 
-      // Nom
-      const nameCell = document.createElement('td')
-      nameCell.textContent = `${member.first_name} ${member.last_name}`
-      nameCell.style.padding = '8px'
-      row.appendChild(nameCell)
+        if (col === 'photo') {
+          if (member.avatar_url) {
+            const src = avatarMap.get(member.avatar_url) ?? member.avatar_url
+            const img = document.createElement('img')
+            img.src = src
+            img.style.width = '36px'
+            img.style.height = '36px'
+            img.style.borderRadius = '6px'
+            img.style.objectFit = 'cover'
+            img.style.display = 'block'
+            cell.appendChild(img)
+          } else {
+            const initials = document.createElement('div')
+            initials.textContent = `${member.first_name[0]}${member.last_name[0]}`
+            initials.style.width = '36px'
+            initials.style.height = '36px'
+            initials.style.borderRadius = '6px'
+            initials.style.backgroundColor = '#fee2e2'
+            initials.style.color = '#dc2626'
+            initials.style.display = 'flex'
+            initials.style.alignItems = 'center'
+            initials.style.justifyContent = 'center'
+            initials.style.fontWeight = 'bold'
+            initials.style.fontSize = '12px'
+            cell.appendChild(initials)
+          }
+        } else {
+          cell.textContent = (buildRowData(member, [col])[EXPORT_COLUMNS[col]] || '—').toString()
+        }
 
-      // Email
-      const emailCell = document.createElement('td')
-      emailCell.textContent = member.email || '—'
-      emailCell.style.padding = '8px'
-      row.appendChild(emailCell)
-
-      // Téléphone
-      const phoneCell = document.createElement('td')
-      phoneCell.textContent = member.phone || '—'
-      phoneCell.style.padding = '8px'
-      row.appendChild(phoneCell)
-
-      // Grade
-      const gradeCell = document.createElement('td')
-      gradeCell.textContent = member.grade || '—'
-      gradeCell.style.padding = '8px'
-      row.appendChild(gradeCell)
-
-      // Statut
-      const statusCell = document.createElement('td')
-      statusCell.textContent = getStatusLabel(member.status)
-      statusCell.style.padding = '8px'
-      row.appendChild(statusCell)
-
-      // Adhésion
-      const dateCell = document.createElement('td')
-      dateCell.textContent = formatDate(member.join_date)
-      dateCell.style.padding = '8px'
-      row.appendChild(dateCell)
+        row.appendChild(cell)
+      })
 
       tbody.appendChild(row)
     }
+
     table.appendChild(tbody)
     container.appendChild(table)
 
-    // Convertir en canvas et ajouter au PDF
-    document.body.appendChild(container)
-    try {
-      const canvas = await html2canvas(container, {
-        backgroundColor: '#ffffff',
-        scale: 2,
-      })
-      const imgData = canvas.toDataURL('image/png')
-      const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: 'a4',
-      })
+    // Rendre en PDF via html2canvas
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+    })
 
-      const imgWidth = 280
-      const imgHeight = (canvas.height * imgWidth) / canvas.width
-      let heightLeft = imgHeight
+    const imgData = canvas.toDataURL('image/png')
+    const pdf = new jsPDF({
+      orientation: 'l',
+      unit: 'mm',
+      format: 'a4',
+    })
 
-      let position = 0
-      while (heightLeft > 0) {
-        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight)
-        heightLeft -= pdf.internal.pageSize.getHeight()
-        if (heightLeft > 0) pdf.addPage()
-        position = heightLeft - imgHeight
-      }
+    const pdfWidth = pdf.internal.pageSize.getWidth()
+    const pdfHeight = pdf.internal.pageSize.getHeight()
+    const imgHeight = (canvas.height * pdfWidth) / canvas.width
+    let heightLeft = imgHeight
 
-      pdf.save(`amicalistes_${status || 'tous'}_${new Date().toISOString().split('T')[0]}.pdf`)
-    } finally {
-      document.body.removeChild(container)
+    let position = 0
+
+    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight)
+    heightLeft -= pdfHeight
+
+    while (heightLeft >= 0) {
+      position = heightLeft - imgHeight
+      pdf.addPage()
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight)
+      heightLeft -= pdfHeight
     }
+
+    pdf.save(`amicalistes_${status || 'tous'}_${new Date().toISOString().split('T')[0]}.pdf`)
   }
 
-  return {
-    exportToCSV,
-    exportToExcel,
-    exportToPDF,
-  }
+  return { exportToCSV, exportToExcel, exportToPDF }
 }

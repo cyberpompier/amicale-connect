@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, UserPlus, Pencil, Trash2, Users, Download, FileJson, File, FileText } from 'lucide-react'
+import { Search, UserPlus, Pencil, Trash2, Users, Download, FileJson, File, FileText, X } from 'lucide-react'
 import { useAmicalistes } from '@/hooks/useAmicalistes'
-import { useExportAmicalistes } from '@/hooks/useExportAmicalistes'
+import { useExportAmicalistes, EXPORT_COLUMNS, type ExportColumn } from '@/hooks/useExportAmicalistes'
+import { useAssociation } from '@/features/association/AssociationContext'
 import { formatDate } from '@/lib/utils'
 import { PageHeader } from '@/components/ui/PageHeader'
 
@@ -14,13 +15,36 @@ const STATUS_STYLES: Record<string, string> = {
 export function MembresListPage() {
   const { amicalistes, loading, deleteAmicaliste } = useAmicalistes()
   const { exportToCSV, exportToExcel, exportToPDF } = useExportAmicalistes()
+  const { currentAssociation } = useAssociation()
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [exportStatus, setExportStatus] = useState<string>('all')
   const [showExportMenu, setShowExportMenu] = useState(false)
+  const [showColumnSelect, setShowColumnSelect] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [selectedColumns, setSelectedColumns] = useState<ExportColumn[]>([
+    'nom', 'prenom', 'email', 'telephone', 'grade', 'statut', 'adhesion'
+  ])
   const navigate = useNavigate()
+
+  const allColumns: ExportColumn[] = [
+    'photo', 'nom', 'prenom', 'email', 'telephone', 'grade', 'statut', 'adhesion', 'naissance', 'adresse', 'etat_civil', 'notes'
+  ]
+
+  const toggleColumn = (col: ExportColumn) => {
+    setSelectedColumns((prev) =>
+      prev.includes(col) ? prev.filter((c) => c !== col) : [...prev, col]
+    )
+  }
+
+  const setAllColumns = () => {
+    setSelectedColumns(allColumns)
+  }
+
+  const clearAllColumns = () => {
+    setSelectedColumns([])
+  }
 
   const filtered = amicalistes.filter((m) => {
     const matchSearch =
@@ -45,17 +69,22 @@ export function MembresListPage() {
   }
 
   const handleExport = async (format: 'csv' | 'xlsx' | 'pdf') => {
+    if (selectedColumns.length === 0) {
+      alert('Sélectionnez au moins une colonne')
+      return
+    }
     setExporting(true)
     try {
       const status = exportStatus === 'all' ? undefined : exportStatus
       if (format === 'csv') {
-        exportToCSV(amicalistes, status)
+        exportToCSV(amicalistes, selectedColumns, status)
       } else if (format === 'xlsx') {
-        await exportToExcel(amicalistes, status)
+        await exportToExcel(amicalistes, selectedColumns, status)
       } else if (format === 'pdf') {
-        await exportToPDF(amicalistes, status)
+        await exportToPDF(amicalistes, selectedColumns, status)
       }
       setShowExportMenu(false)
+      setShowColumnSelect(false)
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Erreur lors de l\'export')
     }
@@ -73,8 +102,8 @@ export function MembresListPage() {
   return (
     <div>
       <PageHeader
-        title="Amicalistes"
-        subtitle={`${amicalistes.length} membre${amicalistes.length !== 1 ? 's' : ''} au total`}
+        title={currentAssociation?.name || 'Amicalistes'}
+        subtitle={`${amicalistes.length} membre${amicalistes.length !== 1 ? 's' : ''} inscrit${amicalistes.length !== 1 ? 's' : ''}`}
         action={
           <button
             onClick={() => navigate('/membres/ajouter')}
@@ -136,8 +165,8 @@ export function MembresListPage() {
                 <span className="hidden sm:inline">Exporter</span>
               </button>
               {showExportMenu && (
-                <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg border border-[var(--color-border)] shadow-lg z-10">
-                  <div className="p-3 border-b border-[var(--color-border)]">
+                <div className="absolute right-0 mt-1 w-80 bg-white rounded-lg border border-[var(--color-border)] shadow-lg z-10 max-h-96 overflow-y-auto">
+                  <div className="p-3 border-b border-[var(--color-border)] sticky top-0 bg-white">
                     <label className="block text-xs font-semibold text-[var(--color-text-muted)] mb-2 uppercase">Statut à exporter</label>
                     <select
                       value={exportStatus}
@@ -150,9 +179,43 @@ export function MembresListPage() {
                       ))}
                     </select>
                   </div>
+
+                  <div className="p-3 border-b border-[var(--color-border)]">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-semibold text-[var(--color-text-muted)] uppercase">Colonnes</label>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={setAllColumns}
+                          className="px-2 py-0.5 text-xs text-[var(--color-primary)] hover:bg-blue-50 rounded transition-colors"
+                        >
+                          Tout
+                        </button>
+                        <button
+                          onClick={clearAllColumns}
+                          className="px-2 py-0.5 text-xs text-red-600 hover:bg-red-50 rounded transition-colors"
+                        >
+                          Rien
+                        </button>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                      {allColumns.map((col) => (
+                        <label key={col} className="flex items-center gap-2 p-1.5 hover:bg-[var(--color-bg-secondary)] rounded cursor-pointer text-sm">
+                          <input
+                            type="checkbox"
+                            checked={selectedColumns.includes(col)}
+                            onChange={() => toggleColumn(col)}
+                            className="w-4 h-4 rounded border-[var(--color-border)] text-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/25"
+                          />
+                          <span className="text-[var(--color-text-muted)]">{EXPORT_COLUMNS[col]}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
                   <button
                     onClick={() => handleExport('xlsx')}
-                    disabled={exporting}
+                    disabled={exporting || selectedColumns.length === 0}
                     className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-[var(--color-bg-secondary)] transition-colors disabled:opacity-50"
                   >
                     <FileJson className="w-4 h-4" />
@@ -160,7 +223,7 @@ export function MembresListPage() {
                   </button>
                   <button
                     onClick={() => handleExport('csv')}
-                    disabled={exporting}
+                    disabled={exporting || selectedColumns.length === 0}
                     className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-[var(--color-bg-secondary)] transition-colors disabled:opacity-50"
                   >
                     <FileText className="w-4 h-4" />
@@ -168,7 +231,7 @@ export function MembresListPage() {
                   </button>
                   <button
                     onClick={() => handleExport('pdf')}
-                    disabled={exporting}
+                    disabled={exporting || selectedColumns.length === 0}
                     className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-[var(--color-bg-secondary)] transition-colors disabled:opacity-50 border-t border-[var(--color-border)]"
                   >
                     <File className="w-4 h-4" />
