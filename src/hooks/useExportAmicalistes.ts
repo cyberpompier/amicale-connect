@@ -193,188 +193,97 @@ export function useExportAmicalistes() {
     try {
       const filtered = status ? amicalistes.filter((a) => a.status === status) : amicalistes
 
-      // Pré-charger toutes les images en base64 (contourne CORS html2canvas)
-      const avatarMap = new Map<string, string>()
-      await Promise.all(
-        filtered
-          .filter((m) => m.avatar_url)
-          .map(async (m) => {
-            const b64 = await toBase64(m.avatar_url!)
-            if (b64) avatarMap.set(m.avatar_url!, b64)
-          })
-      )
-
-      // Pré-charger le logo
-      let logoBase64: string | null = null
-      if (currentAssociation?.logo_url) {
-        logoBase64 = await toBase64(currentAssociation.logo_url)
-      }
-
-      // Créer un conteneur HTML temporaire
-      const container = document.createElement('div')
-      container.style.padding = '20px'
-      container.style.backgroundColor = 'white'
-      container.style.width = '1200px'
-      container.style.height = 'auto'
-      container.style.margin = '0'
-      container.style.boxSizing = 'border-box'
-
-      // En-tête avec logo
-      const header = document.createElement('div')
-      header.style.marginBottom = '20px'
-      header.style.borderBottom = '2px solid #333'
-      header.style.paddingBottom = '10px'
-      header.style.display = 'flex'
-      header.style.alignItems = 'center'
-      header.style.gap = '15px'
-
-      if (logoBase64) {
-        const logo = document.createElement('img')
-        logo.src = logoBase64
-        logo.style.width = '60px'
-        logo.style.height = '60px'
-        logo.style.objectFit = 'contain'
-        header.appendChild(logo)
-      }
-
-      const headerText = document.createElement('div')
-      headerText.innerHTML = `
-        <h1 style="margin: 0; font-size: 24px; font-weight: bold;">${currentAssociation?.name || 'Amicalistes'}</h1>
-        <p style="margin: 5px 0 0 0; font-size: 12px; color: #666;">
-          Statut: ${status ? getStatusLabel(status) : 'Tous'} |
-          Total: ${filtered.length} |
-          Date: ${new Date().toLocaleDateString('fr-FR')}
-        </p>
-      `
-      header.appendChild(headerText)
-      container.appendChild(header)
-
-      // Tableau
-      const table = document.createElement('table')
-      table.style.width = '100%'
-      table.style.borderCollapse = 'collapse'
-      table.style.fontSize = '11px'
-
-      // En-têtes du tableau
-      const thead = document.createElement('thead')
-      const headerRow = document.createElement('tr')
-      headerRow.style.backgroundColor = '#f0f0f0'
-      headerRow.style.borderBottom = '1px solid #ddd'
-
-      columns.forEach((col) => {
-        const th = document.createElement('th')
-        th.textContent = EXPORT_COLUMNS[col]
-        th.style.padding = '8px'
-        th.style.textAlign = 'left'
-        th.style.fontWeight = 'bold'
-        th.style.borderBottom = '1px solid #ddd'
-        headerRow.appendChild(th)
-      })
-
-      thead.appendChild(headerRow)
-      table.appendChild(thead)
-
-      // Corps du tableau
-      const tbody = document.createElement('tbody')
-      for (const member of filtered) {
-        const row = document.createElement('tr')
-        row.style.borderBottom = '1px solid #eee'
-
-        columns.forEach((col) => {
-          const cell = document.createElement('td')
-          cell.style.padding = '4px'
-          cell.style.wordWrap = 'break-word'
-
-          if (col === 'photo') {
-            if (member.avatar_url) {
-              const src = avatarMap.get(member.avatar_url) ?? member.avatar_url
-              const img = document.createElement('img')
-              img.src = src
-              img.style.width = '36px'
-              img.style.height = '36px'
-              img.style.borderRadius = '6px'
-              img.style.objectFit = 'cover'
-              img.style.display = 'block'
-              cell.appendChild(img)
-            } else {
-              const initials = document.createElement('div')
-              initials.textContent = `${member.first_name[0]}${member.last_name[0]}`
-              initials.style.width = '36px'
-              initials.style.height = '36px'
-              initials.style.borderRadius = '6px'
-              initials.style.backgroundColor = '#fee2e2'
-              initials.style.color = '#dc2626'
-              initials.style.display = 'flex'
-              initials.style.alignItems = 'center'
-              initials.style.justifyContent = 'center'
-              initials.style.fontWeight = 'bold'
-              initials.style.fontSize = '12px'
-              cell.appendChild(initials)
-            }
-          } else {
-            cell.textContent = (buildRowData(member, [col])[EXPORT_COLUMNS[col]] || '—').toString()
-          }
-
-          row.appendChild(cell)
-        })
-
-        tbody.appendChild(row)
-      }
-
-      table.appendChild(tbody)
-      container.appendChild(table)
-
-      // Attacher au DOM temporairement pour que html2canvas puisse charger les styles
-      container.style.position = 'fixed'
-      container.style.top = '-9999px'
-      container.style.left = '-9999px'
-      document.body.appendChild(container)
-
-      // Rendre en PDF via html2canvas
-      const canvas = await html2canvas(container, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        allowTaint: true,
-      })
-
-      const imgData = canvas.toDataURL('image/png')
       const pdf = new jsPDF({
         orientation: 'l',
         unit: 'mm',
         format: 'a4',
       })
 
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = pdf.internal.pageSize.getHeight()
-      const imgHeight = (canvas.height * pdfWidth) / canvas.width
-      let heightLeft = imgHeight
+      const pageWidth = pdf.internal.pageSize.getWidth()
+      const pageHeight = pdf.internal.pageSize.getHeight()
+      const margin = 10
+      let currentY = margin
 
-      let position = 0
+      // Ajouter le logo et le titre
+      let logoSize = 0
+      if (currentAssociation?.logo_url) {
+        try {
+          const logoBase64 = await toBase64(currentAssociation.logo_url)
+          if (logoBase64) {
+            logoSize = 15
+            pdf.addImage(logoBase64, 'JPEG', margin, currentY, logoSize, logoSize)
+          }
+        } catch (e) {
+          console.warn('Logo non chargé:', e)
+        }
+      }
 
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight)
-      heightLeft -= pdfHeight
+      // Titre
+      pdf.setFontSize(14)
+      pdf.setFont(undefined, 'bold')
+      pdf.text(currentAssociation?.name || 'Amicalistes', margin + logoSize + 5, currentY + 5)
 
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight
-        pdf.addPage()
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight)
-        heightLeft -= pdfHeight
+      pdf.setFontSize(10)
+      pdf.setFont(undefined, 'normal')
+      const infoText = `Statut: ${status ? getStatusLabel(status) : 'Tous'} | Total: ${filtered.length} | Date: ${new Date().toLocaleDateString('fr-FR')}`
+      pdf.text(infoText, margin + logoSize + 5, currentY + 12)
+
+      currentY = Math.max(currentY + 20, logoSize + margin + 5)
+
+      // Ajouter le tableau avec les données
+      pdf.setFontSize(9)
+      pdf.setFont(undefined, 'bold')
+
+      const colWidth = (pageWidth - 2 * margin) / columns.length
+      const maxCellHeight = 8
+
+      // En-têtes
+      columns.forEach((col) => {
+        const x = margin + columns.indexOf(col) * colWidth
+        pdf.rect(x, currentY, colWidth, maxCellHeight)
+        pdf.text(EXPORT_COLUMNS[col], x + 2, currentY + 5, { maxWidth: colWidth - 4 })
+      })
+
+      pdf.setFont(undefined, 'normal')
+      currentY += maxCellHeight
+
+      // Données
+      for (const member of filtered) {
+        // Vérifier si on doit créer une nouvelle page
+        if (currentY + maxCellHeight > pageHeight - margin) {
+          pdf.addPage()
+          currentY = margin
+        }
+
+        columns.forEach((col) => {
+          const x = margin + columns.indexOf(col) * colWidth
+
+          if (col === 'photo') {
+            if (member.avatar_url) {
+              try {
+                const avatarBase64 = await toBase64(member.avatar_url)
+                if (avatarBase64) {
+                  pdf.addImage(avatarBase64, 'JPEG', x + 1, currentY, 6, 6)
+                }
+              } catch (e) {
+                console.warn('Avatar non chargé:', e)
+              }
+            }
+          } else {
+            const value = buildRowData(member, [col])[EXPORT_COLUMNS[col]] || ''
+            const truncated = truncate(value, 100)
+            pdf.text(truncated, x + 2, currentY + 5, { maxWidth: colWidth - 4 })
+          }
+
+          pdf.rect(x, currentY, colWidth, maxCellHeight)
+        })
+
+        currentY += maxCellHeight
       }
 
       pdf.save(`amicalistes_${status || 'tous'}_${new Date().toISOString().split('T')[0]}.pdf`)
-
-      // Nettoyer le DOM
-      if (document.body.contains(container)) {
-        document.body.removeChild(container)
-      }
     } catch (error) {
       console.error('Erreur lors de la génération du PDF:', error)
-      // Nettoyer le DOM en cas d'erreur
-      if (document.body.contains(container)) {
-        document.body.removeChild(container)
-      }
       throw error
     }
   }
