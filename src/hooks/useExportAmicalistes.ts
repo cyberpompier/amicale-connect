@@ -47,23 +47,28 @@ export function useExportAmicalistes() {
     link.click()
   }
 
+  const truncate = (text: string | null | undefined, max: number = 32000): string => {
+    if (!text) return ''
+    return text.length > max ? text.substring(0, max - 3) + '...' : text
+  }
+
   const exportToExcel = async (amicalistes: Amicaliste[], status?: string) => {
     const filtered = status ? amicalistes.filter((a) => a.status === status) : amicalistes
     const data = filtered.map((a) => ({
-      Prénom: a.first_name,
-      Nom: a.last_name,
-      Email: a.email || '',
-      Téléphone: a.phone || '',
-      Grade: a.grade || '',
+      Prénom: truncate(a.first_name, 100),
+      Nom: truncate(a.last_name, 100),
+      Email: truncate(a.email, 100),
+      Téléphone: truncate(a.phone, 50),
+      Grade: truncate(a.grade, 50),
       Statut: getStatusLabel(a.status),
       'Date adhésion': formatDate(a.join_date),
       'Date de naissance': a.birth_date ? formatDate(a.birth_date) : '',
-      'Rue': a.address_street || '',
-      'Code postal': a.address_postal_code || '',
-      'Ville': a.address_city || '',
-      'État civil': a.marital_status || '',
-      'Lien photo': a.avatar_url || '',
-      Notes: a.notes || '',
+      'Rue': truncate(a.address_street, 200),
+      'Code postal': truncate(a.address_postal_code, 20),
+      'Ville': truncate(a.address_city, 100),
+      'État civil': truncate(a.marital_status, 50),
+      'Lien photo': truncate(a.avatar_url, 1000),
+      Notes: truncate(a.notes, 1000),
     }))
 
     const worksheet = XLSX.utils.json_to_sheet(data)
