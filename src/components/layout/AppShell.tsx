@@ -4,7 +4,7 @@ import { useAuthContext } from '@/features/auth/AuthContext'
 import { AssociationProvider, useAssociation } from '@/features/association/AssociationContext'
 import { SecteurProvider } from '@/features/calendriers/SecteurContext'
 import { MenuPermissionsProvider } from '@/features/auth/MenuPermissionsContext'
-import { OnboardingPage } from '@/features/association/OnboardingPage'
+import { OnboardingChoicePage } from '@/features/association/OnboardingChoicePage'
 import { supabase } from '@/lib/supabase'
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
@@ -45,9 +45,9 @@ function AppShellContent() {
 
   const marginLeft = isDesktop ? (sidebarCollapsed ? '4rem' : '15rem') : '0'
 
-  // Onboarding : aucune association existante
+  // Onboarding : aucune association existante → aiguillage
   if (!assocLoading && associations.length === 0) {
-    return <OnboardingPage />
+    return <OnboardingChoicePage />
   }
 
   // Chargement des associations ou vérification du profil

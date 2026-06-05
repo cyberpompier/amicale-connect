@@ -1,10 +1,62 @@
 import { useState, useEffect, type FormEvent } from 'react'
-import { Building2, User, Lock, LogOut, Save, CheckCircle2, AlertCircle, Eye, EyeOff, Upload, X } from 'lucide-react'
+import { Building2, User, Lock, LogOut, Save, CheckCircle2, AlertCircle, Eye, EyeOff, Upload, X, Copy, KeyRound } from 'lucide-react'
 import { useAssociation } from '@/features/association/AssociationContext'
 import { useAuthContext } from '@/features/auth/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { resizeImage } from '@/lib/imageResize'
 import { PageHeader } from '@/components/ui/PageHeader'
+
+function InviteCodeBlock() {
+  const { currentAssociation } = useAssociation()
+  const [copied, setCopied] = useState(false)
+  const [inviteCode, setInviteCode] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!currentAssociation) return
+    supabase
+      .from('associations')
+      .select('invite_code')
+      .eq('id', currentAssociation.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.invite_code) setInviteCode(data.invite_code)
+      })
+  }, [currentAssociation?.id])
+
+  const handleCopy = () => {
+    if (!inviteCode) return
+    navigator.clipboard.writeText(inviteCode)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-[var(--color-text-muted)]">
+        Transmettez ce code à vos membres lors de leur inscription. Ils pourront rejoindre votre amicale sans que vous ayez besoin de les ajouter manuellement.
+      </p>
+      <div className="flex items-center gap-2">
+        <div className="flex-1 flex items-center gap-3 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-xl px-4 py-3">
+          <KeyRound className="w-4 h-4 text-[var(--color-text-muted)] flex-shrink-0" />
+          <span className="font-mono text-lg font-bold tracking-widest text-[var(--color-text)]">
+            {inviteCode ?? '••••••••'}
+          </span>
+        </div>
+        <button
+          onClick={handleCopy}
+          disabled={!inviteCode}
+          className="flex items-center gap-2 px-4 py-3 border border-[var(--color-border)] rounded-xl text-sm font-medium hover:bg-[var(--color-bg-secondary)] transition-colors disabled:opacity-50"
+        >
+          {copied ? <CheckCircle2 className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+          {copied ? 'Copié !' : 'Copier'}
+        </button>
+      </div>
+      <p className="text-xs text-[var(--color-text-muted)]">
+        Ce code est unique à votre amicale. Ne le partagez qu'avec les personnes autorisées.
+      </p>
+    </div>
+  )
+}
 
 export function ParametresPage() {
   const { currentAssociation, refetch } = useAssociation()
@@ -272,6 +324,22 @@ export function ParametresPage() {
               </button>
             </div>
           </form>
+        </section>
+
+        {/* === CODE D'INVITATION === */}
+        <section className="bg-white rounded-xl border border-[var(--color-border)] shadow-sm overflow-hidden">
+          <div className="flex items-center gap-3 px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
+            <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+              <KeyRound className="w-4 h-4 text-blue-600" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-[var(--color-text)]">Code d'invitation</h2>
+              <p className="text-xs text-[var(--color-text-muted)]">Partagez ce code pour que vos membres rejoignent l'amicale</p>
+            </div>
+          </div>
+          <div className="p-6">
+            <InviteCodeBlock />
+          </div>
         </section>
 
         {/* === MON COMPTE === */}
