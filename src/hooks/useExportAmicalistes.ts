@@ -255,8 +255,9 @@ export function useExportAmicalistes() {
           currentY = margin
         }
 
-        columns.forEach((col) => {
-          const x = margin + columns.indexOf(col) * colWidth
+        for (let i = 0; i < columns.length; i++) {
+          const col = columns[i]
+          const x = margin + i * colWidth
 
           if (col === 'photo') {
             if (member.avatar_url) {
@@ -276,7 +277,7 @@ export function useExportAmicalistes() {
           }
 
           pdf.rect(x, currentY, colWidth, maxCellHeight)
-        })
+        }
 
         currentY += maxCellHeight
       }
