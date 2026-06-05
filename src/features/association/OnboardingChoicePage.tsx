@@ -15,7 +15,6 @@ export function OnboardingChoicePage() {
 
   const [mode, setMode] = useState<Mode>(null)
   const [joinCode, setJoinCode] = useState('')
-  const [platformCode, setPlatformCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [foundAssoc, setFoundAssoc] = useState<{ id: string; name: string; city: string | null } | null>(null)
@@ -67,16 +66,6 @@ export function OnboardingChoicePage() {
     // L'AppShell redirigera vers /profil/completer automatiquement
   }
 
-  // Vérifier le code plateforme pour créer une amicale
-  const handlePlatformCode = (e: FormEvent) => {
-    e.preventDefault()
-    if (platformCode.trim() !== PLATFORM_CODE) {
-      setError('Code invalide. Contactez l\'équipe Amicale Connect.')
-      return
-    }
-    // Passer à la création d'amicale (mode géré par le parent)
-    setMode('create')
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
