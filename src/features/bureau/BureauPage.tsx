@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useBureauPositions } from '@/hooks/useBureauPositions'
 import { useAmicalistes } from '@/hooks/useAmicalistes'
+import { useMenuPermissionsContext } from '@/features/auth/MenuPermissionsContext'
 import { Plus, Trash2, Users2 } from 'lucide-react'
 import { formatDateShort } from '@/lib/utils'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -19,6 +20,8 @@ const BUREAU_POSITIONS = [
 export function BureauPage() {
   const { positions, loading, addPosition, endMandate, deletePosition } = useBureauPositions()
   const { amicalistes } = useAmicalistes()
+  const { userRole } = useMenuPermissionsContext()
+  const canManage = userRole === 'owner' || userRole === 'admin'
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
     position: BUREAU_POSITIONS[0],
@@ -74,7 +77,7 @@ export function BureauPage() {
       <PageHeader
         title="Composition du bureau"
         subtitle={`${positions.length} poste${positions.length !== 1 ? 's' : ''} actif${positions.length !== 1 ? 's' : ''}`}
-        action={
+        action={canManage ? (
           <button
             onClick={() => setShowForm(!showForm)}
             className="flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
@@ -83,7 +86,7 @@ export function BureauPage() {
             <span className="hidden sm:inline">Ajouter un poste</span>
             <span className="sm:hidden">Ajouter</span>
           </button>
-        }
+        ) : undefined}
       />
 
       {showForm && (
@@ -164,16 +167,18 @@ export function BureauPage() {
                     )}
                     <div className="text-lg font-bold">{getMemberName(pos.amicaliste_id)}</div>
                     <div className="text-xs opacity-75 mt-2">Depuis le {formatDateShort(pos.start_date)}</div>
-                    <div className="flex items-center justify-center gap-2 mt-4 pt-4 border-t border-white/20">
-                      <button onClick={() => handleEndMandate(pos.id)}
-                        className="px-3 py-1 text-xs font-semibold bg-white/20 hover:bg-white/30 rounded-lg transition-colors">
-                        Terminer
-                      </button>
-                      <button onClick={() => handleDelete(pos.id)}
-                        className="p-1.5 text-white/60 hover:text-red-300 transition-colors">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                    {canManage && (
+                      <div className="flex items-center justify-center gap-2 mt-4 pt-4 border-t border-white/20">
+                        <button onClick={() => handleEndMandate(pos.id)}
+                          className="px-3 py-1 text-xs font-semibold bg-white/20 hover:bg-white/30 rounded-lg transition-colors">
+                          Terminer
+                        </button>
+                        <button onClick={() => handleDelete(pos.id)}
+                          className="p-1.5 text-white/60 hover:text-red-300 transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )
@@ -203,16 +208,18 @@ export function BureauPage() {
                         )}
                       </div>
                       <div className="text-xs text-[var(--color-text-muted)] mb-3">Depuis le {formatDateShort(pos.start_date)}</div>
-                      <div className="flex items-center gap-1 pt-3 border-t border-[var(--color-border)]">
-                        <button onClick={() => handleEndMandate(pos.id)}
-                          className="px-2 py-1 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 rounded border border-amber-200 transition-colors flex-1">
-                          Terminer
-                        </button>
-                        <button onClick={() => handleDelete(pos.id)}
-                          className="p-1.5 text-[var(--color-text-muted)] hover:text-red-600 hover:bg-red-50 rounded transition-colors">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                      {canManage && (
+                        <div className="flex items-center gap-1 pt-3 border-t border-[var(--color-border)]">
+                          <button onClick={() => handleEndMandate(pos.id)}
+                            className="px-2 py-1 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 rounded border border-amber-200 transition-colors flex-1">
+                            Terminer
+                          </button>
+                          <button onClick={() => handleDelete(pos.id)}
+                            className="p-1.5 text-[var(--color-text-muted)] hover:text-red-600 hover:bg-red-50 rounded transition-colors">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )
                 })}
