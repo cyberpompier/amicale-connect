@@ -178,11 +178,33 @@ export function EtatTresoreriePage() {
     setGenerating(true)
     try {
       const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' })
-      const PW = pdf.internal.pageSize.getWidth()
-      const PH = pdf.internal.pageSize.getHeight()
-      const M = 14
-      let Y = M
+      const PW = pdf.internal.pageSize.getWidth()   // 210 mm
+      const PH = pdf.internal.pageSize.getHeight()  // 297 mm
+      const M  = 14                                  // marge gauche/droite
+      let Y    = M
+
+      // ── Colonnes : label | amount ──────────────────────────────────────
+      // Réserver 38 mm à droite pour les montants (max "−14 655,99 €" ≈ 36 mm en 8pt)
+      const AMT_W  = 38           // largeur colonne montant
+      const AMT_X  = PW - M       // bord droit de la zone montant (align:'right')
+      const LBL_X  = M + 3        // début du texte label (indent léger)
+      const LBL_MAX = PW - 2 * M - AMT_W - 4   // maxWidth du label : laisse 4mm de gap
+
       const assocName = stripEmoji(currentAssociation?.name ?? 'Amicale')
+
+      // ── Helpers PDF ────────────────────────────────────────────────────
+      const textL = (txt: string, y: number, opts?: { size?: number; bold?: boolean; color?: [number,number,number]; maxW?: number }) => {
+        pdf.setFont('helvetica', opts?.bold ? 'bold' : 'normal')
+        pdf.setFontSize(opts?.size ?? 8.5)
+        pdf.setTextColor(...(opts?.color ?? [50, 50, 50] as [number,number,number]))
+        pdf.text(txt, LBL_X, y, { maxWidth: opts?.maxW ?? LBL_MAX })
+      }
+      const textR = (txt: string, y: number, opts?: { size?: number; bold?: boolean; color?: [number,number,number] }) => {
+        pdf.setFont('helvetica', opts?.bold ? 'bold' : 'normal')
+        pdf.setFontSize(opts?.size ?? 8.5)
+        pdf.setTextColor(...(opts?.color ?? [50, 50, 50] as [number,number,number]))
+        pdf.text(txt, AMT_X, y, { align: 'right', maxWidth: AMT_W })
+      }
 
       // ── En-tête ────────────────────────────────────────────────────────
       pdf.setFillColor(180, 20, 20); pdf.rect(0, 0, PW, 18, 'F')
@@ -192,127 +214,121 @@ export function EtatTresoreriePage() {
       pdf.text(`Exercice ${annee}  —  Du 01/01/${annee} au 31/12/${annee}`, M, 14)
       Y = 24
 
-      // ── Synthèse globale ────────────────────────────────────────────────
-      const synthW = (PW - 2 * M - 12) / 4
-      const synthItems = [
-        { label: 'Tresorerie ouverture', val: totalOuverture, sub: `01/01/${annee}`, color: [99, 102, 241] as [number,number,number] },
-        { label: 'Encaissements nets', val: totalEncaiss - totalDecaiss, sub: `Recettes - Depenses`, color: totalEncaiss - totalDecaiss >= 0 ? [22, 163, 74] as [number,number,number] : [220, 38, 38] as [number,number,number] },
-        { label: 'Virements internes', val: 0, sub: `${totalVirIn >= 0 ? '+' : ''}${eur(totalVirIn)} / -${eur(totalVirOut)}`, color: [99, 102, 241] as [number,number,number] },
-        { label: 'Tresorerie cloture', val: totalCloture, sub: `31/12/${annee}`, color: totalCloture >= 0 ? [22, 163, 74] as [number,number,number] : [220, 38, 38] as [number,number,number] },
+      // ── Synthèse globale (4 cases) ──────────────────────────────────────
+      // Chaque case = texte centré — on s'assure que les montants restent dans la case
+      const synthW = (PW - 2 * M - 9) / 4   // 4 cases avec 3mm entre elles
+      const synthData = [
+        { label: 'Tresorerie ouverture', line1: eur(totalOuverture),    line2: `01/01/${annee}`, color: [99, 102, 241] as [number,number,number] },
+        { label: 'Encaissements nets',   line1: eur(totalEncaiss - totalDecaiss), line2: 'Recettes - Depenses', color: (totalEncaiss - totalDecaiss) >= 0 ? [22, 163, 74] as [number,number,number] : [220, 38, 38] as [number,number,number] },
+        { label: 'Virements internes',   line1: `+${eur(totalVirIn)}`, line2: `-${eur(totalVirOut)}`, color: [99, 102, 241] as [number,number,number] },
+        { label: 'Tresorerie cloture',   line1: eur(totalCloture),      line2: `31/12/${annee}`, color: totalCloture >= 0 ? [22, 163, 74] as [number,number,number] : [220, 38, 38] as [number,number,number] },
       ]
-
-      synthItems.forEach((s, i) => {
-        const bx = M + i * (synthW + 4)
-        pdf.setFillColor(245, 245, 245); pdf.roundedRect(bx, Y, synthW, 18, 2, 2, 'F')
+      synthData.forEach((s, i) => {
+        const bx = M + i * (synthW + 3)
+        pdf.setFillColor(245, 245, 245); pdf.roundedRect(bx, Y, synthW, 20, 2, 2, 'F')
+        // label (6 pt gris)
         pdf.setFont('helvetica', 'normal'); pdf.setFontSize(6.5); pdf.setTextColor(100, 100, 100)
-        pdf.text(s.label, bx + synthW / 2, Y + 5, { align: 'center' })
-        pdf.setFont('helvetica', 'bold'); pdf.setFontSize(s.label === 'Virements internes' ? 7 : 9); pdf.setTextColor(...s.color)
-        pdf.text(s.label === 'Virements internes' ? s.sub : eur(s.val), bx + synthW / 2, Y + 11.5, { align: 'center' })
-        pdf.setFont('helvetica', 'normal'); pdf.setFontSize(6.5); pdf.setTextColor(140, 140, 140)
-        if (s.label !== 'Virements internes') pdf.text(s.sub, bx + synthW / 2, Y + 16, { align: 'center' })
+        pdf.text(s.label, bx + synthW / 2, Y + 5, { align: 'center', maxWidth: synthW - 2 })
+        // montant principal (8.5 pt coloré, jamais supérieur à la largeur de la case)
+        pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(...s.color)
+        pdf.text(s.line1, bx + synthW / 2, Y + 12, { align: 'center', maxWidth: synthW - 2 })
+        // sous-titre (6 pt gris clair)
+        pdf.setFont('helvetica', 'normal'); pdf.setFontSize(6); pdf.setTextColor(140, 140, 140)
+        pdf.text(s.line2, bx + synthW / 2, Y + 17, { align: 'center', maxWidth: synthW - 2 })
       })
-      Y += 24
+      Y += 26
 
       // ── Un bloc par compte ──────────────────────────────────────────────
       for (const e of etats) {
         if (Y + 40 > PH - 20) { pdf.addPage(); Y = M }
 
-        // Titre compte
+        // Titre compte (fond sombre)
         pdf.setFillColor(50, 50, 50); pdf.roundedRect(M, Y, PW - 2 * M, 9, 1.5, 1.5, 'F')
         pdf.setFont('helvetica', 'bold'); pdf.setFontSize(9.5); pdf.setTextColor(255, 255, 255)
-        pdf.text(`${stripEmoji(e.icone + ' ' + e.nom)}  —  ${e.type}`, M + 3, Y + 6.5)
+        pdf.text(`${stripEmoji(e.nom)}  —  ${e.type}`, M + 3, Y + 6.5, { maxWidth: PW - 2 * M - 6 })
         Y += 9
 
         // Solde ouverture
         pdf.setFillColor(235, 235, 235); pdf.rect(M, Y, PW - 2 * M, 8, 'F')
-        pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8.5); pdf.setTextColor(60, 60, 60)
-        pdf.text(`Solde au 01/01/${annee}`, M + 3, Y + 5.5)
-        pdf.setFont('helvetica', 'bold')
-        pdf.text(eur(e.soldOuverture), PW - M - 2, Y + 5.5, { align: 'right' })
+        textL(`Solde au 01/01/${annee}`, Y + 5.5)
+        textR(eur(e.soldOuverture), Y + 5.5, { bold: true })
         Y += 8
 
-        // Mouvements
-        const ROW = 6.5
+        // ── Lignes de mouvement ────────────────────────────────────────
+        const ROW = 7
+        const drawSectionHeader = (label: string, montant: number, isCredit: boolean, bgColor: [number,number,number]) => {
+          if (Y + ROW > PH - 20) { pdf.addPage(); Y = M }
+          pdf.setFillColor(...bgColor); pdf.rect(M, Y, PW - 2 * M, ROW - 1, 'F')
+          const tc: [number,number,number] = isCredit ? [22, 163, 74] : [220, 38, 38]
+          textL(label, Y + 5, { size: 7.5, bold: true, color: tc })
+          textR((isCredit ? '+' : '−') + eur(montant), Y + 5, { size: 7.5, bold: true, color: tc })
+          Y += ROW - 1
+        }
         const drawMvtRow = (label: string, montant: number, isCredit: boolean) => {
           if (Y + ROW > PH - 20) { pdf.addPage(); Y = M }
-          pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8); pdf.setTextColor(60, 60, 60)
-          pdf.text(label, M + 5, Y + ROW - 1.5, { maxWidth: PW - 2 * M - 30 })
-          const c: [number,number,number] = isCredit ? [22, 163, 74] : [220, 38, 38]
-          pdf.setTextColor(...c); pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8)
-          pdf.text((isCredit ? '+' : '−') + eur(montant), PW - M - 2, Y + ROW - 1.5, { align: 'right' })
+          const isEven = Math.round(Y) % 2 === 0
+          if (isEven) { pdf.setFillColor(252, 252, 252); pdf.rect(M, Y, PW - 2 * M, ROW - 1, 'F') }
+          const tc: [number,number,number] = isCredit ? [22, 163, 74] : [220, 38, 38]
+          textL(label, Y + 5, { size: 8, color: [60, 60, 60] })
+          textR((isCredit ? '+' : '−') + eur(montant), Y + 5, { size: 8, bold: true, color: tc })
           pdf.setDrawColor(240, 240, 240); pdf.setLineWidth(0.2)
-          pdf.line(M, Y + ROW, PW - M, Y + ROW)
-          Y += ROW
+          pdf.line(M, Y + ROW - 1, PW - M, Y + ROW - 1)
+          Y += ROW - 1
         }
 
         if (e.encaissements > 0 || e.decaissements > 0 || e.virementsReçus > 0 || e.virementsEmis > 0) {
-          // Sous-total recettes
           if (e.encaissements > 0) {
-            pdf.setFillColor(244, 253, 246); pdf.rect(M, Y, PW - 2 * M, 6, 'F')
-            pdf.setFont('helvetica', 'bold'); pdf.setFontSize(7.5); pdf.setTextColor(22, 163, 74)
-            pdf.text('Encaissements (recettes)', M + 3, Y + 4); pdf.text(`+${eur(e.encaissements)}`, PW - M - 2, Y + 4, { align: 'right' })
-            Y += 6
-            const recettes = e.mouvements.filter(m => m.kind === 'recette') as any[]
-            recettes.forEach(m => drawMvtRow(m.categorie, m.montant, true))
+            drawSectionHeader('Encaissements (recettes)', e.encaissements, true, [240, 253, 244])
+            ;(e.mouvements.filter(m => m.kind === 'recette') as any[]).forEach(m => drawMvtRow(m.categorie, m.montant, true))
           }
           if (e.virementsReçus > 0) {
-            pdf.setFillColor(238, 242, 255); pdf.rect(M, Y, PW - 2 * M, 6, 'F')
-            pdf.setFont('helvetica', 'bold'); pdf.setFontSize(7.5); pdf.setTextColor(99, 102, 241)
-            pdf.text('Virements reçus', M + 3, Y + 4); pdf.text(`+${eur(e.virementsReçus)}`, PW - M - 2, Y + 4, { align: 'right' })
-            Y += 6
-            const vIn = e.mouvements.filter(m => m.kind === 'virement_recu') as any[]
-            vIn.forEach(m => drawMvtRow(`De : ${stripEmoji(m.contrepartie)} — ${m.description}`, m.montant, true))
+            drawSectionHeader('Virements recus', e.virementsReçus, true, [238, 242, 255])
+            ;(e.mouvements.filter(m => m.kind === 'virement_recu') as any[]).forEach(m =>
+              drawMvtRow(`De : ${stripEmoji(m.contrepartie)} — ${m.description}`, m.montant, true))
           }
           if (e.decaissements > 0) {
-            pdf.setFillColor(254, 245, 245); pdf.rect(M, Y, PW - 2 * M, 6, 'F')
-            pdf.setFont('helvetica', 'bold'); pdf.setFontSize(7.5); pdf.setTextColor(220, 38, 38)
-            pdf.text('Decaissements (depenses)', M + 3, Y + 4); pdf.text(`-${eur(e.decaissements)}`, PW - M - 2, Y + 4, { align: 'right' })
-            Y += 6
-            const dep = e.mouvements.filter(m => m.kind === 'depense') as any[]
-            dep.forEach(m => drawMvtRow(m.categorie, m.montant, false))
+            drawSectionHeader('Decaissements (depenses)', e.decaissements, false, [254, 242, 242])
+            ;(e.mouvements.filter(m => m.kind === 'depense') as any[]).forEach(m => drawMvtRow(m.categorie, m.montant, false))
           }
           if (e.virementsEmis > 0) {
-            pdf.setFillColor(238, 242, 255); pdf.rect(M, Y, PW - 2 * M, 6, 'F')
-            pdf.setFont('helvetica', 'bold'); pdf.setFontSize(7.5); pdf.setTextColor(99, 102, 241)
-            pdf.text('Virements emis', M + 3, Y + 4); pdf.text(`-${eur(e.virementsEmis)}`, PW - M - 2, Y + 4, { align: 'right' })
-            Y += 6
-            const vOut = e.mouvements.filter(m => m.kind === 'virement_emis') as any[]
-            vOut.forEach(m => drawMvtRow(`Vers : ${stripEmoji(m.contrepartie)} — ${m.description}`, m.montant, false))
+            drawSectionHeader('Virements emis', e.virementsEmis, false, [238, 242, 255])
+            ;(e.mouvements.filter(m => m.kind === 'virement_emis') as any[]).forEach(m =>
+              drawMvtRow(`Vers : ${stripEmoji(m.contrepartie)} — ${m.description}`, m.montant, false))
           }
         } else {
           pdf.setFont('helvetica', 'italic'); pdf.setFontSize(8); pdf.setTextColor(160, 160, 160)
-          pdf.text('Aucun mouvement sur cet exercice.', M + 5, Y + 5)
+          pdf.text('Aucun mouvement sur cet exercice.', LBL_X, Y + 5)
           Y += 7
         }
 
         // Solde clôture
+        if (Y + 9 > PH - 20) { pdf.addPage(); Y = M }
         const clotColor: [number,number,number] = e.soldeCloture >= 0 ? [22, 163, 74] : [220, 38, 38]
         pdf.setFillColor(...clotColor); pdf.rect(M, Y, PW - 2 * M, 9, 'F')
-        pdf.setFont('helvetica', 'bold'); pdf.setFontSize(9); pdf.setTextColor(255, 255, 255)
-        pdf.text(`Solde au 31/12/${annee}`, M + 3, Y + 6)
-        pdf.text(eur(e.soldeCloture), PW - M - 2, Y + 6, { align: 'right' })
+        textL(`Solde au 31/12/${annee}`, Y + 6, { bold: true, color: [255, 255, 255] })
+        textR(eur(e.soldeCloture), Y + 6, { bold: true, color: [255, 255, 255] })
         Y += 13
       }
 
       // ── Synthèse finale ────────────────────────────────────────────────
-      if (Y + 24 > PH - 15) { pdf.addPage(); Y = M }
-      pdf.setFillColor(30, 30, 30); pdf.rect(M, Y, PW - 2 * M, 22, 'F')
+      if (Y + 28 > PH - 15) { pdf.addPage(); Y = M }
+      pdf.setFillColor(30, 30, 30); pdf.rect(M, Y, PW - 2 * M, 26, 'F')
       pdf.setFont('helvetica', 'bold'); pdf.setFontSize(9); pdf.setTextColor(255, 255, 255)
-      pdf.text('SYNTHESE — TRESORERIE GLOBALE', M + 4, Y + 6)
+      pdf.text('SYNTHESE — TRESORERIE GLOBALE', M + 4, Y + 7)
 
-      const rows2 = [
-        [`Tresorerie au 01/01/${annee}`, eur(totalOuverture)],
-        [`  + Encaissements totaux`, `+${eur(totalEncaiss)}`],
-        [`  - Decaissements totaux`, `-${eur(totalDecaiss)}`],
-        [`Tresorerie au 31/12/${annee}`, eur(totalCloture)],
+      const synthRows: [string, string, [number,number,number]][] = [
+        [`Tresorerie au 01/01/${annee}`, eur(totalOuverture), [180, 220, 255]],
+        [`  + Encaissements totaux`,     `+${eur(totalEncaiss)}`, [150, 255, 150]],
+        [`  - Decaissements totaux`,     `-${eur(totalDecaiss)}`, [255, 180, 180]],
+        [`Tresorerie au 31/12/${annee}`, eur(totalCloture), totalCloture >= 0 ? [150, 255, 150] : [255, 180, 180]],
       ]
-      rows2.forEach((r, i) => {
-        pdf.setFontSize(i === 3 ? 9 : 8); pdf.setFont(i === 3 ? 'helvetica' : 'helvetica', i === 3 ? 'bold' : 'normal')
-        pdf.setTextColor(i === 3 ? 150 : 200, i === 3 ? 255 : 200, i === 3 ? 150 : 200)
-        pdf.text(r[0], M + 4, Y + 11 + i * 4)
-        pdf.text(r[1], PW - M - 2, Y + 11 + i * 4, { align: 'right' })
+      synthRows.forEach(([lbl, val, col], i) => {
+        const ry = Y + 13 + i * 4.5
+        pdf.setFont('helvetica', i === 3 ? 'bold' : 'normal'); pdf.setFontSize(i === 3 ? 8.5 : 8)
+        pdf.setTextColor(...col); pdf.text(lbl, M + 4, ry, { maxWidth: PW - 2 * M - AMT_W - 8 })
+        pdf.setFont('helvetica', 'bold'); pdf.text(val, AMT_X, ry, { align: 'right', maxWidth: AMT_W })
       })
-      Y += 26
+      Y += 30
 
       // ── Pied de page ──────────────────────────────────────────────────
       const totalP = (pdf.internal as any).getNumberOfPages()
