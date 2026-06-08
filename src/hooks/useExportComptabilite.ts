@@ -19,6 +19,19 @@ export const EXPORT_COLS_COMPTA: Record<ExportColCompta, string> = {
 
 export type ExportTypeFilter = 'all' | 'income' | 'expense' | 'virement'
 
+/** Supprime les emojis et caractères Unicode non supportés par Helvetica (jsPDF) */
+const stripEmoji = (str: string): string =>
+  str
+    // Emojis Emoticons, Misc Symbols, Supplemental Symbols, etc.
+    .replace(/[\u{1F300}-\u{1FFFF}]/gu, '')
+    // Dingbats, Misc symbols, arrows
+    .replace(/[☀-➿]/gu, '')
+    // Symboles divers supplémentaires
+    .replace(/[\u{E000}-\u{F8FF}]/gu, '')
+    // Remplacer double espace éventuel + trim
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+
 // ── Types fusionnés ────────────────────────────────────────────────────────────
 type LigneTx = {
   kind: 'tx'
@@ -224,12 +237,12 @@ export function useExportComptabilite() {
 
     const textX = M + logoW + (logoW > 0 ? 4 : 0)
     pdf.setFont('helvetica', 'bold'); pdf.setFontSize(14)
-    pdf.text(currentAssociation?.name ?? 'Comptabilité', textX, Y + 5)
+    pdf.text(stripEmoji(currentAssociation?.name ?? 'Comptabilite'), textX, Y + 5)
     pdf.setFont('helvetica', 'normal'); pdf.setFontSize(9)
     const sous = [
-      `Relevé de compte — ${nomMois(mois, annee)}`,
-      compteLabel ? `Compte : ${compteLabel}` : 'Tous les comptes',
-      `Généré le ${new Date().toLocaleDateString('fr-FR')}`,
+      `Releve de compte — ${nomMois(mois, annee)}`,
+      compteLabel ? `Compte : ${stripEmoji(compteLabel)}` : 'Tous les comptes',
+      `Genere le ${new Date().toLocaleDateString('fr-FR')}`,
     ].join('   |   ')
     pdf.text(sous, textX, Y + 12)
     Y = Math.max(Y + 20, (logoW > 0 ? logoW : 0) + M + 4)
@@ -302,14 +315,14 @@ export function useExportComptabilite() {
         let val = ''
         switch (c) {
           case 'date':        val = fmtDate(l.date); break
-          case 'description': val = l.description; break
-          case 'type':        val = l.type === 'income' ? 'Recette' : l.type === 'expense' ? 'Dépense' : 'Virement'; break
-          case 'categorie':   val = l.categorie; break
-          case 'compte':      val = l.compte; break
+          case 'description': val = stripEmoji(l.description); break
+          case 'type':        val = l.type === 'income' ? 'Recette' : l.type === 'expense' ? 'Depense' : 'Virement'; break
+          case 'categorie':   val = stripEmoji(l.categorie); break
+          case 'compte':      val = stripEmoji(l.compte); break
           case 'montant':
             val = (l.kind === 'tx' && l.type === 'expense' ? '-' : '+') + fmt(l.montant)
             break
-          case 'notes':       val = l.notes; break
+          case 'notes':       val = stripEmoji(l.notes); break
         }
 
         // Couleur montant
@@ -338,7 +351,7 @@ export function useExportComptabilite() {
     pdf.setFillColor(40, 40, 40); pdf.rect(M, Y, PW - 2 * M, 9, 'F')
     pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8); pdf.setTextColor(255, 255, 255)
 
-    const totLine = `Recettes : +${fmt(totalRecettes)}   Dépenses : -${fmt(totalDepenses)}${totalVirements > 0 ? `   Virements : ${fmt(totalVirements)}` : ''}   Solde net : ${(solde >= 0 ? '+' : '')}${fmt(solde)}`
+    const totLine = `Recettes : +${fmt(totalRecettes)}   Depenses : -${fmt(totalDepenses)}${totalVirements > 0 ? `   Virements : ${fmt(totalVirements)}` : ''}   Solde net : ${(solde >= 0 ? '+' : '')}${fmt(solde)}`
     pdf.text(totLine, PW / 2, Y + 6, { align: 'center' })
     Y += 12
 
@@ -347,7 +360,7 @@ export function useExportComptabilite() {
     for (let p = 1; p <= totalPages; p++) {
       pdf.setPage(p)
       pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7); pdf.setTextColor(150, 150, 150)
-      pdf.text(`Page ${p}/${totalPages}  —  ${currentAssociation?.name ?? ''}  —  ${nomMois(mois, annee)}`, PW / 2, PH - 5, { align: 'center' })
+      pdf.text(`Page ${p}/${totalPages}  -  ${stripEmoji(currentAssociation?.name ?? '')}  -  ${nomMois(mois, annee)}`, PW / 2, PH - 5, { align: 'center' })
     }
 
     const filename = `comptabilite_${String(mois).padStart(2, '0')}-${annee}${compteLabel ? '_' + compteLabel.replace(/\s+/g, '_') : ''}.pdf`
