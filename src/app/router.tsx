@@ -15,6 +15,7 @@ import { BilanPage } from '@/features/comptabilite/BilanPage'
 import { ComptesPage } from '@/features/comptabilite/ComptesPage'
 import { VirementsPage } from '@/features/comptabilite/VirementsPage'
 import { RapportAGPage } from '@/features/comptabilite/RapportAGPage'
+import { CompteResultatPage } from '@/features/comptabilite/CompteResultatPage'
 import { BureauPage } from '@/features/bureau/BureauPage'
 import { BureauHistoriquePage } from '@/features/bureau/BureauHistoriquePage'
 import { BureauDrivePage } from '@/features/bureau/BureauDrivePage'
@@ -129,6 +130,10 @@ export const router = createBrowserRouter([
       {
         path: 'comptabilite/virements',
         element: <VirementsPage />,
+      },
+      {
+        path: 'comptabilite/compte-resultat',
+        element: <CompteResultatPage />,
       },
       {
         path: 'comptabilite/rapport-ag',
