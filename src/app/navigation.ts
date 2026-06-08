@@ -50,6 +50,7 @@ export const mainNavItems: NavItem[] = [
       { label: 'Virements',    path: '/comptabilite/virements' },
       { label: 'Catégories',   path: '/comptabilite/categories' },
       { label: 'Bilan',        path: '/comptabilite/bilan' },
+      { label: 'Rapport AG',   path: '/comptabilite/rapport-ag' },
     ],
   },
   {
