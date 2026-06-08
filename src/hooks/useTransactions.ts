@@ -7,6 +7,7 @@ export interface Transaction {
   id: string
   association_id: string
   category_id: string | null
+  compte_id: string | null
   type: 'income' | 'expense'
   amount: number
   description: string
@@ -32,9 +33,11 @@ export interface TransactionWithCategory extends Transaction {
   } | null
 }
 
-export type TransactionInput = Omit<Transaction, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'updated_by' | 'association_id'>
+export type TransactionInput = Omit<Transaction, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'updated_by' | 'association_id' | 'compte_id'> & {
+  compte_id?: string | null
+}
 
-export function useTransactions(dateRange?: { from: string; to: string }) {
+export function useTransactions(dateRange?: { from: string; to: string }, compteId?: string | null) {
   const { currentAssociation } = useAssociation()
   const { user } = useAuth()
   const [transactions, setTransactions] = useState<TransactionWithCategory[]>([])
@@ -60,6 +63,14 @@ export function useTransactions(dateRange?: { from: string; to: string }) {
       query = query
         .gte('date', dateRange.from)
         .lte('date', dateRange.to)
+    }
+
+    if (compteId === null) {
+      // Transactions sans compte associé
+      query = query.is('compte_id', null)
+    } else if (compteId) {
+      // Transactions d'un compte spécifique
+      query = query.eq('compte_id', compteId)
     }
 
     const { data, error: fetchError } = await query
@@ -110,7 +121,7 @@ export function useTransactions(dateRange?: { from: string; to: string }) {
       }
     }
     setLoading(false)
-  }, [currentAssociation, dateRange?.from, dateRange?.to])
+  }, [currentAssociation, dateRange?.from, dateRange?.to, compteId])
 
   useEffect(() => {
     fetchTransactions()
