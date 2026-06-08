@@ -1,10 +1,11 @@
-import { useState, useMemo, type FormEvent } from 'react'
+import { useState, useMemo, useRef, useEffect, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useTransactions } from '@/hooks/useTransactions'
 import { useCategories } from '@/hooks/useCategories'
 import { useComptes } from '@/hooks/useComptes'
 import { useVirements } from '@/hooks/useVirements'
-import { Plus, TrendingUp, TrendingDown, Wallet, ArrowRight } from 'lucide-react'
+import { useExportComptabilite, EXPORT_COLS_COMPTA, type ExportColCompta, type ExportTypeFilter } from '@/hooks/useExportComptabilite'
+import { Plus, TrendingUp, TrendingDown, Wallet, ArrowRight, Download, FileText, FileJson } from 'lucide-react'
 import { formatCurrency, formatDateShort } from '@/lib/utils'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { cn } from '@/lib/utils'
@@ -19,6 +20,52 @@ export function TransactionsPage() {
   const { categories } = useCategories()
   const { comptes, compteDefault } = useComptes()
   const { virements, loading: loadingVir } = useVirements()
+  const { buildLignes, exportToExcel, exportToPDF } = useExportComptabilite()
+
+  // ── Export state ────────────────────────────────────────────────────────────
+  const today = new Date()
+  const [showExport, setShowExport] = useState(false)
+  const [exportMois, setExportMois] = useState(today.getMonth() + 1)
+  const [exportAnnee, setExportAnnee] = useState(today.getFullYear())
+  const [exportTypeFilter, setExportTypeFilter] = useState<ExportTypeFilter>('all')
+  const [exportCols, setExportCols] = useState<ExportColCompta[]>(['date', 'description', 'type', 'categorie', 'compte', 'montant'])
+  const [exporting, setExporting] = useState(false)
+  const exportRef = useRef<HTMLDivElement>(null)
+
+  const allCols = Object.keys(EXPORT_COLS_COMPTA) as ExportColCompta[]
+  const toggleCol = (c: ExportColCompta) =>
+    setExportCols(p => p.includes(c) ? p.filter(x => x !== c) : [...p, c])
+
+  // Fermer le menu export au clic extérieur
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) setShowExport(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const handleExport = async (format: 'xlsx' | 'pdf') => {
+    setExporting(true)
+    try {
+      const lignes = buildLignes(transactions, virements, comptes, {
+        mois: exportMois,
+        annee: exportAnnee,
+        compteId: selectedCompteId !== 'all' ? selectedCompteId : undefined,
+        typeFilter: exportTypeFilter,
+      })
+      const label = compteActif?.nom
+      if (format === 'xlsx') {
+        exportToExcel(lignes, exportCols, exportMois, exportAnnee, label)
+      } else {
+        await exportToPDF(lignes, exportCols, exportMois, exportAnnee, label, compteActif?.solde)
+      }
+      setShowExport(false)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erreur export')
+    }
+    setExporting(false)
+  }
 
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
@@ -136,14 +183,99 @@ export function TransactionsPage() {
         title="Transactions"
         subtitle={`${rows.length} mouvement${rows.length !== 1 ? 's' : ''}`}
         action={
-          <button
-            onClick={handleOpenForm}
-            className="flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Nouvelle écriture</span>
-            <span className="sm:hidden">Ajouter</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {/* ── Bouton Export ── */}
+            <div className="relative" ref={exportRef}>
+              <button
+                onClick={() => setShowExport(!showExport)}
+                disabled={exporting}
+                className="flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] bg-white hover:bg-[var(--color-bg-secondary)] text-[var(--color-text)] text-sm font-semibold rounded-lg transition-colors disabled:opacity-50"
+              >
+                <Download className="w-4 h-4" />
+                <span className="hidden sm:inline">Exporter</span>
+              </button>
+
+              {showExport && (
+                <div className="absolute right-0 mt-1 w-80 bg-white rounded-xl border border-[var(--color-border)] shadow-xl z-20">
+                  {/* Mois / Année */}
+                  <div className="p-4 border-b border-[var(--color-border)]">
+                    <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-2">Période</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <select value={exportMois} onChange={e => setExportMois(Number(e.target.value))}
+                        className="px-2 py-1.5 border border-[var(--color-border)] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25">
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                          <option key={m} value={m}>
+                            {new Date(2000, m - 1, 1).toLocaleDateString('fr-FR', { month: 'long' })}
+                          </option>
+                        ))}
+                      </select>
+                      <select value={exportAnnee} onChange={e => setExportAnnee(Number(e.target.value))}
+                        className="px-2 py-1.5 border border-[var(--color-border)] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25">
+                        {Array.from({ length: 5 }, (_, i) => today.getFullYear() - 2 + i).map(y => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Type de mouvements */}
+                  <div className="p-4 border-b border-[var(--color-border)]">
+                    <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-2">Mouvements</p>
+                    <select value={exportTypeFilter} onChange={e => setExportTypeFilter(e.target.value as ExportTypeFilter)}
+                      className="w-full px-2 py-1.5 border border-[var(--color-border)] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25">
+                      <option value="all">Tous</option>
+                      <option value="income">Recettes uniquement</option>
+                      <option value="expense">Dépenses uniquement</option>
+                      <option value="virement">Virements uniquement</option>
+                    </select>
+                  </div>
+
+                  {/* Colonnes */}
+                  <div className="p-4 border-b border-[var(--color-border)]">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Colonnes</p>
+                      <div className="flex gap-1">
+                        <button onClick={() => setExportCols([...allCols])} className="px-2 py-0.5 text-xs text-[var(--color-primary)] hover:bg-blue-50 rounded">Tout</button>
+                        <button onClick={() => setExportCols([])} className="px-2 py-0.5 text-xs text-red-500 hover:bg-red-50 rounded">Rien</button>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                      {allCols.map(col => (
+                        <label key={col} className="flex items-center gap-2 p-1.5 hover:bg-[var(--color-bg-secondary)] rounded cursor-pointer text-sm">
+                          <input type="checkbox" checked={exportCols.includes(col)} onChange={() => toggleCol(col)}
+                            className="w-4 h-4 rounded border-[var(--color-border)] text-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/25" />
+                          <span className="text-[var(--color-text-muted)]">{EXPORT_COLS_COMPTA[col]}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Boutons format */}
+                  <button onClick={() => handleExport('xlsx')} disabled={exporting || exportCols.length === 0}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-left text-sm hover:bg-[var(--color-bg-secondary)] transition-colors disabled:opacity-50">
+                    <FileJson className="w-4 h-4 text-green-600" />
+                    <span>Excel (.xlsx)</span>
+                    <span className="ml-auto text-xs text-[var(--color-text-muted)]">+ résumé catégories</span>
+                  </button>
+                  <button onClick={() => handleExport('pdf')} disabled={exporting || exportCols.length === 0}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-left text-sm hover:bg-[var(--color-bg-secondary)] transition-colors disabled:opacity-50 border-t border-[var(--color-border)]">
+                    <FileText className="w-4 h-4 text-red-500" />
+                    <span>PDF (.pdf)</span>
+                    <span className="ml-auto text-xs text-[var(--color-text-muted)]">mise en page A4</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={handleOpenForm}
+              className="flex items-center gap-2 px-3 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">Nouvelle écriture</span>
+              <span className="sm:hidden">Ajouter</span>
+            </button>
+          </div>
         }
       />
 
