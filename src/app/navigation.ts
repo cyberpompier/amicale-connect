@@ -46,8 +46,10 @@ export const mainNavItems: NavItem[] = [
     icon: BookOpen,
     subNav: [
       { label: 'Transactions', path: '/comptabilite' },
-      { label: 'Catégories', path: '/comptabilite/categories' },
-      { label: 'Bilan', path: '/comptabilite/bilan' },
+      { label: 'Comptes',      path: '/comptabilite/comptes' },
+      { label: 'Virements',    path: '/comptabilite/virements' },
+      { label: 'Catégories',   path: '/comptabilite/categories' },
+      { label: 'Bilan',        path: '/comptabilite/bilan' },
     ],
   },
   {

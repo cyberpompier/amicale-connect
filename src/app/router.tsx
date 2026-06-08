@@ -12,6 +12,8 @@ import { TransactionsPage } from '@/features/comptabilite/TransactionsPage'
 import { TransactionDetailPage } from '@/features/comptabilite/TransactionDetailPage'
 import { CategoriesPage } from '@/features/comptabilite/CategoriesPage'
 import { BilanPage } from '@/features/comptabilite/BilanPage'
+import { ComptesPage } from '@/features/comptabilite/ComptesPage'
+import { VirementsPage } from '@/features/comptabilite/VirementsPage'
 import { BureauPage } from '@/features/bureau/BureauPage'
 import { BureauHistoriquePage } from '@/features/bureau/BureauHistoriquePage'
 import { BureauDrivePage } from '@/features/bureau/BureauDrivePage'
@@ -118,6 +120,14 @@ export const router = createBrowserRouter([
       {
         path: 'comptabilite/bilan',
         element: <BilanPage />,
+      },
+      {
+        path: 'comptabilite/comptes',
+        element: <ComptesPage />,
+      },
+      {
+        path: 'comptabilite/virements',
+        element: <VirementsPage />,
       },
       {
         path: 'comptabilite/:id',
