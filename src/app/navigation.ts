@@ -51,6 +51,7 @@ export const mainNavItems: NavItem[] = [
       { label: 'Catégories',   path: '/comptabilite/categories' },
       { label: 'Bilan',        path: '/comptabilite/bilan' },
       { label: 'Résultat',     path: '/comptabilite/compte-resultat' },
+      { label: 'Trésorerie',   path: '/comptabilite/tresorerie' },
       { label: 'Rapport AG',   path: '/comptabilite/rapport-ag' },
     ],
   },
