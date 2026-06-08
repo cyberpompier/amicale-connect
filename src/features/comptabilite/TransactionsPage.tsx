@@ -17,7 +17,7 @@ export function TransactionsPage() {
     selectedCompteId === 'all' ? undefined : selectedCompteId
   )
   const { categories } = useCategories()
-  const { comptes } = useComptes()
+  const { comptes, compteDefault } = useComptes()
 
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
@@ -64,11 +64,13 @@ export function TransactionsPage() {
     setSaving(false)
   }
 
-  // Pré-sélectionner le compte actif dans le formulaire à l'ouverture
+  // Pré-sélectionner : compte actif > compte par défaut > vide
   const handleOpenForm = () => {
     setFormData(p => ({
       ...p,
-      compte_id: selectedCompteId !== 'all' ? selectedCompteId : '',
+      compte_id: selectedCompteId !== 'all'
+        ? selectedCompteId
+        : (compteDefault?.id ?? ''),
     }))
     setShowForm(!showForm)
   }

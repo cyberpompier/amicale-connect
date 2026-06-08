@@ -11,6 +11,7 @@ export interface Compte {
   couleur: string
   icone: string
   actif: boolean
+  is_default: boolean
   ordre: number
   created_at: string
   updated_at: string
@@ -118,7 +119,24 @@ export function useComptes() {
     await fetchComptes()
   }
 
+  const setDefaultCompte = async (id: string) => {
+    if (!currentAssociation) throw new Error('Aucune association sélectionnée')
+    // Retirer le défaut de tous les comptes, puis le mettre sur celui-ci
+    const { error: e1 } = await supabase
+      .from('comptes')
+      .update({ is_default: false })
+      .eq('association_id', currentAssociation.id)
+    if (e1) throw e1
+    const { error: e2 } = await supabase
+      .from('comptes')
+      .update({ is_default: true })
+      .eq('id', id)
+    if (e2) throw e2
+    await fetchComptes()
+  }
+
+  const compteDefault = comptes.find(c => c.is_default) ?? null
   const totalSolde = comptes.reduce((sum, c) => sum + c.solde, 0)
 
-  return { comptes, loading, error, totalSolde, refetch: fetchComptes, addCompte, updateCompte, deleteCompte }
+  return { comptes, loading, error, totalSolde, compteDefault, refetch: fetchComptes, addCompte, updateCompte, deleteCompte, setDefaultCompte }
 }

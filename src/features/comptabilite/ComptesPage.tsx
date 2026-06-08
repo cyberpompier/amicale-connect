@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Plus, Trash2, Pencil, Wallet } from 'lucide-react'
+import { Plus, Trash2, Pencil, Wallet, Star } from 'lucide-react'
 import { useComptes, COMPTE_TYPES, type CompteInput } from '@/hooks/useComptes'
 import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -12,7 +12,7 @@ function formatMontant(n: number) {
 }
 
 export function ComptesPage() {
-  const { comptes, loading, totalSolde, addCompte, updateCompte, deleteCompte } = useComptes()
+  const { comptes, loading, totalSolde, compteDefault, addCompte, updateCompte, deleteCompte, setDefaultCompte } = useComptes()
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -23,17 +23,18 @@ export function ComptesPage() {
     couleur: '#6366f1',
     icone: '🏦',
     actif: true,
+    is_default: false,
     ordre: 0,
   })
 
   const resetForm = () => {
-    setForm({ nom: '', type: 'courant', solde_initial: 0, couleur: '#6366f1', icone: '🏦', actif: true, ordre: 0 })
+    setForm({ nom: '', type: 'courant', solde_initial: 0, couleur: '#6366f1', icone: '🏦', actif: true, is_default: false, ordre: 0 })
     setShowForm(false)
     setEditingId(null)
   }
 
   const handleEdit = (c: typeof comptes[0]) => {
-    setForm({ nom: c.nom, type: c.type, solde_initial: c.solde_initial, couleur: c.couleur, icone: c.icone, actif: c.actif, ordre: c.ordre })
+    setForm({ nom: c.nom, type: c.type, solde_initial: c.solde_initial, couleur: c.couleur, icone: c.icone, actif: c.actif, is_default: c.is_default, ordre: c.ordre })
     setEditingId(c.id)
     setShowForm(true)
   }
@@ -58,6 +59,11 @@ export function ComptesPage() {
   const handleDelete = async (id: string, nom: string) => {
     if (!confirm(`Supprimer le compte "${nom}" ? Les transactions liées seront dissociées.`)) return
     try { await deleteCompte(id) }
+    catch (err) { alert(err instanceof Error ? err.message : 'Erreur') }
+  }
+
+  const handleSetDefault = async (id: string) => {
+    try { await setDefaultCompte(id) }
     catch (err) { alert(err instanceof Error ? err.message : 'Erreur') }
   }
 
@@ -175,7 +181,15 @@ export function ComptesPage() {
           <p className={cn('text-4xl font-bold mt-1', totalSolde < 0 && 'text-red-200')}>
             {formatMontant(totalSolde)}
           </p>
-          <p className="text-xs text-red-100 mt-1">{comptes.length} compte{comptes.length > 1 ? 's' : ''} actif{comptes.length > 1 ? 's' : ''}</p>
+          <div className="flex items-center justify-between mt-1">
+            <p className="text-xs text-red-100">{comptes.length} compte{comptes.length > 1 ? 's' : ''} actif{comptes.length > 1 ? 's' : ''}</p>
+            {compteDefault && (
+              <p className="text-xs text-red-100 flex items-center gap-1">
+                <Star className="w-3 h-3 fill-amber-300 text-amber-300" />
+                Défaut : <strong>{compteDefault.icone} {compteDefault.nom}</strong>
+              </p>
+            )}
+          </div>
         </div>
       )}
 
@@ -201,15 +215,34 @@ export function ComptesPage() {
                 {/* En-tête */}
                 <div className="flex items-start justify-between gap-3 mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl flex-shrink-0" style={{ backgroundColor: c.couleur + '20' }}>
+                    <div className="relative w-11 h-11 rounded-xl flex items-center justify-center text-2xl flex-shrink-0" style={{ backgroundColor: c.couleur + '20' }}>
                       {c.icone}
+                      {c.is_default && (
+                        <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center shadow-sm" title="Compte par défaut">
+                          <Star className="w-3 h-3 fill-white text-white" />
+                        </span>
+                      )}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-[var(--color-text)]">{c.nom}</h3>
+                      <div className="flex items-center gap-1.5">
+                        <h3 className="font-semibold text-[var(--color-text)]">{c.nom}</h3>
+                        {c.is_default && (
+                          <span className="text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full">Défaut</span>
+                        )}
+                      </div>
                       <p className="text-xs text-[var(--color-text-muted)]">{COMPTE_TYPES[c.type].label}</p>
                     </div>
                   </div>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {!c.is_default && (
+                      <button
+                        onClick={() => handleSetDefault(c.id)}
+                        className="p-1.5 hover:bg-amber-50 rounded-lg transition-colors"
+                        title="Définir comme compte par défaut"
+                      >
+                        <Star className="w-3.5 h-3.5 text-amber-400" />
+                      </button>
+                    )}
                     <button onClick={() => handleEdit(c)} className="p-1.5 hover:bg-[var(--color-bg-secondary)] rounded-lg transition-colors" title="Modifier">
                       <Pencil className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
                     </button>
