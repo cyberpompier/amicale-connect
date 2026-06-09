@@ -11,7 +11,15 @@ import { cn } from '@/lib/utils'
 import jsPDF from 'jspdf'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-const fmt = (n: number) => n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
+const fmt = (n: number) => {
+  const formatter = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const parts = formatter.formatToParts(n)
+  let result = ''
+  for (const part of parts) {
+    result += part.type === 'group' ? ' ' : part.value
+  }
+  return result + ' €'
+}
 const stripEmoji = (s: string) => s.replace(/[\u{1F300}-\u{1FFFF}]/gu, '').replace(/[☀-➿]/gu, '').replace(/\s{2,}/g, ' ').trim()
 
 // ── Calculs récurrents ────────────────────────────────────────────────────────
@@ -180,7 +188,7 @@ export function RapportAGPage() {
 
           pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10)
           pdf.setTextColor(c.solde >= 0 ? 22 : 220, c.solde >= 0 ? 163 : 38, c.solde >= 0 ? 74 : 38)
-          pdf.text(fmt(c.solde), PW - M, Y + 6, { align: 'right' })
+          pdf.text(fmt(c.solde), PW - M - 35, Y + 6, { align: 'right', maxWidth: 35 })
 
           // Ligne séparatrice
           pdf.setDrawColor(240, 240, 240); pdf.setLineWidth(0.3)
@@ -192,7 +200,7 @@ export function RapportAGPage() {
         pdf.setFillColor(40, 40, 40); pdf.roundedRect(M, Y, PW - 2 * M, 10, 2, 2, 'F')
         pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10); pdf.setTextColor(255, 255, 255)
         pdf.text('TRESORERIE TOTALE', M + 4, Y + 7)
-        pdf.text(fmt(totalTreso), PW - M - 2, Y + 7, { align: 'right' })
+        pdf.text(fmt(totalTreso), PW - M - 35, Y + 7, { align: 'right', maxWidth: 35 })
         Y += 16
       }
 
@@ -219,7 +227,7 @@ export function RapportAGPage() {
       pdf.setFillColor(60, 60, 60); pdf.rect(M, Y, PW - 2 * M, 8, 'F')
       pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8); pdf.setTextColor(255, 255, 255)
       pdf.text('INTITULE', M + 3, Y + 5.5)
-      pdf.text('MONTANT', PW - M - 2, Y + 5.5, { align: 'right' })
+      pdf.text('MONTANT', PW - M - 35, Y + 5.5, { align: 'right', maxWidth: 35 })
       Y += 8
 
       const drawRow = (label: string, amount: number, isTotal = false) => {
@@ -232,9 +240,9 @@ export function RapportAGPage() {
           if ((Y / 8) % 2 === 0) { pdf.setFillColor(252, 252, 252); pdf.rect(M, Y, PW - 2 * M, 7, 'F') }
         }
         pdf.setFontSize(8.5); pdf.setTextColor(40, 40, 40)
-        pdf.text(label, M + 4, Y + (isTotal ? 5.5 : 5))
+        pdf.text(label, M + 4, Y + (isTotal ? 5.5 : 5), { maxWidth: PW - 2 * M - 40 })
         pdf.setTextColor(amount >= 0 ? 22 : 220, amount >= 0 ? 163 : 38, amount >= 0 ? 74 : 38)
-        pdf.text(fmt(amount), PW - M - 2, Y + (isTotal ? 5.5 : 5), { align: 'right' })
+        pdf.text(fmt(amount), PW - M - 35, Y + (isTotal ? 5.5 : 5), { align: 'right', maxWidth: 35 })
         pdf.setDrawColor(230, 230, 230); pdf.setLineWidth(0.2)
         pdf.line(M, Y + (isTotal ? 8 : 7), PW - M, Y + (isTotal ? 8 : 7))
         Y += isTotal ? 8 : 7
@@ -267,8 +275,8 @@ export function RapportAGPage() {
       const resColor: [number, number, number] = statsN.resultat >= 0 ? [37, 99, 235] : [245, 158, 11]
       pdf.setFillColor(...resColor); pdf.rect(M, Y, PW - 2 * M, 12, 'F')
       pdf.setFont('helvetica', 'bold'); pdf.setFontSize(12); pdf.setTextColor(255, 255, 255)
-      pdf.text(statsN.resultat >= 0 ? 'EXCEDENT DE L\'EXERCICE' : 'DEFICIT DE L\'EXERCICE', M + 4, Y + 8.5)
-      pdf.text(fmt(Math.abs(statsN.resultat)), PW - M - 2, Y + 8.5, { align: 'right' })
+      pdf.text(statsN.resultat >= 0 ? 'EXCEDENT DE L\'EXERCICE' : 'DEFICIT DE L\'EXERCICE', M + 4, Y + 8.5, { maxWidth: PW - 2 * M - 50 })
+      pdf.text(fmt(Math.abs(statsN.resultat)), PW - M - 35, Y + 8.5, { align: 'right', maxWidth: 35 })
       Y += 18
 
       // Comparaison N-1
