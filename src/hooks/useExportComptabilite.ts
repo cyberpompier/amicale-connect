@@ -56,7 +56,15 @@ type LigneVir = {
 export type LigneExport = LigneTx | LigneVir
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-const fmt = (n: number) => n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
+const fmt = (n: number) => {
+  const formatter = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const parts = formatter.formatToParts(n)
+  let result = ''
+  for (const part of parts) {
+    result += part.type === 'group' ? ' ' : part.value
+  }
+  return result + ' €'
+}
 const fmtDate = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('fr-FR')
 const nomMois = (m: number, y: number) =>
   new Date(y, m - 1, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
