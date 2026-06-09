@@ -13,6 +13,8 @@ export interface Transaction {
   description: string
   date: string
   notes: string | null
+  pointee: boolean
+  date_pointage: string | null
   created_by: string | null
   updated_by: string | null
   created_at: string
@@ -33,7 +35,7 @@ export interface TransactionWithCategory extends Transaction {
   } | null
 }
 
-export type TransactionInput = Omit<Transaction, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'updated_by' | 'association_id' | 'compte_id'> & {
+export type TransactionInput = Omit<Transaction, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'updated_by' | 'association_id' | 'compte_id' | 'pointee' | 'date_pointage'> & {
   compte_id?: string | null
 }
 
@@ -165,6 +167,27 @@ export function useTransactions(dateRange?: { from: string; to: string }, compte
     setTransactions((prev) => prev.filter((t) => t.id !== id))
   }
 
+  // ── Pointage optimiste : mise à jour locale immédiate ─────────────────────
+  const togglePointage = async (id: string, pointee: boolean) => {
+    const now = pointee ? new Date().toISOString() : null
+    // Mise à jour locale immédiate (optimiste)
+    setTransactions(prev =>
+      prev.map(t => t.id === id ? { ...t, pointee, date_pointage: now } : t)
+    )
+    // Persistance en base
+    const { error } = await supabase
+      .from('transactions')
+      .update({ pointee, date_pointage: now })
+      .eq('id', id)
+    if (error) {
+      // Rollback en cas d'erreur
+      setTransactions(prev =>
+        prev.map(t => t.id === id ? { ...t, pointee: !pointee, date_pointage: pointee ? null : t.date_pointage } : t)
+      )
+      throw error
+    }
+  }
+
   const stats = {
     totalIncome: transactions
       .filter((t) => t.type === 'income')
@@ -189,5 +212,6 @@ export function useTransactions(dateRange?: { from: string; to: string }, compte
     addTransaction,
     updateTransaction,
     deleteTransaction,
+    togglePointage,
   }
 }

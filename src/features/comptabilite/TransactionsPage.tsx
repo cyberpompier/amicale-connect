@@ -5,7 +5,7 @@ import { useCategories } from '@/hooks/useCategories'
 import { useComptes } from '@/hooks/useComptes'
 import { useVirements } from '@/hooks/useVirements'
 import { useExportComptabilite, EXPORT_COLS_COMPTA, type ExportColCompta, type ExportTypeFilter } from '@/hooks/useExportComptabilite'
-import { Plus, TrendingUp, TrendingDown, Wallet, ArrowRight, Download, FileText, FileJson } from 'lucide-react'
+import { Plus, TrendingUp, TrendingDown, Wallet, ArrowRight, Download, FileText, FileJson, CheckCircle2, Circle } from 'lucide-react'
 import { formatCurrency, formatDateShort } from '@/lib/utils'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { cn } from '@/lib/utils'
@@ -13,7 +13,9 @@ import { cn } from '@/lib/utils'
 export function TransactionsPage() {
   const [selectedCompteId, setSelectedCompteId] = useState<string>('all')
 
-  const { transactions, loading, stats, addTransaction } = useTransactions(
+  const [filterPointage, setFilterPointage] = useState<'all' | 'pointees' | 'non_pointees'>('all')
+
+  const { transactions, loading, stats, addTransaction, togglePointage } = useTransactions(
     undefined,
     selectedCompteId === 'all' ? undefined : selectedCompteId
   )
@@ -114,11 +116,29 @@ export function TransactionsPage() {
       return { kind: 'vir', data: v, key: `vir-${v.id}`, date: v.date, sens, montant: Number(v.montant) }
     })
 
-    return [...txRows, ...virRows].sort((a, b) => {
+    const allRows = [...txRows, ...virRows].sort((a, b) => {
       const d = b.date.localeCompare(a.date)
       return d !== 0 ? d : b.key.localeCompare(a.key)
     })
-  }, [transactions, virementsFiltrés, selectedCompteId])
+
+    // Filtre pointage (s'applique uniquement aux transactions, pas aux virements)
+    if (filterPointage === 'all') return allRows
+    return allRows.filter(r => {
+      if (r.kind === 'vir') return true // virements toujours visibles
+      return filterPointage === 'pointees' ? r.data.pointee : !r.data.pointee
+    })
+  }, [transactions, virementsFiltrés, selectedCompteId, filterPointage])
+
+  // ── Solde pointé (rapprochement bancaire) ─────────────────────────────────
+  const soldePointe = useMemo(() => {
+    const txPointees = transactions.filter(t => t.pointee)
+    const income  = txPointees.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
+    const expense = txPointees.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0)
+    return income - expense
+  }, [transactions])
+
+  const nbPointees    = transactions.filter(t => t.pointee).length
+  const nbNonPointees = transactions.filter(t => !t.pointee).length
 
   // ── Stats enrichies avec virements (pour un compte spécifique) ─────────────
   const statsEnrichies = useMemo(() => {
@@ -319,6 +339,39 @@ export function TransactionsPage() {
         </div>
       )}
 
+      {/* ── Filtre pointage ──────────────────────────────────────────────── */}
+      <div className="flex items-center gap-2 mb-4 flex-wrap">
+        <span className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mr-1">Pointage :</span>
+        {([
+          { value: 'all',          label: 'Toutes',       icon: null },
+          { value: 'non_pointees', label: `Non pointées${nbNonPointees > 0 ? ` (${nbNonPointees})` : ''}`, icon: 'circle' },
+          { value: 'pointees',     label: `Pointées${nbPointees > 0 ? ` (${nbPointees})` : ''}`,     icon: 'check' },
+        ] as const).map(f => (
+          <button key={f.value} onClick={() => setFilterPointage(f.value)}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all',
+              filterPointage === f.value
+                ? f.value === 'pointees'
+                  ? 'bg-green-600 text-white border-green-600'
+                  : f.value === 'non_pointees'
+                  ? 'bg-amber-500 text-white border-amber-500'
+                  : 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]'
+                : 'bg-white text-[var(--color-text-muted)] border-[var(--color-border)] hover:border-gray-300'
+            )}>
+            {f.icon === 'check' && <CheckCircle2 className="w-3.5 h-3.5" />}
+            {f.icon === 'circle' && <Circle className="w-3.5 h-3.5" />}
+            {f.label}
+          </button>
+        ))}
+        {/* Solde pointé */}
+        {transactions.length > 0 && (
+          <span className="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-50 border border-green-200 text-xs font-bold text-green-700">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            Solde pointé : {formatCurrency(soldePointe)}
+          </span>
+        )}
+      </div>
+
       {/* ── Stats ──────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
         {compteActif && (
@@ -455,10 +508,13 @@ export function TransactionsPage() {
           <table className="w-full">
             <thead>
               <tr className="bg-[var(--color-bg-secondary)] border-b-2 border-[var(--color-border)]">
-                <th className="text-left px-8 py-5 font-bold text-[var(--color-text-muted)] text-xs uppercase tracking-widest">Date</th>
-                <th className="text-left px-8 py-5 font-bold text-[var(--color-text-muted)] text-xs uppercase tracking-widest">Description</th>
-                <th className="text-left px-8 py-5 font-bold text-[var(--color-text-muted)] text-xs uppercase tracking-widest hidden md:table-cell">Catégorie / Compte</th>
-                <th className="text-right px-8 py-5 font-bold text-[var(--color-text-muted)] text-xs uppercase tracking-widest">Montant</th>
+                <th className="w-10 px-3 py-5" title="Pointage rapprochement bancaire">
+                  <CheckCircle2 className="w-4 h-4 text-[var(--color-text-muted)] mx-auto" />
+                </th>
+                <th className="text-left px-4 py-5 font-bold text-[var(--color-text-muted)] text-xs uppercase tracking-widest">Date</th>
+                <th className="text-left px-4 py-5 font-bold text-[var(--color-text-muted)] text-xs uppercase tracking-widest">Description</th>
+                <th className="text-left px-4 py-5 font-bold text-[var(--color-text-muted)] text-xs uppercase tracking-widest hidden md:table-cell">Catégorie / Compte</th>
+                <th className="text-right px-4 py-5 font-bold text-[var(--color-text-muted)] text-xs uppercase tracking-widest">Montant</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-border)]">
@@ -467,18 +523,44 @@ export function TransactionsPage() {
                   const t = row.data
                   const compte = comptes.find(c => c.id === t.compte_id)
                   return (
-                    <tr key={row.key} className="hover:bg-[var(--color-bg-secondary)] transition-colors">
-                      <td className="px-8 py-4">
+                    <tr key={row.key} className={cn(
+                      'transition-colors',
+                      t.pointee
+                        ? 'bg-green-50/40 hover:bg-green-50/70'
+                        : 'hover:bg-[var(--color-bg-secondary)]'
+                    )}>
+                      {/* ── Cellule pointage ── */}
+                      <td className="px-3 py-4 text-center">
+                        <button
+                          onClick={() => togglePointage(t.id, !t.pointee)}
+                          title={t.pointee ? `Pointé le ${t.date_pointage ? new Date(t.date_pointage).toLocaleDateString('fr-FR') : ''}` : 'Cliquer pour pointer'}
+                          className={cn(
+                            'w-7 h-7 rounded-full flex items-center justify-center mx-auto transition-all',
+                            t.pointee
+                              ? 'text-green-600 bg-green-100 hover:bg-green-200'
+                              : 'text-gray-300 hover:text-gray-400 hover:bg-gray-100'
+                          )}
+                        >
+                          {t.pointee
+                            ? <CheckCircle2 className="w-5 h-5" />
+                            : <Circle className="w-5 h-5" />
+                          }
+                        </button>
+                      </td>
+                      <td className="px-4 py-4">
                         <Link to={`/comptabilite/${t.id}`} className="text-sm text-[var(--color-text-muted)] font-semibold hover:text-[var(--color-primary)]">
                           {formatDateShort(t.date)}
                         </Link>
                       </td>
-                      <td className="px-8 py-4">
-                        <Link to={`/comptabilite/${t.id}`} className="text-sm font-bold text-[var(--color-text)] hover:text-[var(--color-primary)] transition-colors">
+                      <td className="px-4 py-4">
+                        <Link to={`/comptabilite/${t.id}`} className={cn(
+                          'text-sm font-bold hover:text-[var(--color-primary)] transition-colors',
+                          t.pointee ? 'text-gray-500' : 'text-[var(--color-text)]'
+                        )}>
                           {t.description}
                         </Link>
                       </td>
-                      <td className="px-8 py-4 hidden md:table-cell">
+                      <td className="px-4 py-4 hidden md:table-cell">
                         <div className="flex flex-wrap gap-1.5">
                           {t.categories?.name && (
                             <span className={`inline-flex px-2.5 py-1 text-xs font-bold rounded-lg ${t.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
@@ -494,9 +576,13 @@ export function TransactionsPage() {
                           {!t.categories?.name && !compte && <span className="text-[var(--color-text-muted)]">—</span>}
                         </div>
                       </td>
-                      <td className="px-8 py-4 text-right">
-                        <Link to={`/comptabilite/${t.id}`} className={`text-lg font-bold ${t.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                          {t.type === 'income' ? '+' : '−'}{formatCurrency(Number(t.amount))}
+                      <td className="px-4 py-4 text-right">
+                        <Link to={`/comptabilite/${t.id}`} className={cn(
+                          'text-lg font-bold',
+                          t.pointee ? 'opacity-60' : '',
+                          t.type === 'income' ? 'text-green-600' : 'text-red-600'
+                        )}>
+                          {t.type === 'income' ? '+' : '-'}{formatCurrency(Number(t.amount))}
                         </Link>
                       </td>
                     </tr>
@@ -510,16 +596,17 @@ export function TransactionsPage() {
 
                 return (
                   <tr key={row.key} className="hover:bg-indigo-50/50 transition-colors bg-indigo-50/20">
-                    <td className="px-8 py-4">
+                    {/* Spacer pointage (virements non pointables) */}
+                    <td className="px-3 py-4 text-center">
+                      <ArrowRight className="w-4 h-4 text-indigo-300 mx-auto" />
+                    </td>
+                    <td className="px-4 py-4">
                       <span className="text-sm text-[var(--color-text-muted)] font-semibold">
                         {formatDateShort(v.date)}
                       </span>
                     </td>
-                    <td className="px-8 py-4">
+                    <td className="px-4 py-4">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                          <ArrowRight className="w-3.5 h-3.5 text-indigo-500" />
-                        </div>
                         <div>
                           <p className="text-sm font-bold text-[var(--color-text)]">{v.description}</p>
                           <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] mt-0.5">
@@ -530,19 +617,19 @@ export function TransactionsPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-8 py-4 hidden md:table-cell">
+                    <td className="px-4 py-4 hidden md:table-cell">
                       <span className="inline-flex px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-100 text-indigo-700">
                         Virement
                       </span>
                     </td>
-                    <td className="px-8 py-4 text-right">
+                    <td className="px-4 py-4 text-right">
                       {isInterne ? (
                         <span className="text-lg font-bold text-indigo-500">
                           {formatCurrency(row.montant)}
                         </span>
                       ) : (
                         <span className={`text-lg font-bold ${isEntrant ? 'text-green-600' : 'text-red-600'}`}>
-                          {isEntrant ? '+' : '−'}{formatCurrency(row.montant)}
+                          {isEntrant ? '+' : '-'}{formatCurrency(row.montant)}
                         </span>
                       )}
                     </td>
