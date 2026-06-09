@@ -171,24 +171,36 @@ export function RapportAGPage() {
 
         const totalTreso = comptes.reduce((s, c) => s + c.solde, 0)
 
+        // ── Colonnes layout (de droite à gauche) ─────────────────────────
+        // [label...] [barre 45mm] [2mm] [% 8mm] [3mm] [montant 38mm] |bord
+        const AMT_RIGHT = PW - M           // bord droit : 195
+        const AMT_W    = 38               // largeur montant
+        const AMT_X    = AMT_RIGHT        // align:'right' ici
+        const PCT_X    = AMT_RIGHT - AMT_W - 3  // début du %
+        const BAR_W    = 45
+        const BAR_X    = PCT_X - BAR_W - 2     // début de la barre
+        const LBL_W    = BAR_X - M - 2         // largeur max du label
+
         comptes.forEach(c => {
           const pct = totalTreso !== 0 ? (c.solde / totalTreso) * 100 : 0
+          // Label (nom + type)
           pdf.setFont('helvetica', 'normal'); pdf.setFontSize(9.5); pdf.setTextColor(40, 40, 40)
-          pdf.text(stripEmoji(c.nom), M + 2, Y + 5)
+          pdf.text(stripEmoji(c.nom), M + 2, Y + 5, { maxWidth: LBL_W })
           pdf.setTextColor(100, 100, 100); pdf.setFontSize(8)
-          pdf.text(stripEmoji(c.type === 'courant' ? 'Compte courant' : c.type === 'caisse' ? 'Caisse' : c.type === 'epargne' ? 'Epargne' : 'Autre'), M + 2, Y + 10)
+          pdf.text(stripEmoji(c.type === 'courant' ? 'Compte courant' : c.type === 'caisse' ? 'Caisse' : c.type === 'epargne' ? 'Epargne' : 'Autre'), M + 2, Y + 10, { maxWidth: LBL_W })
 
           // Barre de proportion
-          const barW = 50
-          const barX = PW - M - barW - 35
-          pdf.setFillColor(230, 230, 230); pdf.roundedRect(barX, Y + 1, barW, 4, 1, 1, 'F')
-          pdf.setFillColor(180, 20, 20); pdf.roundedRect(barX, Y + 1, Math.max(barW * (pct / 100), 0.5), 4, 1, 1, 'F')
-          pdf.setFontSize(7); pdf.setTextColor(120, 120, 120)
-          pdf.text(`${pct.toFixed(0)}%`, barX + barW + 2, Y + 5.5)
+          pdf.setFillColor(230, 230, 230); pdf.roundedRect(BAR_X, Y + 3, BAR_W, 4, 1, 1, 'F')
+          pdf.setFillColor(180, 20, 20); pdf.roundedRect(BAR_X, Y + 3, Math.max(BAR_W * (pct / 100), 0.5), 4, 1, 1, 'F')
 
+          // Pourcentage (centré entre barre et montant)
+          pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7); pdf.setTextColor(120, 120, 120)
+          pdf.text(`${pct.toFixed(0)}%`, PCT_X + 4, Y + 6.5, { align: 'center', maxWidth: 8 })
+
+          // Montant (aligné à droite, colonne stricte)
           pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10)
           pdf.setTextColor(c.solde >= 0 ? 22 : 220, c.solde >= 0 ? 163 : 38, c.solde >= 0 ? 74 : 38)
-          pdf.text(fmt(c.solde), PW - M - 35, Y + 6, { align: 'right', maxWidth: 35 })
+          pdf.text(fmt(c.solde), AMT_X, Y + 6.5, { align: 'right', maxWidth: AMT_W })
 
           // Ligne séparatrice
           pdf.setDrawColor(240, 240, 240); pdf.setLineWidth(0.3)
@@ -200,7 +212,7 @@ export function RapportAGPage() {
         pdf.setFillColor(40, 40, 40); pdf.roundedRect(M, Y, PW - 2 * M, 10, 2, 2, 'F')
         pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10); pdf.setTextColor(255, 255, 255)
         pdf.text('TRESORERIE TOTALE', M + 4, Y + 7)
-        pdf.text(fmt(totalTreso), PW - M - 35, Y + 7, { align: 'right', maxWidth: 35 })
+        pdf.text(fmt(totalTreso), AMT_X, Y + 7, { align: 'right', maxWidth: AMT_W })
         Y += 16
       }
 
