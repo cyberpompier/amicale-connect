@@ -183,28 +183,13 @@ export function EtatTresoreriePage() {
       const M  = 14                                  // marge gauche/droite
       let Y    = M
 
-      // ── Colonnes : label | amount ──────────────────────────────────────
-      // Réserver 38 mm à droite pour les montants (max "−14 655,99 €" ≈ 36 mm en 8pt)
-      const AMT_W  = 38           // largeur colonne montant
-      const AMT_X  = PW - M       // bord droit de la zone montant (align:'right')
-      const LBL_X  = M + 3        // début du texte label (indent léger)
-      const LBL_MAX = PW - 2 * M - AMT_W - 4   // maxWidth du label : laisse 4mm de gap
-
       const assocName = stripEmoji(currentAssociation?.name ?? 'Amicale')
-
-      // ── Helpers PDF ────────────────────────────────────────────────────
-      const textL = (txt: string, y: number, opts?: { size?: number; bold?: boolean; color?: [number,number,number]; maxW?: number }) => {
-        pdf.setFont('helvetica', opts?.bold ? 'bold' : 'normal')
-        pdf.setFontSize(opts?.size ?? 8.5)
-        pdf.setTextColor(...(opts?.color ?? [50, 50, 50] as [number,number,number]))
-        pdf.text(txt, LBL_X, y, { maxWidth: opts?.maxW ?? LBL_MAX })
-      }
-      const textR = (txt: string, y: number, opts?: { size?: number; bold?: boolean; color?: [number,number,number] }) => {
-        pdf.setFont('helvetica', opts?.bold ? 'bold' : 'normal')
-        pdf.setFontSize(opts?.size ?? 8.5)
-        pdf.setTextColor(...(opts?.color ?? [50, 50, 50] as [number,number,number]))
-        pdf.text(txt, AMT_X, y, { align: 'right', maxWidth: AMT_W })
-      }
+      // ── Colonnes strictes : label | montant ───────────────────────────
+      // Colonne montant : 35mm, alignement droite strict
+      const AMT_COL_START = PW - M - 36   // début colonne montant
+      const AMT_W = 35                     // largeur colonne montant
+      const AMT_X = AMT_COL_START          // x position colonne montant
+      const LBL_W = AMT_COL_START - M - 1 // largeur colonne label
 
       // ── En-tête ────────────────────────────────────────────────────────
       pdf.setFillColor(180, 20, 20); pdf.rect(0, 0, PW, 18, 'F')
@@ -250,8 +235,10 @@ export function EtatTresoreriePage() {
 
         // Solde ouverture
         pdf.setFillColor(235, 235, 235); pdf.rect(M, Y, PW - 2 * M, 8, 'F')
-        textL(`Solde au 01/01/${annee}`, Y + 5.5)
-        textR(eur(e.soldOuverture), Y + 5.5, { bold: true })
+        pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8); pdf.setTextColor(0, 0, 0)
+        pdf.text(`Solde au 01/01/${annee}`, M, Y + 5.5, { maxWidth: LBL_W })
+        pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8); pdf.setTextColor(0, 0, 0)
+        pdf.text(eur(e.soldOuverture), AMT_X, Y + 5.5, { align: 'right', maxWidth: AMT_W })
         Y += 8
 
         // ── Lignes de mouvement ────────────────────────────────────────
@@ -260,8 +247,9 @@ export function EtatTresoreriePage() {
           if (Y + ROW > PH - 20) { pdf.addPage(); Y = M }
           pdf.setFillColor(...bgColor); pdf.rect(M, Y, PW - 2 * M, ROW - 1, 'F')
           const tc: [number,number,number] = isCredit ? [22, 163, 74] : [220, 38, 38]
-          textL(label, Y + 5, { size: 7.5, bold: true, color: tc })
-          textR((isCredit ? '+' : '−') + eur(montant), Y + 5, { size: 7.5, bold: true, color: tc })
+          pdf.setFont('helvetica', 'bold'); pdf.setFontSize(7.5); pdf.setTextColor(...tc)
+          pdf.text(label, M, Y + 5, { maxWidth: LBL_W })
+          pdf.text((isCredit ? '+' : '−') + eur(montant), AMT_X, Y + 5, { align: 'right', maxWidth: AMT_W })
           Y += ROW - 1
         }
         const drawMvtRow = (label: string, montant: number, isCredit: boolean) => {
@@ -269,8 +257,10 @@ export function EtatTresoreriePage() {
           const isEven = Math.round(Y) % 2 === 0
           if (isEven) { pdf.setFillColor(252, 252, 252); pdf.rect(M, Y, PW - 2 * M, ROW - 1, 'F') }
           const tc: [number,number,number] = isCredit ? [22, 163, 74] : [220, 38, 38]
-          textL(label, Y + 5, { size: 8, color: [60, 60, 60] })
-          textR((isCredit ? '+' : '−') + eur(montant), Y + 5, { size: 8, bold: true, color: tc })
+          pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8); pdf.setTextColor(60, 60, 60)
+          pdf.text(label, M, Y + 5, { maxWidth: LBL_W })
+          pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8); pdf.setTextColor(...tc)
+          pdf.text((isCredit ? '+' : '−') + eur(montant), AMT_X, Y + 5, { align: 'right', maxWidth: AMT_W })
           pdf.setDrawColor(240, 240, 240); pdf.setLineWidth(0.2)
           pdf.line(M, Y + ROW - 1, PW - M, Y + ROW - 1)
           Y += ROW - 1
@@ -297,7 +287,7 @@ export function EtatTresoreriePage() {
           }
         } else {
           pdf.setFont('helvetica', 'italic'); pdf.setFontSize(8); pdf.setTextColor(160, 160, 160)
-          pdf.text('Aucun mouvement sur cet exercice.', LBL_X, Y + 5)
+          pdf.text('Aucun mouvement sur cet exercice.', M, Y + 5)
           Y += 7
         }
 
@@ -305,8 +295,9 @@ export function EtatTresoreriePage() {
         if (Y + 9 > PH - 20) { pdf.addPage(); Y = M }
         const clotColor: [number,number,number] = e.soldeCloture >= 0 ? [22, 163, 74] : [220, 38, 38]
         pdf.setFillColor(...clotColor); pdf.rect(M, Y, PW - 2 * M, 9, 'F')
-        textL(`Solde au 31/12/${annee}`, Y + 6, { bold: true, color: [255, 255, 255] })
-        textR(eur(e.soldeCloture), Y + 6, { bold: true, color: [255, 255, 255] })
+        pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8); pdf.setTextColor(255, 255, 255)
+        pdf.text(`Solde au 31/12/${annee}`, M, Y + 6, { maxWidth: LBL_W })
+        pdf.text(eur(e.soldeCloture), AMT_X, Y + 6, { align: 'right', maxWidth: AMT_W })
         Y += 13
       }
 
