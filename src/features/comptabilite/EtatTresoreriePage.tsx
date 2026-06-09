@@ -7,8 +7,15 @@ import { cn } from '@/lib/utils'
 import jsPDF from 'jspdf'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-const eur = (n: number) =>
-  n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
+const eur = (n: number) => {
+  const formatter = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const parts = formatter.formatToParts(n)
+  let result = ''
+  for (const part of parts) {
+    result += part.type === 'group' ? ' ' : part.value
+  }
+  return result + ' €'
+}
 const sign = (n: number) => (n >= 0 ? '+' : '') + eur(n)
 const stripEmoji = (s: string) =>
   s.replace(/[\u{1F300}-\u{1FFFF}]/gu, '').replace(/[☀-➿]/gu, '').replace(/\s{2,}/g, ' ').trim()
