@@ -96,58 +96,74 @@ export function BureauPage() {
   const generatePDF = async () => {
     setGenerating(true)
     try {
-      const pdf  = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' })
-      const PW   = pdf.internal.pageSize.getWidth()
-      const PH   = pdf.internal.pageSize.getHeight()
+      // ── Paysage A4 : 297 × 210 mm → contenu 267 mm ──────────────────────
+      const pdf  = new jsPDF({ orientation: 'l', unit: 'mm', format: 'a4' })
+      const PW   = pdf.internal.pageSize.getWidth()   // 297
+      const PH   = pdf.internal.pageSize.getHeight()  // 210
       const M    = 15
       const assocName = stripEmoji(currentAssociation?.name ?? 'Amicale')
       const annee = new Date().getFullYear()
 
       // En-tête
-      pdf.setFillColor(180, 20, 20); pdf.rect(0, 0, PW, 22, 'F')
+      pdf.setFillColor(180, 20, 20); pdf.rect(0, 0, PW, 20, 'F')
       pdf.setFont('helvetica', 'bold'); pdf.setFontSize(14); pdf.setTextColor(255, 255, 255)
-      pdf.text(assocName, M, 10)
+      pdf.text(assocName, M, 9)
       pdf.setFont('helvetica', 'normal'); pdf.setFontSize(9); pdf.setTextColor(255, 200, 200)
-      pdf.text(`COMPOSITION DU BUREAU  —  ${annee}`, M, 17)
-      let Y = 32
+      pdf.text(`COMPOSITION DU BUREAU  —  ${annee}`, M, 16)
+      let Y = 28
 
       // Résumé
       pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10); pdf.setTextColor(40, 40, 40)
       pdf.text(`${positions.length} poste${positions.length > 1 ? 's' : ''} actif${positions.length > 1 ? 's' : ''}`, M, Y)
-      Y += 10
+      Y += 9
 
-      // En-tête tableau
-      const COL = { pos: M, name: M + 52, since: M + 118, dur: M + 148, contact: M + 170 }
-      const ROW_H = 13
+      // ── Colonnes avec espace confortable ──────────────────────────────
+      // Contenu: M=15 → PW-M=282, total=267mm
+      // POSTE 50 | TITULAIRE 65 | DEPUIS 32 | DURÉE 32 | CONTACT (reste=88mm)
+      const COL = {
+        pos:     M,           // 15
+        name:    M + 52,      // 67
+        since:   M + 120,     // 135
+        dur:     M + 155,     // 170
+        contact: M + 188,     // 203 → reste = 282-203 = 79mm pour le contact
+      }
+      const CONTACT_W = PW - M - COL.contact   // ~79mm
+      const ROW_H = 14
+
       pdf.setFillColor(50, 50, 50); pdf.rect(M, Y, PW - 2 * M, 8, 'F')
-      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(7.5); pdf.setTextColor(255, 255, 255)
-      pdf.text('POSTE',    COL.pos,     Y + 5.5)
-      pdf.text('TITULAIRE', COL.name,   Y + 5.5)
-      pdf.text('DEPUIS',   COL.since,   Y + 5.5)
-      pdf.text('DURÉE',    COL.dur,     Y + 5.5)
-      pdf.text('CONTACT',  COL.contact, Y + 5.5)
+      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8); pdf.setTextColor(255, 255, 255)
+      pdf.text('POSTE',     COL.pos,     Y + 5.5)
+      pdf.text('TITULAIRE', COL.name,    Y + 5.5)
+      pdf.text('DEPUIS',    COL.since,   Y + 5.5)
+      pdf.text('DURÉE',     COL.dur,     Y + 5.5)
+      pdf.text('CONTACT',   COL.contact, Y + 5.5)
       Y += 8
 
       sorted.forEach((pos, idx) => {
-        if (Y + ROW_H > PH - 20) { pdf.addPage(); Y = M }
+        if (Y + ROW_H > PH - 18) { pdf.addPage(); Y = M }
         const member = getMember(pos.amicaliste_id)
         if (idx % 2 === 0) { pdf.setFillColor(248, 248, 248); pdf.rect(M, Y, PW - 2 * M, ROW_H, 'F') }
 
-        pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8); pdf.setTextColor(180, 20, 20)
-        pdf.text(stripEmoji(pos.position), COL.pos, Y + 8.5, { maxWidth: 50 })
+        // Poste
+        pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8.5); pdf.setTextColor(180, 20, 20)
+        pdf.text(stripEmoji(pos.position), COL.pos, Y + 9, { maxWidth: 50 })
 
+        // Titulaire
         pdf.setFont('helvetica', 'normal'); pdf.setTextColor(20, 20, 20)
-        pdf.text(getName(pos.amicaliste_id), COL.name, Y + 8.5, { maxWidth: 60 })
+        pdf.text(getName(pos.amicaliste_id), COL.name, Y + 9, { maxWidth: 52 })
 
-        pdf.setTextColor(100, 100, 100)
-        pdf.text(formatDateShort(pos.start_date), COL.since, Y + 8.5)
+        // Depuis
+        pdf.setFontSize(8); pdf.setTextColor(100, 100, 100)
+        pdf.text(formatDateShort(pos.start_date), COL.since, Y + 9)
 
-        pdf.setFont('helvetica', 'bold'); pdf.setTextColor(60, 60, 60)
-        pdf.text(mandateDuration(pos.start_date), COL.dur, Y + 8.5, { maxWidth: 22 })
+        // Durée
+        pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8); pdf.setTextColor(60, 60, 60)
+        pdf.text(mandateDuration(pos.start_date), COL.dur, Y + 9, { maxWidth: 32 })
 
-        pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7); pdf.setTextColor(100, 100, 100)
-        if (member?.email) pdf.text(member.email, COL.contact, Y + 5.5, { maxWidth: PW - M - COL.contact - 2 })
-        if (member?.phone) pdf.text(member.phone, COL.contact, Y + 10.5, { maxWidth: PW - M - COL.contact - 2 })
+        // Contact : email ligne 1, téléphone ligne 2
+        pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7.5); pdf.setTextColor(80, 80, 80)
+        if (member?.email) pdf.text(member.email, COL.contact, Y + 6,  { maxWidth: CONTACT_W })
+        if (member?.phone) pdf.text(member.phone, COL.contact, Y + 11, { maxWidth: CONTACT_W })
 
         pdf.setDrawColor(230, 230, 230); pdf.setLineWidth(0.2)
         pdf.line(M, Y + ROW_H, PW - M, Y + ROW_H)
