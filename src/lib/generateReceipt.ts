@@ -36,6 +36,21 @@ const PAYMENT_LABELS: Record<string, string> = {
 
 // ─── Génération PDF (lazy) ────────────────────────────────────────────────────
 
+// Helper pour formatter les montants avec espaces réguliers
+const formatCurrency = (amount: number): string => {
+  const formatter = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' })
+  const parts = formatter.formatToParts(amount)
+  let result = ''
+  for (const part of parts) {
+    if (part.type === 'group') {
+      result += ' '
+    } else {
+      result += part.value
+    }
+  }
+  return result
+}
+
 async function buildDoc(data: ReceiptData) {
   // jsPDF chargé uniquement à la demande — ne pénalise pas le démarrage
   const { default: JsPDF } = await import('jspdf')
@@ -132,7 +147,7 @@ async function buildDoc(data: ReceiptData) {
 
   boxY += 6
   doc.text(`Prix unitaire indicatif :`, boxX, boxY)
-  doc.text(data.unitPrice.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' }), pageW - marginX - 5, boxY, { align: 'right' })
+  doc.text(formatCurrency(data.unitPrice), pageW - marginX - 5, boxY, { align: 'right' })
 
   boxY += 6
   doc.text(`Mode de paiement :`, boxX, boxY)
@@ -145,7 +160,7 @@ async function buildDoc(data: ReceiptData) {
   doc.setFontSize(13)
   doc.setTextColor(22, 163, 74)
   doc.text('Montant du don', boxX, boxY + 3)
-  doc.text(data.amount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' }), pageW - marginX - 5, boxY + 3, { align: 'right' })
+  doc.text(formatCurrency(data.amount), pageW - marginX - 5, boxY + 3, { align: 'right' })
 
   y += 52
   doc.setFont('helvetica', 'normal')
@@ -219,7 +234,7 @@ export function buildEmailMailto(data: ReceiptData): string {
   const subject = encodeURIComponent(`Votre reçu — ${data.associationName} (${data.campagneName})`)
   const body = encodeURIComponent(
     `Bonjour${data.donorName ? ' ' + data.donorName : ''},\n\n` +
-    `Merci pour votre don de ${data.amount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })} ` +
+    `Merci pour votre don de ${formatCurrency(data.amount)} ` +
     `en soutien à ${data.associationName} dans le cadre de la tournée des calendriers ${data.campagneName}.\n\n` +
     `Vous trouverez en pièce jointe votre reçu n°${data.receiptNumber}.\n\nCordialement,\n${data.associationName}`
   )
@@ -230,7 +245,7 @@ export function buildWhatsAppUrl(data: ReceiptData, phone: string): string {
   const cleanPhone = phone.replace(/[^0-9+]/g, '').replace(/^\+/, '')
   const text = encodeURIComponent(
     `Bonjour${data.donorName ? ' ' + data.donorName : ''}, merci pour votre don de ` +
-    `${data.amount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })} à ${data.associationName}. ` +
+    `${formatCurrency(data.amount)} à ${data.associationName}. ` +
     `Votre reçu n°${data.receiptNumber} est joint.`
   )
   return `https://wa.me/${cleanPhone}?text=${text}`
@@ -239,7 +254,7 @@ export function buildWhatsAppUrl(data: ReceiptData, phone: string): string {
 export function buildSmsUrl(data: ReceiptData, phone: string): string {
   const text = encodeURIComponent(
     `Merci ${data.donorName ?? ''} pour votre don de ` +
-    `${data.amount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })} à ${data.associationName}. ` +
+    `${formatCurrency(data.amount)} à ${data.associationName}. ` +
     `Reçu n°${data.receiptNumber} envoyé par email.`
   )
   return `sms:${phone}?body=${text}`
