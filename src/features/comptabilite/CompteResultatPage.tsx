@@ -6,8 +6,15 @@ import { cn } from '@/lib/utils'
 import jsPDF from 'jspdf'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-const eur = (n: number) =>
-  n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
+const eur = (n: number) => {
+  const formatter = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const parts = formatter.formatToParts(n)
+  let result = ''
+  for (const part of parts) {
+    result += part.type === 'group' ? ' ' : part.value
+  }
+  return result + ' €'
+}
 
 const pct = (n: number, total: number) =>
   total === 0 ? '—' : ((n / total) * 100).toFixed(1) + ' %'
