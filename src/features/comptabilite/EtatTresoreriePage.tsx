@@ -256,7 +256,7 @@ export function EtatTresoreriePage() {
           const tc: [number,number,number] = isCredit ? [22, 163, 74] : [220, 38, 38]
           pdf.setFont('helvetica', 'bold'); pdf.setFontSize(7.5); pdf.setTextColor(...tc)
           pdf.text(label, M, Y + 5, { maxWidth: LBL_W })
-          pdf.text((isCredit ? '+' : '−') + eur(montant), AMT_X, Y + 5, { align: 'right', maxWidth: AMT_W })
+          pdf.text((isCredit ? '+' : '-') + eur(montant), AMT_X, Y + 5, { align: 'right', maxWidth: AMT_W })
           Y += ROW - 1
         }
         const drawMvtRow = (label: string, montant: number, isCredit: boolean) => {
@@ -267,7 +267,7 @@ export function EtatTresoreriePage() {
           pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8); pdf.setTextColor(60, 60, 60)
           pdf.text(label, M, Y + 5, { maxWidth: LBL_W })
           pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8); pdf.setTextColor(...tc)
-          pdf.text((isCredit ? '+' : '−') + eur(montant), AMT_X, Y + 5, { align: 'right', maxWidth: AMT_W })
+          pdf.text((isCredit ? '+' : '-') + eur(montant), AMT_X, Y + 5, { align: 'right', maxWidth: AMT_W })
           pdf.setDrawColor(240, 240, 240); pdf.setLineWidth(0.2)
           pdf.line(M, Y + ROW - 1, PW - M, Y + ROW - 1)
           Y += ROW - 1
@@ -379,7 +379,7 @@ export function EtatTresoreriePage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Trésorerie ouverture', sub: `01/01/${annee}`, val: totalOuverture, color: 'text-indigo-700', bg: 'bg-indigo-50 border-indigo-200', icon: <Building2 className="w-4 h-4 text-indigo-600" /> },
-          { label: 'Encaissements nets', sub: `Recettes − Dépenses`, val: totalEncaiss - totalDecaiss, color: (totalEncaiss - totalDecaiss) >= 0 ? 'text-green-700' : 'text-red-700', bg: (totalEncaiss - totalDecaiss) >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200', icon: <TrendingUp className="w-4 h-4 text-green-600" /> },
+          { label: 'Encaissements nets', sub: `Recettes - Dépenses`, val: totalEncaiss - totalDecaiss, color: (totalEncaiss - totalDecaiss) >= 0 ? 'text-green-700' : 'text-red-700', bg: (totalEncaiss - totalDecaiss) >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200', icon: <TrendingUp className="w-4 h-4 text-green-600" /> },
           { label: 'Décaissements', sub: `Dépenses totales`, val: totalDecaiss, color: 'text-red-700', bg: 'bg-red-50 border-red-200', icon: <TrendingDown className="w-4 h-4 text-red-600" /> },
           { label: 'Trésorerie clôture', sub: `31/12/${annee}`, val: totalCloture, color: totalCloture >= 0 ? 'text-green-700' : 'text-red-700', bg: totalCloture >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200', icon: <Building2 className="w-4 h-4 text-green-600" /> },
         ].map((s, i) => (
@@ -449,13 +449,13 @@ export function EtatTresoreriePage() {
               )}
               {e.decaissements > 0 && (
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-red-600">− Dépenses</span>
+                  <span className="text-red-600">- Dépenses</span>
                   <span className="font-semibold text-red-600">{eur(e.decaissements)}</span>
                 </div>
               )}
               {e.virementsEmis > 0 && (
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-indigo-600">− Virements émis</span>
+                  <span className="text-indigo-600">- Virements émis</span>
                   <span className="font-semibold text-indigo-600">{eur(e.virementsEmis)}</span>
                 </div>
               )}
@@ -506,7 +506,7 @@ export function EtatTresoreriePage() {
                           {label}{badge}
                         </td>
                         <td className={cn('px-5 py-2.5 text-right font-semibold', isCredit ? 'text-green-700' : 'text-red-600')}>
-                          {isCredit ? '+' : '−'}{eur(m.montant)}
+                          {isCredit ? '+' : '-'}{eur(m.montant)}
                         </td>
                       </tr>
                     )
@@ -530,7 +530,7 @@ export function EtatTresoreriePage() {
                 <th className="text-left px-5 py-3">Compte</th>
                 <th className="text-right px-5 py-3">Ouverture</th>
                 <th className="text-right px-5 py-3 hidden sm:table-cell">+ Encaiss.</th>
-                <th className="text-right px-5 py-3 hidden sm:table-cell">− Décaiss.</th>
+                <th className="text-right px-5 py-3 hidden sm:table-cell">- Décaiss.</th>
                 <th className="text-right px-5 py-3 hidden lg:table-cell">Virements</th>
                 <th className="text-right px-5 py-3">Clôture</th>
               </tr>
@@ -543,10 +543,10 @@ export function EtatTresoreriePage() {
                   </td>
                   <td className="px-5 py-3 text-right text-[var(--color-text-muted)]">{eur(e.soldOuverture)}</td>
                   <td className="px-5 py-3 text-right text-green-700 hidden sm:table-cell">{e.encaissements > 0 ? `+${eur(e.encaissements)}` : '—'}</td>
-                  <td className="px-5 py-3 text-right text-red-600 hidden sm:table-cell">{e.decaissements > 0 ? `−${eur(e.decaissements)}` : '—'}</td>
+                  <td className="px-5 py-3 text-right text-red-600 hidden sm:table-cell">{e.decaissements > 0 ? `-${eur(e.decaissements)}` : '—'}</td>
                   <td className="px-5 py-3 text-right text-indigo-600 hidden lg:table-cell text-xs">
                     {e.virementsReçus > 0 && <span className="block">+{eur(e.virementsReçus)}</span>}
-                    {e.virementsEmis > 0 && <span className="block">−{eur(e.virementsEmis)}</span>}
+                    {e.virementsEmis > 0 && <span className="block">-{eur(e.virementsEmis)}</span>}
                     {e.virementsReçus === 0 && e.virementsEmis === 0 && '—'}
                   </td>
                   <td className={cn('px-5 py-3 text-right font-bold', e.soldeCloture >= 0 ? 'text-[var(--color-text)]' : 'text-red-600')}>
@@ -560,7 +560,7 @@ export function EtatTresoreriePage() {
                 <td className="px-5 py-3 font-bold">TOTAL</td>
                 <td className="px-5 py-3 text-right font-bold">{eur(totalOuverture)}</td>
                 <td className="px-5 py-3 text-right font-bold hidden sm:table-cell">+{eur(totalEncaiss)}</td>
-                <td className="px-5 py-3 text-right font-bold hidden sm:table-cell">−{eur(totalDecaiss)}</td>
+                <td className="px-5 py-3 text-right font-bold hidden sm:table-cell">-{eur(totalDecaiss)}</td>
                 <td className="px-5 py-3 text-right hidden lg:table-cell">—</td>
                 <td className={cn('px-5 py-3 text-right font-bold text-lg', totalCloture >= 0 ? 'text-green-300' : 'text-red-300')}>
                   {eur(totalCloture)}
