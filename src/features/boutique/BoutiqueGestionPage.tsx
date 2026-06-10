@@ -1,5 +1,6 @@
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Package, ShoppingCart, TrendingUp, Plus, ChevronRight, Sparkles } from 'lucide-react'
+import { Package, ShoppingCart, TrendingUp, Plus, ChevronRight, Sparkles, Store, Percent } from 'lucide-react'
 import { useBoutiqueProduits } from '@/hooks/useBoutiqueProduits'
 import { useBoutiqueCommandes, type Commande } from '@/hooks/useBoutiqueCommandes'
 import { formatDateShort } from '@/lib/utils'
@@ -22,6 +23,29 @@ export function BoutiqueGestionPage() {
   const revenue = allCommandes
     .filter((c) => c.payment_status === 'completed')
     .reduce((sum, c) => sum + c.total_amount, 0)
+
+  const revenueSplit = useMemo(() => {
+    let local = 0
+    let partnerGross = 0
+    let partnerCommission = 0
+
+    for (const commande of allCommandes) {
+      if (commande.payment_status !== 'completed') continue
+      for (const item of commande.boutique_commande_items ?? []) {
+        const vendor = item.boutique_produits?.boutique_vendors
+        if (vendor?.is_platform) {
+          partnerGross += item.total_price
+          partnerCommission += item.total_price * (vendor.commission_percent / 100)
+        } else {
+          local += item.total_price
+        }
+      }
+    }
+
+    return { local, partnerGross, partnerCommission, partnerNet: partnerGross - partnerCommission }
+  }, [allCommandes])
+
+  const hasPartnerSales = revenueSplit.partnerGross > 0
 
   const STATUS_NEXT: Record<string, Commande['status'][]> = {
     pending: ['processing', 'cancelled'],
@@ -87,6 +111,45 @@ export function BoutiqueGestionPage() {
           <p className="text-xs text-[var(--color-text-muted)] mt-1">paiements complétés</p>
         </div>
       </div>
+
+      {/* Répartition des revenus */}
+      {hasPartnerSales && (
+        <div className="bg-white rounded-xl border border-[var(--color-border)] shadow-sm p-5 mb-6">
+          <h2 className="font-semibold text-[var(--color-text)] text-sm mb-4">Répartition des revenus boutique</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Store className="w-4 h-4 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Articles locaux</p>
+                <p className="text-lg font-bold text-[var(--color-text)]">{revenueSplit.local.toFixed(2)} €</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-4 h-4 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Catalogue partenaire (brut)</p>
+                <p className="text-lg font-bold text-[var(--color-text)]">{revenueSplit.partnerGross.toFixed(2)} €</p>
+                <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                  dont {revenueSplit.partnerCommission.toFixed(2)} € de commission Amicale Connect
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Percent className="w-4 h-4 text-green-600" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Net partenaire pour l'amicale</p>
+                <p className="text-lg font-bold text-green-700">{revenueSplit.partnerNet.toFixed(2)} €</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Raccourcis */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">

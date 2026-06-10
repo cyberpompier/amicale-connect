@@ -13,7 +13,12 @@ export interface CommandeItem {
   unit_price: number
   total_price: number
   created_at: string
-  boutique_produits?: { name: string; image_url: string | null }
+  boutique_produits?: {
+    name: string
+    image_url: string | null
+    global_produit_id: string | null
+    boutique_vendors?: { name: string; is_platform: boolean; commission_percent: number }
+  }
   boutique_produit_variantes?: { type: string; value: string } | null
 }
 
@@ -84,7 +89,7 @@ export function useBoutiqueCommandes() {
         *,
         boutique_commande_items(
           *,
-          boutique_produits(name, image_url),
+          boutique_produits(name, image_url, global_produit_id, boutique_vendors(name, is_platform, commission_percent)),
           boutique_produit_variantes(type, value)
         )
       `)
