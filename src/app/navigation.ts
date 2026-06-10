@@ -95,6 +95,7 @@ export const mainNavItems: NavItem[] = [
       { label: 'Panier', path: '/boutique/panier' },
       { label: 'Mes commandes', path: '/boutique/commandes' },
       { label: 'Gestion', path: '/boutique/gestion' },
+      { label: 'Catalogue partenaire', path: '/boutique/gestion/catalogue-partenaire' },
     ],
   },
   {

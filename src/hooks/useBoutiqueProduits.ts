@@ -50,6 +50,8 @@ export interface BoutiqueProduit {
   sku: string | null
   badges: string[]
   discount_percent: number
+  is_active: boolean
+  global_produit_id: string | null
   created_by: string | null
   created_at: string
   updated_at: string

@@ -1,8 +1,9 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { Flame, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Flame, ChevronLeft, ChevronRight, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { mainNavItems, settingsNavItem } from '@/app/navigation'
 import { useMenuPermissionsContext } from '@/features/auth/MenuPermissionsContext'
+import { usePlatformAdmin } from '@/hooks/usePlatformAdmin'
 
 const MOBILE_LABELS: Record<string, string> = {
   'Dashboard': 'Accueil',
@@ -20,6 +21,7 @@ interface SidebarProps {
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const location = useLocation()
   const { isAllowed } = useMenuPermissionsContext()
+  const { isPlatformAdmin } = usePlatformAdmin()
 
   const visibleNavItems = mainNavItems.filter((item) => isAllowed(item.path))
 
@@ -89,6 +91,23 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             <settingsNavItem.icon className={cn('flex-shrink-0', collapsed ? 'w-5 h-5' : 'w-4 h-4')} />
             {!collapsed && <span className="truncate">{settingsNavItem.label}</span>}
           </NavLink>
+
+          {isPlatformAdmin && (
+            <NavLink
+              to="/admin/catalogue-partage"
+              title={collapsed ? 'Administration' : undefined}
+              className={cn(
+                'flex items-center gap-3 rounded-lg text-sm font-medium transition-colors',
+                collapsed ? 'px-0 py-2.5 justify-center' : 'px-3 py-2.5',
+                isActive('/admin')
+                  ? 'bg-white/10 text-white'
+                  : 'text-gray-400 hover:bg-white/5 hover:text-white'
+              )}
+            >
+              <ShieldCheck className={cn('flex-shrink-0', collapsed ? 'w-5 h-5' : 'w-4 h-4')} />
+              {!collapsed && <span className="truncate">Administration</span>}
+            </NavLink>
+          )}
 
           <button
             onClick={onToggle}

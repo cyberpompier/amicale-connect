@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Package, ShoppingCart, TrendingUp, Plus, ChevronRight } from 'lucide-react'
+import { Package, ShoppingCart, TrendingUp, Plus, ChevronRight, Sparkles } from 'lucide-react'
 import { useBoutiqueProduits } from '@/hooks/useBoutiqueProduits'
 import { useBoutiqueCommandes, type Commande } from '@/hooks/useBoutiqueCommandes'
 import { formatDateShort } from '@/lib/utils'
@@ -112,6 +112,19 @@ export function BoutiqueGestionPage() {
             <div>
               <p className="font-semibold text-[var(--color-text)] text-sm">Toutes les commandes</p>
               <p className="text-xs text-[var(--color-text-muted)]">{allCommandes.length} commande(s)</p>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-[var(--color-text-muted)]" />
+        </button>
+        <button
+          onClick={() => navigate('/boutique/gestion/catalogue-partenaire')}
+          className="flex items-center justify-between px-5 py-4 bg-white border border-[var(--color-border)] rounded-xl hover:border-[var(--color-primary)]/30 hover:shadow-sm transition-all text-left sm:col-span-2"
+        >
+          <div className="flex items-center gap-3">
+            <Sparkles className="w-5 h-5 text-purple-600" />
+            <div>
+              <p className="font-semibold text-[var(--color-text)] text-sm">Catalogue partenaire (dropshipping)</p>
+              <p className="text-xs text-[var(--color-text-muted)]">Activez des produits Amicale Connect dans votre boutique</p>
             </div>
           </div>
           <ChevronRight className="w-4 h-4 text-[var(--color-text-muted)]" />

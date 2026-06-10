@@ -22,6 +22,7 @@ export function BoutiquePage() {
 
   const filtered = useMemo(() => {
     return produits.filter((p) => {
+      if (!p.is_active) return false
       const matchSearch = !search ||
         p.name.toLowerCase().includes(search.toLowerCase()) ||
         p.description?.toLowerCase().includes(search.toLowerCase())

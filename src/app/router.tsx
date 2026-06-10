@@ -38,6 +38,9 @@ import { BoutiqueGestionPage } from '@/features/boutique/BoutiqueGestionPage'
 import { BoutiqueGestionCommandesAdminPage } from '@/features/boutique/BoutiqueGestionCommandesAdminPage'
 import { BoutiqueGestionProduitsList } from '@/features/boutique/BoutiqueGestionProduitsList'
 import { BoutiqueGestionProduitForm } from '@/features/boutique/BoutiqueGestionProduitForm'
+import { BoutiqueGestionCataloguePartenairePage } from '@/features/boutique/BoutiqueGestionCataloguePartenairePage'
+import { AdminCataloguePartagePage } from '@/features/admin/AdminCataloguePartagePage'
+import { AdminCatalogueProduitForm } from '@/features/admin/AdminCatalogueProduitForm'
 import { CalendriersPage } from '@/features/calendriers/CalendriersPage'
 import { CalendriersSecteursPage } from '@/features/calendriers/CalendriersSecteursPage'
 import { CalendriersSecteursTemplatesPage } from '@/features/calendriers/CalendriersSecteursTemplatesPage'
@@ -237,8 +240,25 @@ export const router = createBrowserRouter([
         element: <BoutiqueGestionProduitForm />,
       },
       {
+        path: 'boutique/gestion/catalogue-partenaire',
+        element: <BoutiqueGestionCataloguePartenairePage />,
+      },
+      {
         path: 'boutique/:id',
         element: <BoutiqueDetailPage />,
+      },
+      // Administration plateforme
+      {
+        path: 'admin/catalogue-partage',
+        element: <AdminCataloguePartagePage />,
+      },
+      {
+        path: 'admin/catalogue-partage/creer',
+        element: <AdminCatalogueProduitForm />,
+      },
+      {
+        path: 'admin/catalogue-partage/:id',
+        element: <AdminCatalogueProduitForm />,
       },
       // Calendriers
       {
