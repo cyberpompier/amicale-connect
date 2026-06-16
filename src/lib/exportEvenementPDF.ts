@@ -301,13 +301,15 @@ export async function exportEvenementPDF({ evenement, participants, invites, nom
   y += 5
 
   // Pointage table header
+  // NOM réduit à ~55mm pour laisser de la place aux annotations manuscrites
+  // ÉMARGEMENT : large zone vide (pas de trait — l'émargent écrit librement)
   const PC = {
     n:    M + 1,
     nom:  M + 11,
-    pres: M + 95,
-    acc:  M + 118,
-    pay:  M + 132,
-    sig:  M + 158,
+    pres: M + 68,
+    acc:  M + 91,
+    pay:  M + 106,
+    sig:  M + 134,
   }
 
   const drawPointageHeader = () => {
@@ -316,12 +318,12 @@ export async function exportEvenementPDF({ evenement, participants, invites, nom
     doc.setTextColor(...WHITE)
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(7.5)
-    doc.text('N°',        PC.n,    y + 5.5)
-    doc.text('NOM',       PC.nom,  y + 5.5)
-    doc.text('PRÉSENT',   PC.pres, y + 5.5)
-    doc.text('ACC.',      PC.acc,  y + 5.5)
-    doc.text('PAIEMENT',  PC.pay,  y + 5.5)
-    doc.text('SIGNATURE', PC.sig,  y + 5.5)
+    doc.text('N°',          PC.n,    y + 5.5)
+    doc.text('NOM',         PC.nom,  y + 5.5)
+    doc.text('PRÉSENT',     PC.pres, y + 5.5)
+    doc.text('ACC.',        PC.acc,  y + 5.5)
+    doc.text('PAIEMENT',    PC.pay,  y + 5.5)
+    doc.text('ÉMARGEMENT',  PC.sig,  y + 5.5)
     y += 9
   }
 
@@ -380,7 +382,7 @@ export async function exportEvenementPDF({ evenement, participants, invites, nom
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(8)
     doc.setTextColor(...DARK)
-    doc.text(person.nom, PC.nom, y + 5, { maxWidth: 80 })
+    doc.text(person.nom, PC.nom, y + 5, { maxWidth: 54 })
     if (person.grade) {
       doc.setFont('helvetica', 'normal')
       doc.setFontSize(6.5)
@@ -404,11 +406,6 @@ export async function exportEvenementPDF({ evenement, participants, invites, nom
     doc.setFontSize(7.5)
     doc.setTextColor(...(PAIEMENT_COLORS[person.paiement] ?? GRAY))
     doc.text(person.paiement, PC.pay, y + 6)
-
-    // Signature line
-    doc.setDrawColor(190, 190, 190)
-    doc.setLineWidth(0.3)
-    doc.line(PC.sig, y + 7, PC.sig + 34, y + 7)
 
     y += PROW
   })
@@ -436,10 +433,6 @@ export async function exportEvenementPDF({ evenement, participants, invites, nom
     doc.setDrawColor(...DARK)
     doc.setLineWidth(0.5)
     doc.rect(PC.pres + 7, y + 1.5, 5.5, 5.5)
-
-    doc.setDrawColor(190, 190, 190)
-    doc.setLineWidth(0.3)
-    doc.line(PC.sig, y + 7, PC.sig + 34, y + 7)
 
     y += PROW
   }
