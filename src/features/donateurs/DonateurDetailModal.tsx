@@ -26,7 +26,7 @@ export function DonateurDetailModal({
   const [dons, setDons] = useState<DonVente[]>([])
   const [loading, setLoading] = useState(false)
   const [showMap, setShowMap] = useState(false)
-  const [mapCoords, setMapCoords] = useState<{ lat: number; lng: number } | null>(null)
+  const [mapCoords, setMapCoords] = useState<{ lat: number; lng: number; donateurId: string } | null>(null)
   const [geocodingLoading, setGeocodingLoading] = useState(false)
   const mapInstanceRef = useRef<any>(null)
 
@@ -79,7 +79,7 @@ export function DonateurDetailModal({
 
         if (results.length > 0) {
           const { lat, lon } = results[0]
-          setMapCoords({ lat: parseFloat(lat), lng: parseFloat(lon) })
+          setMapCoords({ lat: parseFloat(lat), lng: parseFloat(lon), donateurId: donateur.id })
         }
       } catch (err) {
         console.error('Erreur géocodage:', err)
@@ -93,7 +93,7 @@ export function DonateurDetailModal({
 
   // Initialiser Leaflet quand les coords sont disponibles
   useEffect(() => {
-    if (!showMap || !mapCoords || mapInstanceRef.current) return
+    if (!showMap || !mapCoords || mapCoords.donateurId !== donateur?.id || mapInstanceRef.current) return
 
     const initMap = async () => {
       const mapEl = document.getElementById(`map-donateur-${donateur?.id}`)
