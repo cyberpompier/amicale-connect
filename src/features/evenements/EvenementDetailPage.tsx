@@ -31,8 +31,17 @@ function avatarColor(name: string) {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function Avatar({ prenom, nom, size = 'md' }: { prenom: string; nom: string; size?: 'sm' | 'md' | 'lg' }) {
+function Avatar({ prenom, nom, size = 'md', avatarUrl }: { prenom: string; nom: string; size?: 'sm' | 'md' | 'lg'; avatarUrl?: string | null }) {
   const sizeClass = size === 'sm' ? 'w-8 h-8 text-xs' : size === 'lg' ? 'w-12 h-12 text-base' : 'w-10 h-10 text-sm'
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={`${prenom} ${nom}`}
+        className={cn('rounded-full object-cover flex-shrink-0', sizeClass)}
+      />
+    )
+  }
   return (
     <div className={cn('rounded-full flex items-center justify-center font-bold text-white flex-shrink-0', sizeClass, avatarColor(prenom + nom))}>
       {getInitials(prenom, nom)}
@@ -383,15 +392,25 @@ export function EvenementDetailPage() {
           {confirmes.length > 0 && (
             <div className="flex items-center gap-1 mt-3">
               <div className="flex -space-x-2">
-                {confirmes.slice(0, 7).map((p) => (
-                  <div
-                    key={p.id}
-                    className={cn('w-8 h-8 rounded-full border-2 border-red-600 flex items-center justify-center text-xs font-bold text-white', avatarColor(p.amicalistes.first_name + p.amicalistes.last_name))}
-                    title={`${p.amicalistes.first_name} ${p.amicalistes.last_name}`}
-                  >
-                    {getInitials(p.amicalistes.first_name, p.amicalistes.last_name)}
-                  </div>
-                ))}
+                {confirmes.slice(0, 7).map((p) =>
+                  p.amicalistes.avatar_url ? (
+                    <img
+                      key={p.id}
+                      src={p.amicalistes.avatar_url}
+                      alt={`${p.amicalistes.first_name} ${p.amicalistes.last_name}`}
+                      className="w-8 h-8 rounded-full border-2 border-red-600 object-cover flex-shrink-0"
+                      title={`${p.amicalistes.first_name} ${p.amicalistes.last_name}`}
+                    />
+                  ) : (
+                    <div
+                      key={p.id}
+                      className={cn('w-8 h-8 rounded-full border-2 border-red-600 flex items-center justify-center text-xs font-bold text-white', avatarColor(p.amicalistes.first_name + p.amicalistes.last_name))}
+                      title={`${p.amicalistes.first_name} ${p.amicalistes.last_name}`}
+                    >
+                      {getInitials(p.amicalistes.first_name, p.amicalistes.last_name)}
+                    </div>
+                  )
+                )}
               </div>
               {confirmes.length > 7 && (
                 <span className="text-xs text-red-100 ml-1">+{confirmes.length - 7} autres</span>
@@ -445,7 +464,7 @@ export function EvenementDetailPage() {
                     onClick={() => handleAddMember(a.id)}
                     className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-[var(--color-bg-secondary)] transition-colors text-left"
                   >
-                    <Avatar prenom={a.first_name} nom={a.last_name} size="sm" />
+                    <Avatar prenom={a.first_name} nom={a.last_name} size="sm" avatarUrl={a.avatar_url} />
                     <div>
                       <p className="text-sm font-medium text-[var(--color-text)]">{a.last_name} {a.first_name}</p>
                       {a.grade && <p className="text-xs text-[var(--color-text-muted)]">{a.grade}</p>}
@@ -776,7 +795,7 @@ function ParticipantRow({
     <div className="px-4 py-3.5 hover:bg-[var(--color-bg-secondary)] transition-colors group">
       {/* Ligne 1 : avatar + nom + bouton supprimer */}
       <div className="flex items-center gap-3">
-        <Avatar prenom={p.amicalistes.first_name} nom={p.amicalistes.last_name} size="sm" />
+        <Avatar prenom={p.amicalistes.first_name} nom={p.amicalistes.last_name} size="sm" avatarUrl={p.amicalistes.avatar_url} />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-[var(--color-text)] truncate">{fullName}</p>
           <div className="flex items-center gap-1.5 flex-wrap mt-0.5">

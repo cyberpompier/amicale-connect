@@ -19,6 +19,7 @@ export interface Participant {
     last_name: string
     email: string | null
     grade: string | null
+    avatar_url: string | null
   }
 }
 
@@ -72,7 +73,7 @@ export function useEvenementDetail(evenementId: string | undefined) {
       // Participants (membres)
       const { data: parts, error: partsErr } = await supabase
         .from('evenement_participants')
-        .select('*, amicalistes(id, first_name, last_name, email, grade)')
+        .select('*, amicalistes(id, first_name, last_name, email, grade, avatar_url)')
         .eq('evenement_id', evenementId)
         .order('created_at', { ascending: true })
 
