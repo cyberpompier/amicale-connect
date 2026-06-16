@@ -4,6 +4,7 @@ import { useAssociation } from '@/features/association/AssociationContext'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '@/lib/supabase'
 
 interface HeaderProps {
   associationName: string
@@ -15,6 +16,7 @@ export function Header({ associationName, logoUrl }: HeaderProps) {
   const { currentAssociation } = useAssociation()
   const { isSupported, isSubscribed, loading, subscribe, unsubscribe } = usePushNotifications(currentAssociation?.id)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
 
@@ -27,6 +29,18 @@ export function Header({ associationName, logoUrl }: HeaderProps) {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  useEffect(() => {
+    if (!user?.id) return
+    supabase
+      .from('amicalistes')
+      .select('avatar_url')
+      .eq('user_id', user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.avatar_url) setAvatarUrl(data.avatar_url)
+      })
+  }, [user?.id])
 
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Utilisateur'
   const initials = displayName.slice(0, 2).toUpperCase()
@@ -52,9 +66,18 @@ export function Header({ associationName, logoUrl }: HeaderProps) {
           onClick={() => setMenuOpen(!menuOpen)}
           className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[var(--color-bg-secondary)] transition-colors"
         >
-          <div className="w-8 h-8 bg-[var(--color-primary)] rounded-full flex items-center justify-center flex-shrink-0">
-            <span className="text-white text-xs font-bold">{initials}</span>
-          </div>
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt={initials}
+              className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+              onError={() => setAvatarUrl(null)}
+            />
+          ) : (
+            <div className="w-8 h-8 bg-[var(--color-primary)] rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-white text-xs font-bold">{initials}</span>
+            </div>
+          )}
           <span className="text-sm font-medium text-[var(--color-text)] hidden sm:block max-w-[120px] truncate">
             {displayName}
           </span>
