@@ -7,12 +7,12 @@ export interface Donateur {
   id: string
   association_id: string
   nom: string
-  prenom: string
+  prenom: string | null
   email: string | null
   telephone: string | null
   adresse: string | null
   code_postal: string | null
-  ville: string | null
+  ville: string
   total_dons: number
   nombre_dons: number
   derniere_donation: string | null
@@ -23,12 +23,12 @@ export interface Donateur {
 
 export type DonateurInput = {
   nom: string
-  prenom: string
+  prenom?: string | null
   email?: string | null
   telephone?: string | null
   adresse?: string | null
   code_postal?: string | null
-  ville?: string | null
+  ville: string
   notes?: string | null
 }
 
