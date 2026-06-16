@@ -26,7 +26,7 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 export function MembresDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { amicalistes, deleteAmicaliste } = useAmicalistes()
+  const { amicalistes, loading, deleteAmicaliste } = useAmicalistes()
   const { cotisations } = useCotisations()
   const { children } = useAmicalisteChildren(id ?? null)
 
@@ -42,6 +42,14 @@ export function MembresDetailPage() {
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Erreur lors de la suppression')
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="animate-spin w-8 h-8 border-4 border-[var(--color-primary)] border-t-transparent rounded-full" />
+      </div>
+    )
   }
 
   if (!membre) {
