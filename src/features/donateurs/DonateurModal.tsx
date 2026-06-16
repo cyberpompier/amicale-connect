@@ -60,21 +60,21 @@ export function DonateurModal({ isOpen, donateur, onClose, onSave }: DonateurMod
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.prenom.trim() || !formData.nom.trim()) {
-      alert('Le prénom et le nom sont obligatoires')
+    if (!formData.nom.trim() || !formData.ville.trim()) {
+      alert('Le nom et la ville sont obligatoires')
       return
     }
 
     setIsSaving(true)
     try {
       await onSave({
-        prenom: formData.prenom.trim(),
+        prenom: formData.prenom.trim() || null,
         nom: formData.nom.trim(),
         email: formData.email.trim() || null,
         telephone: formData.telephone.trim() || null,
         adresse: formData.adresse.trim() || null,
         code_postal: formData.code_postal.trim() || null,
-        ville: formData.ville.trim() || null,
+        ville: formData.ville.trim(),
         notes: formData.notes.trim() || null,
       })
     } finally {
@@ -103,7 +103,7 @@ export function DonateurModal({ isOpen, donateur, onClose, onSave }: DonateurMod
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-[var(--color-text)] mb-1">
-                Prénom *
+                Prénom
               </label>
               <input
                 type="text"
@@ -111,7 +111,6 @@ export function DonateurModal({ isOpen, donateur, onClose, onSave }: DonateurMod
                 value={formData.prenom}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:border-[var(--color-primary)]"
-                required
               />
             </div>
             <div>
@@ -183,7 +182,7 @@ export function DonateurModal({ isOpen, donateur, onClose, onSave }: DonateurMod
             </div>
             <div>
               <label className="block text-sm font-medium text-[var(--color-text)] mb-1">
-                Ville
+                Ville *
               </label>
               <input
                 type="text"
@@ -191,6 +190,7 @@ export function DonateurModal({ isOpen, donateur, onClose, onSave }: DonateurMod
                 value={formData.ville}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg focus:outline-none focus:border-[var(--color-primary)]"
+                required
               />
             </div>
           </div>
