@@ -413,9 +413,17 @@ export function CalendriersPage() {
                       <div className="space-y-1.5">
                         {selectedSecteur.calendrier_secteur_equipiers.map((eq) => (
                           <div key={eq.id} className="flex items-center gap-2 p-2 bg-[var(--color-bg-secondary)] rounded-lg">
-                            <div className="w-7 h-7 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] text-xs font-bold">
-                              {eq.amicalistes?.first_name?.[0]}{eq.amicalistes?.last_name?.[0]}
-                            </div>
+                            {eq.amicalistes?.avatar_url ? (
+                              <img
+                                src={eq.amicalistes.avatar_url}
+                                alt={`${eq.amicalistes.first_name} ${eq.amicalistes.last_name}`}
+                                className="w-7 h-7 rounded-full object-cover flex-shrink-0"
+                              />
+                            ) : (
+                              <div className="w-7 h-7 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] text-xs font-bold">
+                                {eq.amicalistes?.first_name?.[0]}{eq.amicalistes?.last_name?.[0]}
+                              </div>
+                            )}
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-semibold text-[var(--color-text)] truncate">
                                 {eq.amicalistes?.first_name} {eq.amicalistes?.last_name}

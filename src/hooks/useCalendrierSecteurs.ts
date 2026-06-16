@@ -23,6 +23,7 @@ export interface CalendrierSecteurEquipier {
     first_name: string
     last_name: string
     grade: string | null
+    avatar_url: string | null
   }
 }
 
@@ -93,7 +94,7 @@ export function useCalendrierSecteurs(campagneId?: string) {
         calendrier_secteur_rues(*),
         calendrier_secteur_equipiers(
           *,
-          amicalistes(id, first_name, last_name, grade)
+          amicalistes(id, first_name, last_name, grade, avatar_url)
         ),
         calendrier_stocks(*)
       `)
