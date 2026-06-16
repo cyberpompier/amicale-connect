@@ -3,6 +3,7 @@ import { Plus, Search, Mail, Phone, MapPin, Trash2, Edit, Gift, Eye } from 'luci
 import { useDonateurs, type Donateur } from '@/hooks/useDonateurs'
 import { DonateurModal } from './DonateurModal'
 import { DonateurDetailModal } from './DonateurDetailModal'
+import { DonateurMapModal } from './DonateurMapModal'
 
 export function DonatairesPage() {
   const {
@@ -17,6 +18,7 @@ export function DonatairesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingDonateur, setEditingDonateur] = useState<Donateur | null>(null)
   const [detailDonateur, setDetailDonateur] = useState<Donateur | null>(null)
+  const [mapDonateur, setMapDonateur] = useState<Donateur | null>(null)
 
   const filtered = useMemo(() => {
     if (!search) return donateurs
@@ -199,7 +201,7 @@ export function DonatairesPage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
-                              window.open(`https://maps.google.com?q=${encodeURIComponent(localisation)}`, '_blank')
+                              setMapDonateur(donateur)
                             }}
                             className="inline-block text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors"
                             title={localisation}
@@ -283,6 +285,12 @@ export function DonatairesPage() {
         donateur={detailDonateur}
         onClose={() => setDetailDonateur(null)}
         fetchDons={fetchDonsForDonateur}
+      />
+
+      <DonateurMapModal
+        isOpen={!!mapDonateur}
+        donateur={mapDonateur}
+        onClose={() => setMapDonateur(null)}
       />
     </div>
   )
