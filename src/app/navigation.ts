@@ -8,6 +8,7 @@ import {
   Settings,
   BarChart3,
   ShoppingBag,
+  Heart,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -110,6 +111,12 @@ export const mainNavItems: NavItem[] = [
       { label: 'Statistiques', path: '/calendriers/statistiques' },
       { label: 'Historique', path: '/calendriers/historique' },
     ],
+  },
+  {
+    label: 'Donateurs',
+    path: '/donateurs',
+    icon: Heart,
+    subNav: [],
   },
 ]
 

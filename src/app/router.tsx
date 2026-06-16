@@ -51,6 +51,7 @@ import { CalendriersStatistiquesPage } from '@/features/calendriers/CalendriersS
 import { CalendriersStockPage } from '@/features/calendriers/CalendriersStockPage'
 import { CalendriersHistoriquePage } from '@/features/calendriers/CalendriersHistoriquePage'
 import { CalendriersSecteurMapPage } from '@/features/calendriers/CalendriersSecteurMapPage'
+import { DonatairesPage } from '@/features/donateurs/DonatairesPage'
 import { ParametresPage } from '@/features/parametres/ParametresPage'
 import { ParametresFacturationPage } from '@/features/parametres/ParametresFacturationPage'
 import { ParametresEquipePage } from '@/features/parametres/ParametresEquipePage'
@@ -304,6 +305,11 @@ export const router = createBrowserRouter([
       {
         path: 'calendriers/historique',
         element: <CalendriersHistoriquePage />,
+      },
+      // Donateurs
+      {
+        path: 'donateurs',
+        element: <DonatairesPage />,
       },
       // Profil utilisateur
       {
