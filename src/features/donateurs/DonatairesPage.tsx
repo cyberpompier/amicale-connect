@@ -252,7 +252,7 @@ export function DonatairesPage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
-                              handleDelete(donateur.id, donateur.nom, donateur.prenom)
+                              handleDelete(donateur.id, donateur.nom, donateur.prenom ?? '')
                             }}
                             className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition"
                             title="Supprimer"
