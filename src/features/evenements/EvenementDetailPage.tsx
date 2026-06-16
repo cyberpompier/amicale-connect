@@ -4,12 +4,14 @@ import {
   ArrowLeft, MapPin, Clock, Users, MessageSquare, Star,
   Check, X, HelpCircle, Plus, Pencil, Trash2, Share2,
   Link2, Phone, Mail, ChevronDown, ChevronUp, UserPlus,
-  CheckCircle2, AlertCircle, UserMinus, Copy, Calendar,
+  CheckCircle2, AlertCircle, UserMinus, Copy, Calendar, Download,
 } from 'lucide-react'
 import { useEvenementDetail, type Participant, type Invite } from '@/hooks/useEvenementDetail'
 import { useAmicalistes } from '@/hooks/useAmicalistes'
+import { useAssociation } from '@/features/association/AssociationContext'
 import { cn, formatDateShort } from '@/lib/utils'
 import { downloadICalendar } from '@/lib/icalendar'
+import { exportEvenementPDF } from '@/lib/exportEvenementPDF'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -79,9 +81,11 @@ export function EvenementDetailPage() {
     addCommentaire, deleteCommentaire,
   } = useEvenementDetail(id)
   const { amicalistes } = useAmicalistes()
+  const { currentAssociation } = useAssociation()
 
   // UI state
   const [showAddMember, setShowAddMember]   = useState(false)
+  const [exporting, setExporting]           = useState(false)
   const [showAddInvite, setShowAddInvite]   = useState(false)
   const [showAddComment, setShowAddComment] = useState(false)
   const [memberSearch, setMemberSearch]     = useState('')
@@ -134,6 +138,24 @@ export function EvenementDetailPage() {
     await navigator.clipboard.writeText(window.location.href)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleExport = async () => {
+    if (!evenement) return
+    setExporting(true)
+    try {
+      await exportEvenementPDF({
+        evenement,
+        participants,
+        invites,
+        nomAssociation: currentAssociation?.name,
+      })
+    } catch (err) {
+      console.error('Erreur export PDF:', err)
+      alert('Erreur lors de la génération du PDF')
+    } finally {
+      setExporting(false)
+    }
   }
 
   const handleParticipantPaiement = async (p: Participant, next: Participant['paiement']) => {
@@ -242,6 +264,15 @@ export function EvenementDetailPage() {
           >
             <Calendar className="w-3.5 h-3.5" />
             Calendrier
+          </button>
+          <button
+            onClick={handleExport}
+            disabled={exporting}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border bg-white text-[var(--color-text-muted)] border-[var(--color-border)] hover:text-[var(--color-text)] hover:border-gray-300 disabled:opacity-50"
+            title="Exporter en PDF"
+          >
+            <Download className="w-3.5 h-3.5" />
+            {exporting ? 'Export…' : 'Exporter'}
           </button>
           <button
             onClick={() => navigate(`/evenements/creer?id=${evenement.id}`)}
