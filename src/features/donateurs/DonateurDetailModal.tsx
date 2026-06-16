@@ -57,15 +57,25 @@ export function DonateurDetailModal({
     if (!showMap || !donateur || mapCoords) return
 
     const geocodeAddress = async () => {
-      if (!donateur.adresse || !donateur.ville) return
+      if (!donateur.ville) return
 
       setGeocodingLoading(true)
       try {
-        const query = `${donateur.adresse}, ${donateur.ville}, France`
-        const response = await fetch(
+        // Essayer d'abord avec l'adresse complète
+        let query = `${donateur.adresse}, ${donateur.ville}, France`
+        let response = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`
         )
-        const results = await response.json()
+        let results = await response.json()
+
+        // Si pas de résultats avec l'adresse complète, essayer juste la ville
+        if (results.length === 0 && donateur.adresse) {
+          query = `${donateur.ville}, France`
+          response = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`
+          )
+          results = await response.json()
+        }
 
         if (results.length > 0) {
           const { lat, lon } = results[0]
