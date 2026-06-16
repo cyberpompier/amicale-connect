@@ -161,47 +161,53 @@ export function DonatairesPage() {
                         )}
                       </td>
 
-                      {/* Email */}
-                      <td className="px-6 py-4">
+                      {/* Email icon only */}
+                      <td className="px-6 py-4 text-center">
                         {donateur.email ? (
                           <a
                             href={`mailto:${donateur.email}`}
                             onClick={(e) => e.stopPropagation()}
-                            className="flex items-center gap-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"
+                            className="inline-block text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors"
+                            title={donateur.email}
                           >
-                            <Mail className="w-4 h-4 flex-shrink-0" />
-                            <span className="truncate">{donateur.email}</span>
+                            <Mail className="w-4 h-4" />
                           </a>
                         ) : (
-                          <span className="text-sm text-gray-300">—</span>
+                          <span className="text-gray-300">—</span>
                         )}
                       </td>
 
-                      {/* Téléphone */}
-                      <td className="px-6 py-4">
+                      {/* Téléphone icon only */}
+                      <td className="px-6 py-4 text-center">
                         {donateur.telephone ? (
                           <a
                             href={`tel:${donateur.telephone}`}
                             onClick={(e) => e.stopPropagation()}
-                            className="flex items-center gap-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"
+                            className="inline-block text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors"
+                            title={donateur.telephone}
                           >
-                            <Phone className="w-4 h-4 flex-shrink-0" />
-                            {donateur.telephone}
+                            <Phone className="w-4 h-4" />
                           </a>
                         ) : (
-                          <span className="text-sm text-gray-300">—</span>
+                          <span className="text-gray-300">—</span>
                         )}
                       </td>
 
-                      {/* Localisation : (numéro, rue), ville */}
-                      <td className="px-6 py-4">
+                      {/* Localisation icon only */}
+                      <td className="px-6 py-4 text-center">
                         {localisation ? (
-                          <div className="flex items-start gap-2 text-sm text-[var(--color-text-muted)]">
-                            <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>{localisation}</span>
-                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              window.open(`https://maps.google.com?q=${encodeURIComponent(localisation)}`, '_blank')
+                            }}
+                            className="inline-block text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors"
+                            title={localisation}
+                          >
+                            <MapPin className="w-4 h-4" />
+                          </button>
                         ) : (
-                          <span className="text-sm text-gray-300">—</span>
+                          <span className="text-gray-300">—</span>
                         )}
                       </td>
 
