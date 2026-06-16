@@ -30,8 +30,19 @@ export function DonateurDetailModal({
   const [geocodingLoading, setGeocodingLoading] = useState(false)
   const mapInstanceRef = useRef<any>(null)
 
+  // Réinitialiser les états quand le donateur change
   useEffect(() => {
-    if (isOpen && donateur) {
+    if (donateur) {
+      // Nettoyer la carte précédente
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove()
+        mapInstanceRef.current = null
+      }
+      // Réinitialiser les états de la carte
+      setShowMap(false)
+      setMapCoords(null)
+
+      // Charger les dons du nouveau donateur
       setLoading(true)
       fetchDons(donateur)
         .then(setDons)
@@ -39,7 +50,7 @@ export function DonateurDetailModal({
     } else {
       setDons([])
     }
-  }, [isOpen, donateur])
+  }, [donateur, isOpen])
 
   // Géocoder l'adresse et initialiser la carte
   useEffect(() => {
