@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Filter, ChevronRight } from 'lucide-react'
+import { Search, Filter, ChevronRight, Box, AlertCircle } from 'lucide-react'
 import { useBoutiqueCommandes, type Commande } from '@/hooks/useBoutiqueCommandes'
 import { formatDateShort } from '@/lib/utils'
 
@@ -20,10 +20,28 @@ const PAYMENT_STATUS_CONFIG: Record<string, { label: string; class: string }> = 
 
 export function BoutiqueGestionCommandesAdminPage() {
   const navigate = useNavigate()
-  const { allCommandes, loading, updateStatus, markAsPaid } = useBoutiqueCommandes()
+  const { allCommandes, loading, updateStatus, markAsPaid, sendToPrintful } = useBoutiqueCommandes()
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<Commande['status'] | 'all'>('all')
   const [filterPayment, setFilterPayment] = useState<'all' | 'pending' | 'completed' | 'failed'>('all')
+  const [printfulSending, setPrintfulSending] = useState<string | null>(null)
+  const [printfulError, setPrintfulError] = useState<{ id: string; message: string } | null>(null)
+
+  const handleSendToPrintful = async (commandeId: string) => {
+    setPrintfulSending(commandeId)
+    setPrintfulError(null)
+    try {
+      await sendToPrintful(commandeId)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      setPrintfulError({ id: commandeId, message })
+    } finally {
+      setPrintfulSending(null)
+    }
+  }
+
+  const hasPrintfulItems = (commande: Commande) =>
+    (commande.boutique_commande_items ?? []).some((item) => !!item.boutique_produits?.global_produit_id)
 
   const STATUS_NEXT: Record<string, Commande['status'][]> = {
     pending: ['processing', 'cancelled'],
@@ -220,7 +238,31 @@ export function BoutiqueGestionCommandesAdminPage() {
                         ))}
                       </div>
                     )}
+                    {commande.payment_status === 'completed' && hasPrintfulItems(commande) && (
+                      commande.printful_order_id ? (
+                        <span className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-indigo-100 text-indigo-700 rounded-lg">
+                          <Box className="w-3.5 h-3.5" />
+                          Printful : {commande.printful_status ?? 'envoyé'} (#{commande.printful_order_id})
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleSendToPrintful(commande.id)}
+                          disabled={printfulSending === commande.id}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors disabled:opacity-50"
+                        >
+                          <Box className="w-3.5 h-3.5" />
+                          {printfulSending === commande.id ? 'Envoi...' : 'Envoyer à Printful'}
+                        </button>
+                      )
+                    )}
                   </div>
+
+                  {printfulError && printfulError.id === commande.id && (
+                    <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-3 py-2 mt-2">
+                      <AlertCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                      <p>{printfulError.message}</p>
+                    </div>
+                  )}
                 </div>
               )
             })}

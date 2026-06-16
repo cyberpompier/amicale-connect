@@ -181,6 +181,21 @@ export function useBoutiqueProduits() {
       .eq('id', id)
     if (error) throw error
 
+    if (variantes) {
+      const { error: delErr } = await supabase
+        .from('boutique_produit_variantes')
+        .delete()
+        .eq('produit_id', id)
+      if (delErr) throw delErr
+
+      if (variantes.length > 0) {
+        const { error: vErr } = await supabase
+          .from('boutique_produit_variantes')
+          .insert(variantes.map((v) => ({ ...v, produit_id: id })))
+        if (vErr) throw vErr
+      }
+    }
+
     await fetchAll()
   }
 

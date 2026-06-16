@@ -1,20 +1,37 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, ShoppingBag, Sparkles, Pencil, Check, X } from 'lucide-react'
+import { ArrowLeft, ShoppingBag, Sparkles, Pencil, Check, X, AlertCircle, RefreshCw } from 'lucide-react'
 import { useBoutiquePartenaireCatalogue } from '@/hooks/useBoutiquePartenaireCatalogue'
 import { PageHeader } from '@/components/ui/PageHeader'
 
+function describeError(err: unknown): string {
+  const message =
+    err instanceof Error
+      ? err.message
+      : typeof err === 'object' && err !== null && 'message' in err
+        ? String((err as { message: unknown }).message)
+        : String(err)
+  if (message.includes('Accès refusé')) {
+    return "Action réservée aux responsables (propriétaire ou administrateur) de l'amicale."
+  }
+  return `Une erreur est survenue : ${message}`
+}
+
 export function BoutiqueGestionCataloguePartenairePage() {
   const navigate = useNavigate()
-  const { catalogue, loading, getActivation, activate, deactivate } = useBoutiquePartenaireCatalogue()
+  const { catalogue, loading, getActivation, activate, deactivate, resync } = useBoutiquePartenaireCatalogue()
   const [busyId, setBusyId] = useState<string | null>(null)
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null)
   const [priceInput, setPriceInput] = useState('')
+  const [actionError, setActionError] = useState<string | null>(null)
 
   const handleActivate = async (globalProduitId: string, customPrice?: number | null) => {
     setBusyId(globalProduitId)
+    setActionError(null)
     try {
       await activate(globalProduitId, customPrice)
+    } catch (err) {
+      setActionError(describeError(err))
     } finally {
       setBusyId(null)
       setEditingPriceId(null)
@@ -23,8 +40,23 @@ export function BoutiqueGestionCataloguePartenairePage() {
 
   const handleDeactivate = async (globalProduitId: string) => {
     setBusyId(globalProduitId)
+    setActionError(null)
     try {
       await deactivate(globalProduitId)
+    } catch (err) {
+      setActionError(describeError(err))
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  const handleResync = async (globalProduitId: string) => {
+    setBusyId(globalProduitId)
+    setActionError(null)
+    try {
+      await resync(globalProduitId)
+    } catch (err) {
+      setActionError(describeError(err))
     } finally {
       setBusyId(null)
     }
@@ -53,6 +85,13 @@ export function BoutiqueGestionCataloguePartenairePage() {
           </button>
         }
       />
+
+      {actionError && (
+        <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mb-4">
+          <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+          <p>{actionError}</p>
+        </div>
+      )}
 
       {catalogue.length === 0 ? (
         <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center shadow-sm">
@@ -154,13 +193,23 @@ export function BoutiqueGestionCataloguePartenairePage() {
                   </p>
 
                   {isActive ? (
-                    <button
-                      onClick={() => handleDeactivate(produit.id)}
-                      disabled={isBusy}
-                      className="w-full px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50"
-                    >
-                      Désactiver
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleResync(produit.id)}
+                        disabled={isBusy}
+                        title="Mettre à jour les infos (image, nom, prix...) depuis le catalogue partagé"
+                        className="flex items-center justify-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50"
+                      >
+                        <RefreshCw className={`w-4 h-4 ${isBusy ? 'animate-spin' : ''}`} />
+                      </button>
+                      <button
+                        onClick={() => handleDeactivate(produit.id)}
+                        disabled={isBusy}
+                        className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50"
+                      >
+                        Désactiver
+                      </button>
+                    </div>
                   ) : (
                     <button
                       onClick={() => handleActivate(produit.id)}

@@ -7,6 +7,9 @@ export interface PlatformProductStat {
   nb_associations_actives: number
   total_revenue: number
   total_commission: number
+  total_quantity: number
+  cost_price: number | null
+  total_margin: number
 }
 
 export function usePlatformDropshippingStats() {

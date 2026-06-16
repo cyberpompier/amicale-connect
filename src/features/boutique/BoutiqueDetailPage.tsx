@@ -74,6 +74,7 @@ export function BoutiqueDetailPage() {
     if (!produit) return false
     if (varianteTypes.length === 0) return produit.stock_status === 'in_stock'
     if (!matchedVariante) return false
+    if (produit.global_produit_id) return true
     return matchedVariante.stock_qty > 0
   }, [produit, varianteTypes, matchedVariante])
 
@@ -219,7 +220,7 @@ export function BoutiqueDetailPage() {
               <div className="flex flex-wrap gap-2">
                 {variantesByType[type].map((v) => {
                   const isSelected = selectedVariantes[type] === v.value
-                  const isOutOfStock = v.stock_qty === 0
+                  const isOutOfStock = !produit.global_produit_id && v.stock_qty === 0
                   return (
                     <button
                       key={v.id}
@@ -243,7 +244,7 @@ export function BoutiqueDetailPage() {
                   )
                 })}
               </div>
-              {matchedVariante && type === varianteTypes[0] && (
+              {matchedVariante && type === varianteTypes[0] && !produit.global_produit_id && (
                 <p className="text-xs text-[var(--color-text-muted)] mt-1">
                   Stock : {matchedVariante.stock_qty} unité(s)
                 </p>

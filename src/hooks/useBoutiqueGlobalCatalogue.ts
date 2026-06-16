@@ -7,6 +7,7 @@ export interface BoutiqueGlobalVariante {
   type: 'size' | 'color' | 'material' | 'custom'
   value: string
   price_modifier: number
+  printful_variant_id: number | null
   created_at: string
 }
 
@@ -18,7 +19,9 @@ export interface BoutiqueGlobalProduit {
   category_name: string | null
   base_price: number
   commission_percent: number
+  cost_price: number | null
   sku: string | null
+  printful_sync_variant_id: number | null
   stock_status: 'in_stock' | 'out_of_stock' | 'coming_soon'
   status: 'active' | 'inactive'
   created_at: string
@@ -33,6 +36,7 @@ export type BoutiqueGlobalProduitInput = {
   category_name: string | null
   base_price: number
   commission_percent: number
+  cost_price: number | null
   sku: string | null
   stock_status: 'in_stock' | 'out_of_stock' | 'coming_soon'
   status: 'active' | 'inactive'
@@ -91,6 +95,21 @@ export function useBoutiqueGlobalCatalogue() {
       .update({ ...produitData, updated_at: new Date().toISOString() })
       .eq('id', id)
     if (err) throw err
+
+    if (variantes) {
+      const { error: delErr } = await supabase
+        .from('boutique_global_produit_variantes')
+        .delete()
+        .eq('global_produit_id', id)
+      if (delErr) throw delErr
+
+      if (variantes.length > 0) {
+        const { error: vErr } = await supabase
+          .from('boutique_global_produit_variantes')
+          .insert(variantes.map((v) => ({ ...v, global_produit_id: id })))
+        if (vErr) throw vErr
+      }
+    }
 
     await fetchAll()
   }

@@ -33,9 +33,17 @@ export interface Commande {
   total_amount: number
   tax_amount: number
   shipping_address: string | null
+  shipping_name: string | null
+  shipping_address1: string | null
+  shipping_address2: string | null
+  shipping_city: string | null
+  shipping_zip: string | null
+  shipping_country: string | null
   payment_method: 'stripe' | 'manual'
   payment_status: 'pending' | 'completed' | 'failed'
   stripe_payment_intent_id: string | null
+  printful_order_id: string | null
+  printful_status: string | null
   notes: string | null
   created_at: string
   updated_at: string
@@ -46,7 +54,12 @@ export type CommandeInput = {
   user_name: string
   user_email: string
   user_phone?: string
-  shipping_address?: string
+  shipping_name?: string
+  shipping_address1?: string
+  shipping_address2?: string
+  shipping_city?: string
+  shipping_zip?: string
+  shipping_country?: string
   payment_method: 'stripe' | 'manual'
   notes?: string
 }
@@ -123,7 +136,12 @@ export function useBoutiqueCommandes() {
         user_name: input.user_name,
         user_email: input.user_email,
         user_phone: input.user_phone || null,
-        shipping_address: input.shipping_address || null,
+        shipping_name: input.shipping_name || null,
+        shipping_address1: input.shipping_address1 || null,
+        shipping_address2: input.shipping_address2 || null,
+        shipping_city: input.shipping_city || null,
+        shipping_zip: input.shipping_zip || null,
+        shipping_country: input.shipping_country || 'FR',
         payment_method: input.payment_method,
         notes: input.notes || null,
         total_amount,
@@ -235,6 +253,16 @@ export function useBoutiqueCommandes() {
     await Promise.all([fetchUserCommandes(), fetchAllCommandes()])
   }
 
+  const sendToPrintful = async (commandeId: string) => {
+    const { data, error } = await supabase.functions.invoke<{ printful_order_id: string; printful_status: string }>(
+      'printful-submit-order',
+      { method: 'POST', body: { commande_id: commandeId } }
+    )
+    if (error) throw error
+    await Promise.all([fetchUserCommandes(), fetchAllCommandes()])
+    return data
+  }
+
   const cancelCommande = async (commandeId: string) => {
     const { error } = await supabase
       .from('boutique_commandes')
@@ -252,6 +280,7 @@ export function useBoutiqueCommandes() {
     createCommande,
     updateStatus,
     markAsPaid,
+    sendToPrintful,
     cancelCommande,
   }
 }

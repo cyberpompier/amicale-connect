@@ -8,6 +8,7 @@ type VarianteForm = {
   type: 'size' | 'color' | 'material' | 'custom'
   value: string
   price_modifier: number
+  printful_variant_id: number | null
 }
 
 const TYPE_LABELS = { size: 'Taille', color: 'Couleur', material: 'Matière', custom: 'Personnalisé' }
@@ -26,6 +27,7 @@ export function AdminCatalogueProduitForm() {
     category_name: '',
     base_price: '',
     commission_percent: '20',
+    cost_price: '',
     sku: '',
     stock_status: 'in_stock' as 'in_stock' | 'out_of_stock' | 'coming_soon',
     status: 'active' as 'active' | 'inactive',
@@ -43,6 +45,7 @@ export function AdminCatalogueProduitForm() {
         category_name: existing.category_name ?? '',
         base_price: existing.base_price.toString(),
         commission_percent: existing.commission_percent.toString(),
+        cost_price: existing.cost_price != null ? existing.cost_price.toString() : '',
         sku: existing.sku ?? '',
         stock_status: existing.stock_status,
         status: existing.status,
@@ -53,6 +56,7 @@ export function AdminCatalogueProduitForm() {
           type: v.type,
           value: v.value,
           price_modifier: v.price_modifier,
+          printful_variant_id: v.printful_variant_id,
         }))
       )
     }
@@ -67,7 +71,7 @@ export function AdminCatalogueProduitForm() {
     }
   }
 
-  const addVariante = () => setVariantes((prev) => [...prev, { type: 'size', value: '', price_modifier: 0 }])
+  const addVariante = () => setVariantes((prev) => [...prev, { type: 'size', value: '', price_modifier: 0, printful_variant_id: null }])
   const removeVariante = (i: number) => setVariantes((prev) => prev.filter((_, idx) => idx !== i))
   const updateVariante = (i: number, field: keyof VarianteForm, value: string | number) =>
     setVariantes((prev) => prev.map((v, idx) => idx === i ? { ...v, [field]: value } : v))
@@ -84,6 +88,9 @@ export function AdminCatalogueProduitForm() {
 
     const validVariantes = variantes.filter((v) => v.value.trim())
 
+    const costPrice = form.cost_price.trim() ? parseFloat(form.cost_price) : null
+    if (costPrice !== null && (isNaN(costPrice) || costPrice < 0)) { setError('Coût Printful invalide.'); return }
+
     setSaving(true)
     try {
       const input = {
@@ -92,6 +99,7 @@ export function AdminCatalogueProduitForm() {
         category_name: form.category_name.trim() || null,
         base_price: price,
         commission_percent: commission,
+        cost_price: costPrice,
         sku: form.sku.trim() || null,
         stock_status: form.stock_status,
         status: form.status,
@@ -100,6 +108,7 @@ export function AdminCatalogueProduitForm() {
           type: v.type,
           value: v.value.trim(),
           price_modifier: Number(v.price_modifier),
+          printful_variant_id: v.printful_variant_id,
         })),
       }
 
@@ -200,6 +209,17 @@ export function AdminCatalogueProduitForm() {
               <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Commission Amicale Connect (%) <span className="text-red-500">*</span></label>
               <input required type="number" step="0.01" min="0" max="100" value={form.commission_percent} onChange={(e) => setForm((p) => ({ ...p, commission_percent: e.target.value }))}
                 placeholder="20" className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text)] mb-1">
+                Coût Printful (€) <span className="text-[var(--color-text-muted)] font-normal">(optionnel)</span>
+              </label>
+              <input type="number" step="0.01" min="0" value={form.cost_price} onChange={(e) => setForm((p) => ({ ...p, cost_price: e.target.value }))}
+                placeholder="9.50" className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]" />
+              <p className="text-xs text-[var(--color-text-muted)] mt-1">Coût de production + expédition facturé par Printful, utilisé pour calculer la marge nette.</p>
             </div>
           </div>
 

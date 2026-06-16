@@ -1,15 +1,16 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Pencil, Trash2, ShoppingBag, ShieldAlert, Building2, TrendingUp, Percent } from 'lucide-react'
+import { Plus, Pencil, Trash2, ShoppingBag, ShieldAlert, Building2, TrendingUp, Percent, Wallet } from 'lucide-react'
 import { useBoutiqueGlobalCatalogue } from '@/hooks/useBoutiqueGlobalCatalogue'
 import { usePlatformAdmin } from '@/hooks/usePlatformAdmin'
 import { usePlatformDropshippingStats } from '@/hooks/usePlatformDropshippingStats'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { PrintfulSettingsCard } from '@/features/admin/PrintfulSettingsCard'
 
 export function AdminCataloguePartagePage() {
   const navigate = useNavigate()
   const { isPlatformAdmin, loading: adminLoading } = usePlatformAdmin()
-  const { produits, loading, deleteProduit, updateProduit } = useBoutiqueGlobalCatalogue()
+  const { produits, loading, deleteProduit, updateProduit, refetch } = useBoutiqueGlobalCatalogue()
   const { stats, loading: statsLoading } = usePlatformDropshippingStats()
 
   const statsByProduct = useMemo(() => {
@@ -24,8 +25,9 @@ export function AdminCataloguePartagePage() {
         nbAssociations: acc.nbAssociations + s.nb_associations_actives,
         revenue: acc.revenue + Number(s.total_revenue),
         commission: acc.commission + Number(s.total_commission),
+        margin: acc.margin + Number(s.total_margin),
       }),
-      { nbAssociations: 0, revenue: 0, commission: 0 }
+      { nbAssociations: 0, revenue: 0, commission: 0, margin: 0 }
     )
   }, [stats])
 
@@ -71,9 +73,11 @@ export function AdminCataloguePartagePage() {
         }
       />
 
+      <PrintfulSettingsCard onSynced={refetch} />
+
       {/* KPIs plateforme */}
       {!statsLoading && stats.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 shadow-sm">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Activations</span>
@@ -104,6 +108,16 @@ export function AdminCataloguePartagePage() {
             <p className="text-2xl font-bold text-green-700">{totals.commission.toFixed(2)} €</p>
             <p className="text-xs text-[var(--color-text-muted)] mt-1">part plateforme sur les ventes</p>
           </div>
+          <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Marge nette plateforme</span>
+              <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+                <Wallet className="w-4 h-4 text-amber-600" />
+              </div>
+            </div>
+            <p className={`text-2xl font-bold ${totals.margin >= 0 ? 'text-amber-700' : 'text-red-600'}`}>{totals.margin.toFixed(2)} €</p>
+            <p className="text-xs text-[var(--color-text-muted)] mt-1">commission - coût Printful (production + envoi)</p>
+          </div>
         </div>
       )}
 
@@ -133,6 +147,7 @@ export function AdminCataloguePartagePage() {
                 <p className="font-semibold text-[var(--color-text)] text-sm truncate">{produit.name}</p>
                 <p className="text-xs text-[var(--color-text-muted)]">
                   {produit.base_price.toFixed(2)} € · Commission {produit.commission_percent.toFixed(0)}%
+                  {produit.cost_price != null ? ` · Coût Printful ${produit.cost_price.toFixed(2)} €` : ' · Coût Printful non renseigné'}
                   {produit.category_name ? ` · ${produit.category_name}` : ''}
                 </p>
                 {(() => {
@@ -140,7 +155,10 @@ export function AdminCataloguePartagePage() {
                   if (!s) return null
                   return (
                     <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
-                      {s.nb_associations_actives} amicale(s) actives · {Number(s.total_revenue).toFixed(2)} € de ventes · {Number(s.total_commission).toFixed(2)} € de commission
+                      {s.nb_associations_actives} amicale(s) actives · {s.total_quantity} vendu(s) · {Number(s.total_revenue).toFixed(2)} € de ventes · {Number(s.total_commission).toFixed(2)} € de commission ·{' '}
+                      <span className={Number(s.total_margin) >= 0 ? 'text-amber-700 font-semibold' : 'text-red-600 font-semibold'}>
+                        {Number(s.total_margin).toFixed(2)} € de marge nette
+                      </span>
                     </p>
                   )
                 })()}

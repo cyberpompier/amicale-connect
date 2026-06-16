@@ -17,7 +17,12 @@ export function BoutiqueCheckoutPage() {
     user_name: '',
     user_email: user?.email ?? '',
     user_phone: '',
-    shipping_address: '',
+    shipping_name: '',
+    shipping_address1: '',
+    shipping_address2: '',
+    shipping_city: '',
+    shipping_zip: '',
+    shipping_country: 'FR',
     payment_method: 'manual' as 'stripe' | 'manual',
     notes: '',
   })
@@ -41,6 +46,7 @@ export function BoutiqueCheckoutPage() {
           user_name: fullName || prev.user_name,
           user_email: data.email || user.email || prev.user_email,
           user_phone: data.phone || prev.user_phone,
+          shipping_name: fullName || prev.shipping_name,
         }))
       })
   }, [user])
@@ -154,14 +160,56 @@ export function BoutiqueCheckoutPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Adresse de livraison</label>
-              <textarea
-                rows={2}
-                value={form.shipping_address}
-                onChange={(e) => setForm((p) => ({ ...p, shipping_address: e.target.value }))}
-                placeholder="12 rue des Pompiers, 75001 Paris"
-                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)] resize-none"
-              />
+              <p className="block text-sm font-medium text-[var(--color-text)] mb-1">Adresse de livraison</p>
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  value={form.shipping_name}
+                  onChange={(e) => setForm((p) => ({ ...p, shipping_name: e.target.value }))}
+                  placeholder="Nom du destinataire"
+                  className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
+                />
+                <input
+                  type="text"
+                  value={form.shipping_address1}
+                  onChange={(e) => setForm((p) => ({ ...p, shipping_address1: e.target.value }))}
+                  placeholder="12 rue des Pompiers"
+                  className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
+                />
+                <input
+                  type="text"
+                  value={form.shipping_address2}
+                  onChange={(e) => setForm((p) => ({ ...p, shipping_address2: e.target.value }))}
+                  placeholder="Complément d'adresse (optionnel)"
+                  className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    value={form.shipping_zip}
+                    onChange={(e) => setForm((p) => ({ ...p, shipping_zip: e.target.value }))}
+                    placeholder="Code postal"
+                    className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
+                  />
+                  <input
+                    type="text"
+                    value={form.shipping_city}
+                    onChange={(e) => setForm((p) => ({ ...p, shipping_city: e.target.value }))}
+                    placeholder="Ville"
+                    className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
+                  />
+                </div>
+                <select
+                  value={form.shipping_country}
+                  onChange={(e) => setForm((p) => ({ ...p, shipping_country: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 focus:border-[var(--color-primary)]"
+                >
+                  <option value="FR">France</option>
+                  <option value="BE">Belgique</option>
+                  <option value="CH">Suisse</option>
+                  <option value="LU">Luxembourg</option>
+                </select>
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-[var(--color-text)] mb-1">Notes</label>

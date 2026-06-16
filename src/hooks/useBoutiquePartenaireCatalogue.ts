@@ -73,6 +73,17 @@ export function useBoutiquePartenaireCatalogue() {
     await fetchAll()
   }
 
+  const resync = async (globalProduitId: string) => {
+    if (!currentAssociation) throw new Error('Aucune association sélectionnée')
+
+    const { error: err } = await supabase.rpc('resync_global_produit', {
+      p_association_id: currentAssociation.id,
+      p_global_produit_id: globalProduitId,
+    })
+    if (err) throw err
+    await fetchAll()
+  }
+
   return {
     catalogue,
     activations,
@@ -82,5 +93,6 @@ export function useBoutiquePartenaireCatalogue() {
     getActivation,
     activate,
     deactivate,
+    resync,
   }
 }
