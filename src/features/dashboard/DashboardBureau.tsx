@@ -4,8 +4,9 @@ import { useCotisations } from '@/hooks/useCotisations'
 import { useAmicalistes } from '@/hooks/useAmicalistes'
 import { useSondages } from '@/hooks/useSondages'
 import { useComptes } from '@/hooks/useComptes'
+import { useRevenusKPI } from '@/hooks/useRevenusKPI'
 import { formatCurrency, formatDateShort } from '@/lib/utils'
-import { TrendingUp, TrendingDown, Calendar, MapPin, AlertCircle, Users, CheckCircle, ArrowRight, AlertTriangle, Wallet, Radio } from 'lucide-react'
+import { TrendingUp, TrendingDown, Calendar, MapPin, AlertCircle, Users, CheckCircle, ArrowRight, AlertTriangle, Wallet, Radio, ShoppingBag, BookOpen, Store, PartyPopper, DollarSign } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 function SkeletonCard() {
@@ -43,6 +44,7 @@ export function DashboardBureau() {
   const { amicalistes, loading: l4 } = useAmicalistes()
   const { sondages, loading: l5 } = useSondages()
   const { comptes, loading: l6 } = useComptes()
+  const revenusKPI = useRevenusKPI()
   const navigate = useNavigate()
 
   const upcoming = getUpcoming().slice(0, 3)
@@ -135,6 +137,169 @@ export function DashboardBureau() {
               <p className="text-xs text-[var(--color-text-muted)] mt-1">cotisations</p>
             </div>
           </>
+        )}
+      </div>
+
+      {/* Revenus générés */}
+      <div className="bg-white rounded-xl border border-[var(--color-border)] shadow-[var(--shadow-sm)] overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)]">
+          <div className="flex items-center gap-2">
+            <DollarSign className="w-4 h-4 text-[var(--color-primary)]" />
+            <h2 className="text-sm font-semibold text-[var(--color-text)]">Revenus générés {revenusKPI.annee}</h2>
+          </div>
+          <p className="text-xs text-[var(--color-text-muted)]">Dépenses selon catégories comptables</p>
+        </div>
+
+        {revenusKPI.loading ? (
+          <div className="px-5 py-4 space-y-3 animate-pulse">
+            {[1,2,3,4,5].map(i => (
+              <div key={i} className="flex items-center justify-between py-1">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gray-200 rounded-lg" />
+                  <div className="h-3 w-28 bg-gray-200 rounded" />
+                </div>
+                <div className="flex gap-4">
+                  <div className="h-3 w-18 bg-gray-200 rounded" />
+                  <div className="h-3 w-18 bg-gray-200 rounded" />
+                  <div className="h-3 w-18 bg-gray-200 rounded" />
+                  <div className="h-3 w-12 bg-gray-200 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[var(--color-border)]">
+                  <th className="px-5 py-2 text-left text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide w-48">Source</th>
+                  <th className="px-3 py-2 text-right text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Recettes</th>
+                  <th className="px-3 py-2 text-right text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Dépenses</th>
+                  <th className="px-3 py-2 text-right text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Bénéfice</th>
+                  <th className="px-5 py-2 text-right text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide w-16">Marge</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--color-border)]">
+                {/* Calendriers */}
+                <tr className="hover:bg-[var(--color-bg-secondary)] transition-colors">
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <BookOpen className="w-4 h-4 text-orange-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-[var(--color-text)]">Calendriers</p>
+                        <p className="text-xs text-[var(--color-text-muted)]">{revenusKPI.calendriers.campagneName}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-3 py-3 text-right font-semibold text-[var(--color-text)]">{formatCurrency(revenusKPI.calendriers.recettes)}</td>
+                  <td className="px-3 py-3 text-right text-red-600">{revenusKPI.calendriers.depenses > 0 ? `−${formatCurrency(revenusKPI.calendriers.depenses)}` : '—'}</td>
+                  <td className={`px-3 py-3 text-right font-semibold ${revenusKPI.calendriers.benefice >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(revenusKPI.calendriers.benefice)}</td>
+                  <td className="px-5 py-3 text-right">
+                    {revenusKPI.calendriers.margePercent !== null
+                      ? <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${revenusKPI.calendriers.margePercent >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{revenusKPI.calendriers.margePercent.toFixed(0)}%</span>
+                      : <span className="text-xs text-[var(--color-text-muted)]">—</span>}
+                  </td>
+                </tr>
+
+                {/* Brocantes */}
+                <tr className="hover:bg-[var(--color-bg-secondary)] transition-colors">
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <ShoppingBag className="w-4 h-4 text-yellow-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-[var(--color-text)]">Brocantes</p>
+                        <p className="text-xs text-[var(--color-text-muted)]">
+                          {revenusKPI.brocantes.evenementsCount > 0 ? `${revenusKPI.brocantes.evenementsCount} événement${revenusKPI.brocantes.evenementsCount > 1 ? 's' : ''}` : 'Aucun événement'}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-3 py-3 text-right font-semibold text-[var(--color-text)]">{formatCurrency(revenusKPI.brocantes.recettes)}</td>
+                  <td className="px-3 py-3 text-right text-red-600">{revenusKPI.brocantes.depenses > 0 ? `−${formatCurrency(revenusKPI.brocantes.depenses)}` : '—'}</td>
+                  <td className={`px-3 py-3 text-right font-semibold ${revenusKPI.brocantes.benefice >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(revenusKPI.brocantes.benefice)}</td>
+                  <td className="px-5 py-3 text-right">
+                    {revenusKPI.brocantes.margePercent !== null
+                      ? <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${revenusKPI.brocantes.margePercent >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{revenusKPI.brocantes.margePercent.toFixed(0)}%</span>
+                      : <span className="text-xs text-[var(--color-text-muted)]">—</span>}
+                  </td>
+                </tr>
+
+                {/* Boutique */}
+                <tr className="hover:bg-[var(--color-bg-secondary)] transition-colors">
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Store className="w-4 h-4 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-[var(--color-text)]">Boutique</p>
+                        <p className="text-xs text-[var(--color-text-muted)]">
+                          {revenusKPI.boutique.commandesCount > 0 ? `${revenusKPI.boutique.commandesCount} commande${revenusKPI.boutique.commandesCount > 1 ? 's' : ''}` : 'Aucune commande'}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-3 py-3 text-right font-semibold text-[var(--color-text)]">{formatCurrency(revenusKPI.boutique.recettes)}</td>
+                  <td className="px-3 py-3 text-right text-red-600">{revenusKPI.boutique.depenses > 0 ? `−${formatCurrency(revenusKPI.boutique.depenses)}` : '—'}</td>
+                  <td className={`px-3 py-3 text-right font-semibold ${revenusKPI.boutique.benefice >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(revenusKPI.boutique.benefice)}</td>
+                  <td className="px-5 py-3 text-right">
+                    {revenusKPI.boutique.margePercent !== null
+                      ? <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${revenusKPI.boutique.margePercent >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{revenusKPI.boutique.margePercent.toFixed(0)}%</span>
+                      : <span className="text-xs text-[var(--color-text-muted)]">—</span>}
+                  </td>
+                </tr>
+
+                {/* Événements */}
+                <tr className="hover:bg-[var(--color-bg-secondary)] transition-colors">
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <PartyPopper className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-[var(--color-text)]">Événements</p>
+                        <p className="text-xs text-[var(--color-text-muted)]">
+                          {revenusKPI.evenements.evenementsCount > 0 ? `${revenusKPI.evenements.evenementsCount} événement${revenusKPI.evenements.evenementsCount > 1 ? 's' : ''}` : 'Aucun événement'}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-3 py-3 text-right font-semibold text-[var(--color-text)]">{formatCurrency(revenusKPI.evenements.recettes)}</td>
+                  <td className="px-3 py-3 text-right text-red-600">{revenusKPI.evenements.depenses > 0 ? `−${formatCurrency(revenusKPI.evenements.depenses)}` : '—'}</td>
+                  <td className={`px-3 py-3 text-right font-semibold ${revenusKPI.evenements.benefice >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(revenusKPI.evenements.benefice)}</td>
+                  <td className="px-5 py-3 text-right">
+                    {revenusKPI.evenements.margePercent !== null
+                      ? <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${revenusKPI.evenements.margePercent >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{revenusKPI.evenements.margePercent.toFixed(0)}%</span>
+                      : <span className="text-xs text-[var(--color-text-muted)]">—</span>}
+                  </td>
+                </tr>
+
+                {/* Total */}
+                <tr className="bg-[var(--color-bg-secondary)]">
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <TrendingUp className="w-4 h-4 text-green-600" />
+                      </div>
+                      <p className="font-bold text-[var(--color-text)]">Total {revenusKPI.annee}</p>
+                    </div>
+                  </td>
+                  <td className="px-3 py-3 text-right font-bold text-[var(--color-text)]">{formatCurrency(revenusKPI.total.recettes)}</td>
+                  <td className="px-3 py-3 text-right font-bold text-red-600">{revenusKPI.total.depenses > 0 ? `−${formatCurrency(revenusKPI.total.depenses)}` : '—'}</td>
+                  <td className={`px-3 py-3 text-right font-bold ${revenusKPI.total.benefice >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(revenusKPI.total.benefice)}</td>
+                  <td className="px-5 py-3 text-right">
+                    {revenusKPI.total.margePercent !== null
+                      ? <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${revenusKPI.total.margePercent >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{revenusKPI.total.margePercent.toFixed(0)}%</span>
+                      : <span className="text-xs text-[var(--color-text-muted)]">—</span>}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
