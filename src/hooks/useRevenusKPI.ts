@@ -138,7 +138,7 @@ export function useRevenusKPI(annee?: number) {
     }
 
     // ── Dépenses par source via catégories ────────────────────────────────────
-    const transactions = (transactionsRes.data ?? []) as { amount: number; type: string; categories?: { name: string } | null }[]
+    const transactions = (transactionsRes.data ?? []) as unknown as { amount: number; type: string; categories?: { name: string } | null }[]
 
     const depenses = { calendriers: 0, brocantes: 0, boutique: 0, evenements: 0 }
 
